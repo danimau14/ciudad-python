@@ -143,14 +143,17 @@ def pantalla_fin():
         if st.button("🔄 JUGAR DE NUEVO", use_container_width=True):
             if gid:
                 reiniciar_progreso(gid)  # resetea indicadores + partida_terminada=0
+            # Mantener la misma dificultad actual
+            dif_actual = st.session_state.get("dificultad", "Medio")
             st.session_state.update({
-                "pregunta_actual":None,"respuesta_correcta":False,
-                "decision_elegida":None,"decision_efectos":None,
-                "evento_ronda":None,"fase_ronda":"decision",
-                "preguntas_usadas":[],"timer_inicio":None,"tiempo_agotado":False,
-                "correctas":0,"incorrectas":0,"ninguno_critico":True,
-                "logros_ganados":[],"energia_rondas_altas":0,
+                "pregunta_actual": None, "respuesta_correcta": False,
+                "decision_elegida": None, "decision_efectos": None,
+                "evento_ronda": None, "fase_ronda": "decision",
+                "preguntas_usadas": [], "timer_inicio": None, "tiempo_agotado": False,
+                "correctas": 0, "incorrectas": 0, "ninguno_critico": True,
+                "logros_ganados": [], "energia_rondas_altas": 0,
                 "ranking_guardado": False,
+                "dificultad": dif_actual,
             })
             navegar("juego")
     with c2:
