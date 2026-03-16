@@ -1,0 +1,22 @@
+import streamlit as st
+from screen_inicio import pantalla_inicio, pantalla_instrucciones
+from screen_registro import pantalla_registro
+from screen_agregar_estudiantes import pantalla_agregar_estudiantes
+from screen_login import pantalla_login
+from screen_juego import pantalla_juego
+from screen_fin import pantalla_fin
+from screen_ranking import pantalla_ranking
+
+
+def router():
+    pantallas = {
+        "inicio":               pantalla_inicio,
+        "instrucciones":        pantalla_instrucciones,
+        "registro":             pantalla_registro,
+        "agregar_estudiantes":  pantalla_agregar_estudiantes,
+        "login":                pantalla_login,
+        "juego":                pantalla_juego,
+        "fin":                  pantalla_fin,
+        "ranking":              pantalla_ranking,
+    }
+    pantallas.get(st.session_state["pantalla"], pantalla_inicio)()
