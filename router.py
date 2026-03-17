@@ -6,6 +6,7 @@ from screen_login import pantalla_login
 from screen_juego import pantalla_juego
 from screen_fin import pantalla_fin
 from screen_ranking import pantalla_ranking
+from screen_misiones import pantalla_misione
 
 
 def router():
@@ -14,6 +15,7 @@ def router():
         "lobby":               pantalla_lobby,
         "instrucciones":       pantalla_instrucciones,
         "logros":              pantalla_logros,
+        "misiones":            pantalla_misiones,
         "registro":            pantalla_registro,
         "agregar_estudiantes": pantalla_agregar_estudiantes,
         "login":               pantalla_login,

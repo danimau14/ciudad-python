@@ -97,30 +97,38 @@ def pantalla_lobby():
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Botones de acción
-        bj, bi, br = st.columns(3)
-        with bj:
-            if st.button("🚀  JUGAR", use_container_width=True, key="btn_jugar"):
-                _iniciar_juego(gid)
-        with bi:
+        # ── Botones de acción ──
+        if st.button("🚀  JUGAR", use_container_width=True, key="btn_jugar"):
+            _iniciar_juego(gid)
+
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
+        b1, b2 = st.columns(2)
+        with b1:
             if st.button("📖  INSTRUCCIONES", use_container_width=True, key="btn_inst"):
                 navegar("instrucciones")
-        with br:
+        with b2:
             if st.button("🏆  RANKING", use_container_width=True, key="btn_rank"):
                 navegar("ranking")
-        with st.columns(2)[0]:  # debajo de INSTRUCCIONES y RANKING
+
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
+        b3, b4 = st.columns(2)
+        with b3:
             if st.button("📋  MISIONES", use_container_width=True, key="btn_misiones"):
                 navegar("misiones")
+        with b4:
+            if st.button("🏅  VER LOGROS", use_container_width=True, key="btn_logros"):
+                navegar("logros")
 
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🏅  VER LOGROS", use_container_width=True, key="btn_logros"):
-            navegar("logros")
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
         if st.button("🚪  CERRAR SESIÓN", use_container_width=True, key="btn_logout"):
             for k in ["grupo_id","grupo_nombre","logros_obtenidos","progreso_cargado"]:
                 st.session_state.pop(k, None)
             navegar("inicio")
+
+
 
     with right:
         # Panel de logros compacto (preview)
@@ -128,9 +136,16 @@ def pantalla_lobby():
             "<div style='font-family:Orbitron,sans-serif;font-size:0.6rem;"
             "color:rgba(245,158,11,0.6);letter-spacing:3px;margin-bottom:10px;'>"
             "🏅 LOGROS</div>", unsafe_allow_html=True)
+        
+         # ── Solo los 8 logros más relevantes ──────────────────────
+        LOGROS_LOBBY = [
+            "admin_eficiente", "ciudad_verde", "energia_sost", "economia_boom",
+            "superviviente",   "maestro_preguntas", "equilibrio_total", "ciudad_feliz"
+        ]
 
         cols_l = st.columns(2)
-        for i, (lkey, ldata) in enumerate(LOGROS.items()):
+        for i, lkey in enumerate(LOGROS_LOBBY):          # ← LÍNEA CAMBIADA
+            ldata = LOGROS.get(lkey, {})                 # ← LÍNEA AÑADIDA
             obtenido = lkey in logros_gp
             color    = LOGRO_COLOR.get(lkey, "#94a3b8")
             if obtenido:
