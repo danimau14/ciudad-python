@@ -12,6 +12,29 @@ def _conn():
 
 def inicializar_db():
     con = _conn(); cur = con.cursor()
+
+    # ── Migración: añadir columna dificultad si la tabla ya existe sin ella ──
+    cur.execute("CREATE TABLE IF NOT EXISTS progreso_juego_old (id INTEGER)")
+    try:
+        cur.execute("SELECT dificultad FROM progreso_juego LIMIT 1")
+    except Exception:
+        # La tabla existe pero sin la columna dificultad → migrar
+        try:
+            cur.execute("ALTER TABLE progreso_juego ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'")
+            con.commit()
+        except Exception:
+            pass
+
+    # ── Migración: añadir columna en_curso si no existe ──
+    try:
+        cur.execute("SELECT en_curso FROM progreso_juego LIMIT 1")
+    except Exception:
+        try:
+            cur.execute("ALTER TABLE progreso_juego ADD COLUMN en_curso INTEGER DEFAULT 1")
+            con.commit()
+        except Exception:
+            pass
+
     cur.execute("""CREATE TABLE IF NOT EXISTS grupos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre_grupo TEXT UNIQUE NOT NULL,
