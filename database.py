@@ -102,12 +102,12 @@ def inicializar_db():
     conn.close()
 
 
-def registrar_grupo(nombre, pw):
+def registrar_grupo(nombre, pw, dificultad='Normal'):
     conn = get_conn()
     try:
         c = conn.cursor()
-        c.execute("INSERT INTO grupos(nombre_grupo,password) VALUES(?,?)",
-                  (nombre.strip(), hp(pw)))
+        c.execute("INSERT INTO grupos(nombre_grupo,password,dificultad) VALUES(?,?,?)",
+                  (nombre.strip(), hp(pw), dificultad))
         conn.commit()
         gid = c.lastrowid
         # Inicializar estrellas
