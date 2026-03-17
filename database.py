@@ -1,20 +1,36 @@
-import sqlite3, time, hashlib, os
+import sqlite3, time, hashlib, os, sys
 
-# /tmp siempre tiene permisos de escritura en Streamlit Cloud
-DB_PATH = os.path.join("/tmp", "database.db")
+# Elegir directorio escribible automáticamente
+def _get_db_path():
+    candidates = ["/tmp", os.path.expanduser("~"), os.getcwd()]
+    for d in candidates:
+        try:
+            test = os.path.join(d, "_test_write.tmp")
+            with open(test, "w") as f:
+                f.write("ok")
+            os.remove(test)
+            return os.path.join(d, "database.db")
+        except Exception:
+            continue
+    return "database.db"  # fallback
+
+DB_PATH = _get_db_path()
 
 
 def get_conn():
+    last_err = None
     for intento in range(8):
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
+            conn = sqlite3.connect(DB_PATH, timeout=15, check_same_thread=False)
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA busy_timeout=5000")
+            conn.execute("PRAGMA busy_timeout=8000")
+            conn.execute("PRAGMA synchronous=NORMAL")
             return conn
-        except sqlite3.OperationalError:
-            time.sleep(0.2 * (intento + 1))
-    raise RuntimeError("No se pudo conectar a la base de datos.")
+        except Exception as e:
+            last_err = e
+            time.sleep(0.3 * (intento + 1))
+    raise RuntimeError(f"No se pudo conectar a DB ({DB_PATH}): {last_err}")
 
 
 def hp(p):
