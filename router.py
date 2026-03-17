@@ -1,7 +1,6 @@
 import streamlit as st
 from screen_inicio import pantalla_inicio, pantalla_instrucciones
-from screen_agregar_estudiantes import pantalla_registro, pantalla_agregar_estudiantes
-from screen_login import pantalla_login
+from screen_auth import pantalla_login, pantalla_registro, pantalla_agregar_estudiantes
 from screen_lobby import pantalla_lobby
 from screen_juego import pantalla_juego
 from screen_fin import pantalla_fin
@@ -14,9 +13,9 @@ def router():
     pantallas = {
         "inicio":              pantalla_inicio,
         "instrucciones":       pantalla_instrucciones,
+        "login":               pantalla_login,
         "registro":            pantalla_registro,
         "agregar_estudiantes": pantalla_agregar_estudiantes,
-        "login":               pantalla_login,
         "lobby":               pantalla_lobby,
         "juego":               pantalla_juego,
         "fin":                 pantalla_fin,

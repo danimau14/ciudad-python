@@ -6,11 +6,13 @@ def pantalla_inicio():
     st.markdown('<div class="game-title">Ciudad en Equilibrio</div>', unsafe_allow_html=True)
     st.markdown('<div class="game-sub">Ingeniería Edition · Pensamiento Sistémico</div>',
                 unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
     c1, c2, c3, c4 = st.columns(4)
-    stats = [("🏙️","10 Rondas","Por partida"),("📚","63 Preguntas","7 categorías"),
-             ("⏱️","30 Segundos","Por pregunta"),("🔥","Alta dificultad","Mayor riesgo")]
-    for col, (em, v, d) in zip([c1,c2,c3,c4], stats):
+    for col, em, v, d in zip([c1,c2,c3,c4],
+        ["🏙️","📚","⏱️","🔥"],
+        ["10 Rondas","63 Preguntas","30 Segundos","Alta dificultad"],
+        ["Por partida","7 categorías","Por pregunta","Mayor riesgo"]):
         with col:
             st.markdown(f'''<div class="card" style="text-align:center">
                 <div style="font-size:1.8rem">{em}</div>
@@ -21,12 +23,13 @@ def pantalla_inicio():
     st.markdown("<br>", unsafe_allow_html=True)
     b1, b2 = st.columns(2)
     with b1:
-        if st.button("🔐 Iniciar Sesión", use_container_width=True): navegar("login")
+        if st.button("🔐 Iniciar Sesión",  use_container_width=True): navegar("login")
     with b2:
         if st.button("📝 Registrar Grupo", use_container_width=True): navegar("registro")
 
 
 def pantalla_instrucciones():
+    gid = st.session_state.get("grupo_id")
     st.markdown('<div class="game-title" style="font-size:1.8rem">📖 Instrucciones</div>',
                 unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -38,7 +41,7 @@ def pantalla_instrucciones():
             <h3 style="color:#60a5fa">📊 Indicadores inician en 50</h3>
             <p>💰 Economía &nbsp; 🌿 Medio Ambiente<br>⚡ Energía &nbsp; ❤️ Bienestar Social</p>
             <h3 style="color:#f59e0b">⏱️ Temporizador</h3>
-            <p>Cada pregunta tiene <b>30 segundos</b>. Si se acaba el tiempo, cuenta como incorrecta.</p>
+            <p>Cada pregunta tiene <b>30 segundos</b>. Si se acaba, cuenta como incorrecta.</p>
         </div>''', unsafe_allow_html=True)
     with c2:
         st.markdown('''<div class="card-glow">
@@ -47,18 +50,15 @@ def pantalla_instrucciones():
             <li>Se selecciona el <b>estudiante en turno</b></li>
             <li>El grupo <b>elige una decisión estratégica</b></li>
             <li>El estudiante responde una <b>pregunta de opción múltiple</b></li>
-            <li>Acierta → se aplican los puntos de la decisión</li>
-            <li>Falla → <b>todos pierden puntos</b> según la dificultad</li>
+            <li>Acierta → se aplican los efectos de la decisión</li>
+            <li>Falla → <b>todos los indicadores pierden puntos</b></li>
             <li>Ocurre un <b>evento aleatorio</b></li>
-            </ol></div>
-            <div class="card-danger">
+            </ol>
+        </div>
+        <div class="card-danger">
             <h3 style="color:#f87171;margin-top:0">⚠️ Dificultad</h3>
-            <p>Los eventos negativos son <b>más frecuentes y severos</b>. Las decisiones tienen
-            <b>mayor impacto</b>. Mantener el equilibrio es un verdadero reto.</p>
+            <p>Afecta la penalización por error y la intensidad de los eventos negativos.</p>
         </div>''', unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
-    gid = st.session_state.get("grupo_id")
-    if st.button("← Volver al Lobby" if gid else "← Volver al Inicio",
-                 use_container_width=True):
+    if st.button("← Volver al Lobby" if gid else "← Volver al Inicio", use_container_width=True):
         navegar("lobby" if gid else "inicio")

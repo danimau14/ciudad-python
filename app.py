@@ -13,9 +13,9 @@ st.set_page_config(
 
 
 def main():
+    inicializar_db()
     init_session()
     inyectar_css()
-    inicializar_db()
     router()
 
 
