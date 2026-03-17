@@ -2,10 +2,11 @@ import streamlit as st
 import time
 import random
 from navigation import navegar
-from config import TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN, IND_COLOR, IND_LABEL, CAT_COLOR, DIFICULTADES
+from config import TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN, IND_COLOR, IND_LABEL, CAT_COLOR, DIFICULTADES, ATRIBUTOS
 from database import (
     obtener_progreso, obtener_estudiantes, obtener_cooldowns,
-    actualizar_progreso, actualizar_cooldown, decrementar_cooldowns
+    actualizar_progreso, actualizar_cooldown, decrementar_cooldowns,
+    obtener_estrellas, actualizar_estrellas
 )
 from decisions import DECISIONES
 from questions import seleccionar_pregunta
@@ -65,6 +66,48 @@ def pantalla_juego():
     # FASE 1: ELEGIR DECISION
     # ══════════════════════════════════════════════
     if fase == "decision":
+        # ── Panel de Estrellas ──────────────────────────────────
+        estrellas = obtener_estrellas(gid)
+        st.markdown(
+            f"<div style='display:flex;align-items:center;gap:10px;background:rgba(251,191,36,0.06);"
+            f"border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:8px 16px;"
+            f"margin-bottom:10px;'>"
+            f"<span style='font-size:1.2rem;'>⭐</span>"
+            f"<span style='font-family:Orbitron,sans-serif;font-size:0.7rem;color:#fbbf24;"
+            f"font-weight:700;letter-spacing:1px;'>ESTRELLAS: {estrellas}</span>"
+            f"</div>", unsafe_allow_html=True)
+
+        with st.expander("🌟 Usar atributo de estrellas"):
+            a_cols = st.columns(4)
+            atrib_activo = st.session_state.get("atributo_activo")
+            for ai, (akey, aval) in enumerate(ATRIBUTOS.items()):
+                puede   = estrellas >= aval["costo"]
+                activo  = atrib_activo == akey
+                bcolor  = "#22c55e" if activo else ("#f59e0b" if puede else "rgba(255,255,255,.08)")
+                op      = "1" if puede else "0.35"
+                badge   = f"<div style=\'font-size:.5rem;color:#22c55e;font-weight:700;\'>✅ ACTIVO</div>" if activo else ""
+                with a_cols[ai % 4]:
+                    st.markdown(
+                        f"<div style=\'border:1px solid {bcolor};border-radius:10px;padding:8px;"
+                        f"text-align:center;opacity:{op};background:rgba(0,0,0,0.3);margin-bottom:4px;\'>"
+                        f"<div style=\'font-size:1.3rem;\'>{aval['icon']}</div>"
+                        f"<div style=\'font-family:Orbitron,sans-serif;font-size:.55rem;"
+                        f"color:#fbbf24;font-weight:700;margin:3px 0;\'>{aval['nombre']}</div>"
+                        f"<div style=\'font-size:.5rem;color:rgba(255,255,255,.35);line-height:1.3;\'>"
+                        f"{aval['desc']}</div>"
+                        f"<div style=\'font-size:.6rem;color:#facc15;margin-top:4px;\'>⭐ {aval['costo']}</div>"
+                        f"{badge}</div>", unsafe_allow_html=True)
+                    if puede and not activo:
+                        if st.button("Activar", key=f"attr_{akey}_{ronda}", use_container_width=True):
+                            actualizar_estrellas(gid, -aval["costo"])
+                            st.session_state["atributo_activo"] = akey
+                            st.rerun()
+                    elif activo:
+                        if st.button("Cancelar", key=f"attr_cancel_{akey}_{ronda}", use_container_width=True):
+                            actualizar_estrellas(gid, aval["costo"])  # devolver estrellas
+                            st.session_state["atributo_activo"] = None
+                            st.rerun()
+
         st.markdown("### 🗳️ Paso 1 — Elige una Decision Estrategica")
         st.markdown("<p style='color:rgba(255,255,255,0.45);font-size:0.85rem;margin-top:-8px;'>Si aciertas la pregunta, los efectos de esta decision se aplicaran a la ciudad.</p>",unsafe_allow_html=True)
 
@@ -341,9 +384,20 @@ def pantalla_juego():
                 actualizar_progreso(gid, nueva_ind_r["economia"], nueva_ind_r["medio_ambiente"],
                                     nueva_ind_r["energia"], nueva_ind_r["bienestar_social"], ronda)
             if juego_terminado:
-                st.session_state["indicadores_finales"]  = nueva_ind_r
-                st.session_state["rondas_completadas"]   = ronda
-                st.session_state["resultado"]            = "victoria"
+                st.session_state["indicadores_finales"] = nueva_ind_r
+                st.session_state["rondas_completadas"]  = ronda
+                # Ciudad colapsa si hay indicador crítico (≤30)
+                hay_critico = any(v <= 30 for v in nueva_ind_r.values())
+                from achievements import calcular_puntaje
+                logros_tmp  = st.session_state.get("logros_obtenidos", [])
+                dif_tmp     = st.session_state.get("dificultad", "Medio")
+                correctas_t = st.session_state.get("correctas", 0)
+                incorrectas_t = st.session_state.get("incorrectas", 0)
+                puntaje_tmp = calcular_puntaje(nueva_ind_r, correctas_t, incorrectas_t, logros_tmp, dif_tmp)
+                if hay_critico or puntaje_tmp < 60:
+                    st.session_state["resultado"] = "derrota"
+                else:
+                    st.session_state["resultado"] = "victoria"
                 navegar("fin")
             else:
                 st.session_state["fase_ronda"] = "evento"
@@ -436,5 +490,6 @@ def pantalla_juego():
                 "decision_elegida":None,"decision_efectos":None,
                 "evento_ronda":None,"fase_ronda":"decision",
                 "timer_inicio":None,"tiempo_agotado":False,
+                "atributo_activo":None,
             })
             st.rerun()

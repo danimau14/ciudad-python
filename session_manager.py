@@ -12,7 +12,9 @@ def init_session():
         "indicadores_finales": {}, "rondas_completadas": 0,
         "timer_inicio": None, "tiempo_agotado": False,
         "correctas": 0, "incorrectas": 0,
-        "ninguno_critico": True, "dificultad": "Medio",
+        "ninguno_critico": True,
+        "logros_obtenidos": [],
+        "progreso_cargado": {}, "dificultad": "Medio",
         "ranking_guardado": False,
     }
     for k, v in d.items():

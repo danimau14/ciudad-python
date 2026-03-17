@@ -18,6 +18,7 @@ def pantalla_fin():
 
     stats  = {"correctas": correctas, "ninguno_critico": st.session_state.get("ninguno_critico",True)}
     logros = calcular_logros(ind_fin, stats)
+    st.session_state["logros_obtenidos"] = logros
     puntaje= calcular_puntaje(ind_fin, correctas, incorrectas, logros, dificultad)
 
     # Colapso si puntaje final < 40
@@ -155,8 +156,8 @@ def pantalla_fin():
                 "ranking_guardado": False,
                 "dificultad": dif_actual,
             })
-            navegar("juego")
+            navegar("lobby")
     with c2:
         if st.button("🏆 VER RANKING", use_container_width=True): navegar("ranking")
     with c3:
-        if st.button("🏠 MENÚ PRINCIPAL", use_container_width=True): navegar("inicio")
+        if st.button("🏠 MENÚ PRINCIPAL", use_container_width=True): navegar("lobby")

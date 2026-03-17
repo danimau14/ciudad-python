@@ -60,10 +60,16 @@ def inicializar_db():
         logros TEXT DEFAULT '',
         fecha TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(grupo_id) REFERENCES grupos(id))""")
+    c.execute("""CREATE TABLE IF NOT EXISTS estrellas(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupo_id INTEGER NOT NULL UNIQUE,
+        total INTEGER DEFAULT 0,
+        FOREIGN KEY(grupo_id) REFERENCES grupos(id))""")
     # Migraciones automáticas
     for sql in [
         "ALTER TABLE grupos ADD COLUMN dificultad TEXT DEFAULT 'Medio'",
         "ALTER TABLE progreso_juego ADD COLUMN partida_terminada INTEGER DEFAULT 0",
+        "CREATE TABLE IF NOT EXISTS estrellas(id INTEGER PRIMARY KEY AUTOINCREMENT, grupo_id INTEGER NOT NULL UNIQUE, total INTEGER DEFAULT 0)",
     ]:
         try:
             conn.execute(sql)
@@ -274,6 +280,46 @@ def dificultad_jugada(gid, dificultad):
         return c.fetchone() is not None
     finally:
         conn.close()
+
+
+def obtener_estrellas(gid):
+    conn = get_conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT total FROM estrellas WHERE grupo_id=?", (gid,))
+        row = c.fetchone()
+        if not row:
+            conn.execute("INSERT INTO estrellas(grupo_id,total) VALUES(?,0)", (gid,))
+            conn.commit()
+            return 0
+        return row["total"]
+    finally:
+        conn.close()
+
+
+def actualizar_estrellas(gid, delta):
+    """Suma o resta estrellas. Nunca baja de 0."""
+    conn = get_conn()
+    try:
+        actual = obtener_estrellas(gid)
+        nuevo  = max(0, actual + delta)
+        conn.execute("INSERT INTO estrellas(grupo_id,total) VALUES(?,?) "
+                     "ON CONFLICT(grupo_id) DO UPDATE SET total=?", (gid, nuevo, nuevo))
+        conn.commit()
+        return nuevo
+    finally:
+        conn.close()
+
+
+def obtener_estudiantes_ranking(gid):
+    conn = get_conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT nombre_estudiante FROM estudiantes WHERE grupo_id=? ORDER BY id", (gid,))
+        return [r["nombre_estudiante"] for r in c.fetchall()]
+    finally:
+        conn.close()
+
 def obtener_ranking(dificultad=None):
     conn = get_conn()
     try:
