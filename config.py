@@ -106,3 +106,11 @@ PREGUNTAS = [
 IND_COLOR  = {"economia":("#fbbf24","💰"),"medio_ambiente":("#34d399","🌿"),"energia":("#60a5fa","⚡"),"bienestar_social":("#f472b6","❤️")}
 IND_LABEL  = {"economia":"Economía","medio_ambiente":"Medio Amb.","energia":"Energía","bienestar_social":"Bienestar"}
 CAT_COLOR  = {"Python":"#6366f1","PSeInt":"#8b5cf6","Cálculo":"#06b6d4","Derivadas":"#10b981","Física MRU":"#f59e0b","Física MRUA":"#ef4444","Matrices":"#ec4899"}
+
+DIFICULTADES = {
+    "Fácil":   {"penalizacion": 5,  "evento_neg_peso": 1, "multiplicador": 0.7},
+    "Normal":  {"penalizacion": 10, "evento_neg_peso": 2, "multiplicador": 1.0},
+    "Difícil": {"penalizacion": 20, "evento_neg_peso": 3, "multiplicador": 1.3},
+}
+
+ATRIBUTOS = ["economia", "medio_ambiente", "energia", "bienestar_social"]
