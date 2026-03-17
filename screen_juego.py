@@ -98,9 +98,9 @@ def pantalla_juego():
         navegar("inicio")
         return
 
-    progreso   = obtener_progreso(gid)
+    progreso   = obtener_progreso(gid, dificultad)
     estudiantes = obtener_estudiantes(gid)
-    cooldowns   = obtener_cooldowns(gid)
+    cooldowns   = obtener_cooldowns(gid, dificultad)
     ronda       = progreso["ronda_actual"]
     nombre_grp  = st.session_state["grupo_nombre"]
     dificultad  = st.session_state.get("dificultad_sel", "Normal")
@@ -124,6 +124,8 @@ def pantalla_juego():
             "indicadores_finales": ind,
             "rondas_completadas": TOTAL_RONDAS,
         })
+        from database import marcar_partida_terminada
+        marcar_partida_terminada(gid, dificultad)
         navegar("fin")
         return
 
@@ -309,8 +311,8 @@ def pantalla_juego():
             st.session_state["correctas"] = st.session_state.get("correctas", 0) + 1
             nueva_ind = aplicar_efectos(ind, ef_dec)
             actualizar_progreso(gid, nueva_ind["economia"], nueva_ind["medio_ambiente"],
-                                nueva_ind["energia"], nueva_ind["bienestar_social"], ronda)
-            actualizar_cooldown(gid, nom_dec, ronda)
+                                nueva_ind["energia"], nueva_ind["bienestar_social"], ronda, dificultad)
+            actualizar_cooldown(gid, nom_dec, ronda, dificultad)
 
             cambios_html = ""
             for k, v in ef_dec.items():
@@ -340,7 +342,7 @@ def pantalla_juego():
             nueva_ind = aplicar_efectos(ind, {k: -penalizacion for k in
                                               ["economia","medio_ambiente","energia","bienestar_social"]})
             actualizar_progreso(gid, nueva_ind["economia"], nueva_ind["medio_ambiente"],
-                                nueva_ind["energia"], nueva_ind["bienestar_social"], ronda)
+                                nueva_ind["energia"], nueva_ind["bienestar_social"], ronda, dificultad)
             st.markdown(
                 f'<div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);'
                 f'border-radius:16px;padding:22px 26px;text-align:center;margin-bottom:14px">'
