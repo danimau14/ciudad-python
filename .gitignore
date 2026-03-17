@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 database.db
 database.db-wal
 database.db-shm
 __pycache__/
 *.pyc
+=======
+database.db
+database.db-wal
+database.db-shm
+__pycache__/
+*.pyc
+>>>>>>> aad5ef754755b653a1d44ec9ef8107ec3e2cbcc5
