@@ -325,11 +325,11 @@ def obtener_ranking(dificultad=None):
     try:
         c = conn.cursor()
         if dificultad:
-            c.execute("SELECT nombre_grupo,puntaje,correctas,dificultad,logros,fecha "
+            c.execute("SELECT grupo_id,nombre_grupo,puntaje,correctas,dificultad,logros,fecha "
                       "FROM ranking WHERE dificultad=? ORDER BY puntaje DESC LIMIT 10",
                       (dificultad,))
         else:
-            c.execute("SELECT nombre_grupo,puntaje,correctas,dificultad,logros,fecha "
+            c.execute("SELECT grupo_id,nombre_grupo,puntaje,correctas,dificultad,logros,fecha "
                       "FROM ranking ORDER BY puntaje DESC LIMIT 10")
         return [dict(r) for r in c.fetchall()]
     finally:
