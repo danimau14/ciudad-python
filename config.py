@@ -113,4 +113,9 @@ DIFICULTADES = {
     "Difícil": {"penalizacion": 20, "evento_neg_peso": 3, "multiplicador": 1.3},
 }
 
-ATRIBUTOS = ["economia", "medio_ambiente", "energia", "bienestar_social"]
+ATRIBUTOS = {
+    "economia":        ("💰", "Economía"),
+    "medio_ambiente":  ("🌿", "Medio Ambiente"),
+    "energia":         ("⚡", "Energía"),
+    "bienestar_social":("❤️", "Bienestar Social"),
+}
