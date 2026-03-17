@@ -1,241 +1,76 @@
 import streamlit as st
-from navigation import navegar
-from database import guardar_ranking, reiniciar_progreso, marcar_partida_terminada, actualizar_estrellas, obtener_estrellas
-from achievements import LOGROS, calcular_logros, calcular_puntaje
-from missions import MISIONES, evaluar_misiones
-from config import IND_COLOR, IND_LABEL, TOTAL_RONDAS, DIFICULTADES
-from ui_components import barra_indicador
+from database import reiniciar_progreso
+from session_manager import navegar
+from config import TOTAL_RONDAS
+
+
+def barra_indicador(nombre, valor, emoji):
+    valor = max(0, min(100, valor))
+    if valor >= 60:   color, badge = "#10b981", "Estable"
+    elif valor >= 30: color, badge = "#f59e0b", "Precaución"
+    else:             color, badge = "#ef4444", "Crítico"
+    st.markdown(f'''<div style="background:rgba(255,255,255,0.05);border:1px solid {color}44;
+        border-radius:14px;padding:14px 18px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:700;color:#f1f5f9">{emoji} {nombre}</span>
+            <span style="font-size:0.72rem;color:{color};font-weight:600">{badge}</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:6px;height:8px">
+            <div style="width:{valor}%;background:{color};height:8px;border-radius:6px"></div>
+        </div>
+        <div style="text-align:right;margin-top:5px;font-size:0.82rem;font-weight:700;color:{color}">{valor}/100</div>
+    </div>''', unsafe_allow_html=True)
 
 
 def pantalla_fin():
-    resultado   = st.session_state.get("resultado","victoria")
-    ind_fin     = st.session_state.get("indicadores_finales",{})
-    rondas_comp = st.session_state.get("rondas_completadas",0)
-    correctas   = st.session_state.get("correctas",0)
-    incorrectas = st.session_state.get("incorrectas",0)
-    dificultad  = st.session_state.get("dificultad","Medio")
-    nombre_grp  = st.session_state.get("grupo_nombre","Equipo")
-    gid         = st.session_state.get("grupo_id")
-
-    stats  = {"correctas": correctas, "ninguno_critico": st.session_state.get("ninguno_critico",True)}
-    logros = calcular_logros(ind_fin, stats)
-    st.session_state["logros_obtenidos"] = logros
-    puntaje= calcular_puntaje(ind_fin, correctas, incorrectas, logros, dificultad)
-
-    # Evaluar misiones
-    stats_m = {
-        "correctas": correctas, "incorrectas": incorrectas,
-        "combo_max": st.session_state.get("combo_max",0),
-        "rapidas": st.session_state.get("rapidas",0),
-        "eventos_negativos": st.session_state.get("eventos_negativos",0),
-        "eventos_positivos": st.session_state.get("eventos_positivos",0),
-        "estrellas_usadas": st.session_state.get("estrellas_usadas",0),
-        "ninguno_critico": st.session_state.get("ninguno_critico",True),
-        "resultado": resultado, "dificultad": dificultad,
-    }
-    misiones_cumplidas = evaluar_misiones(stats_m, ind_fin)
-    st.session_state["misiones_cumplidas"] = misiones_cumplidas
-    # Calcular estrellas ganadas por misiones (solo si no canjeadas aún)
-    if not st.session_state.get("misiones_canjeadas", False):
-        est_ganadas = sum(MISIONES[m]["estrellas"] for m in misiones_cumplidas if m in MISIONES)
-        st.session_state["estrellas_ganadas_partida"] = est_ganadas
-    else:
-        est_ganadas = 0
-        st.session_state["estrellas_ganadas_partida"] = 0
-
-    # Colapso si puntaje final < 40
-    if puntaje < 40:
-        resultado = "colapso"
-
-    # Guardar ranking solo una vez (evitar duplicados al recargar)
-    if gid and not st.session_state.get("ranking_guardado", False):
-        guardar_ranking(gid, nombre_grp, puntaje, correctas, incorrectas, dificultad, logros)
-        marcar_partida_terminada(gid)  # bloquear reingreso al juego sin JUGAR DE NUEVO
-        st.session_state["ranking_guardado"] = True
+    resultado   = st.session_state.get("resultado", "desconocido")
+    ind_fin     = st.session_state.get("indicadores_finales", {})
+    rondas_comp = st.session_state.get("rondas_completadas", 0)
 
     if resultado == "victoria":
-        col_r="#22c55e"; bg_r="rgba(34,197,94,0.08)"; ico="🏆"
-        tit="¡CIUDAD EQUILIBRADA!"; sub="El equipo administró la ciudad exitosamente."
         st.balloons()
+        col_r, bg_r = "#10b981", "rgba(16,185,129,0.12)"
+        ico, tit = "🏆", "¡Ciudad Equilibrada!"
+        sub = f"El grupo administró la ciudad durante todas las {TOTAL_RONDAS} rondas exitosamente."
     else:
-        col_r="#ef4444"; bg_r="rgba(239,68,68,0.08)"; ico="💥"
-        tit="LA CIUDAD COLAPSÓ"; sub=f"Puntaje final ({puntaje} pts) por debajo del mínimo de 40."
+        col_r, bg_r = "#ef4444", "rgba(239,68,68,0.12)"
+        ico, tit = "💥", "La Ciudad Colapsó"
+        sub = "Un indicador llegó al límite crítico."
 
-    st.markdown(
-        "<div style='background:"+bg_r+";border:2px solid "+col_r+"44;"
-        "border-radius:16px;padding:30px;text-align:center;margin-bottom:20px;'>"
-        "<div style='font-family:Apple Color Emoji,Segoe UI Emoji,sans-serif;font-size:3.5rem;'>"+ico+"</div>"
-        "<div style='font-family:Orbitron,sans-serif;font-size:clamp(1.3rem,4vw,2rem);"
-        "font-weight:900;color:"+col_r+";margin:10px 0 6px;'>"+tit+"</div>"
-        "<div style='color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:14px;'>"+sub+"</div>"
-        "<div style='font-family:Orbitron,sans-serif;font-size:2.2rem;font-weight:900;"
-        "color:#f59e0b;text-shadow:0 0 20px rgba(245,158,11,0.6);'>"+str(puntaje)+" PTS</div>"
-        "<div style='font-size:.65rem;color:rgba(255,255,255,.3);font-family:Orbitron,sans-serif;"
-        "letter-spacing:2px;'>PUNTAJE FINAL — "+dificultad.upper()+"</div>"
-        "</div>", unsafe_allow_html=True)
+    st.markdown(f'''<div style="background:{bg_r};border:2px solid {col_r}44;
+        border-radius:20px;padding:40px;text-align:center;margin-bottom:24px">
+        <div style="font-size:4rem">{ico}</div>
+        <h1 style="color:{col_r};margin:12px 0 8px;font-size:1.9rem">{tit}</h1>
+        <p style="color:rgba(255,255,255,0.55)">{sub}</p>
+        <p style="color:{col_r};font-size:1.1rem;font-weight:600">
+            Rondas {rondas_comp}/{TOTAL_RONDAS}</p>
+    </div>''', unsafe_allow_html=True)
 
-    left, right = st.columns([3,2])
-    with left:
-        st.markdown("<div style='font-family:Orbitron,sans-serif;font-size:.62rem;"
-                    "color:rgba(0,212,255,.5);letter-spacing:2px;margin-bottom:8px;'>"
-                    "ESTADO FINAL DE LA CIUDAD</div>", unsafe_allow_html=True)
-        barra_indicador("Economía",        ind_fin.get("economia",0),        "💰")
-        barra_indicador("Medio Ambiente",  ind_fin.get("medio_ambiente",0),  "🌿")
-        barra_indicador("Energía",         ind_fin.get("energia",0),         "⚡")
-        barra_indicador("Bienestar Social",ind_fin.get("bienestar_social",0),"🏥")
-    with right:
-        vals  = [ind_fin.get(k,0) for k in ["economia","medio_ambiente","energia","bienestar_social"]]
-        prom  = int(sum(vals)/4) if vals else 0
-        total_p = correctas + incorrectas
-        pct_c = int(correctas/total_p*100) if total_p>0 else 0
-        st.markdown("<div style='font-family:Orbitron,sans-serif;font-size:.62rem;"
-                    "color:rgba(0,212,255,.5);letter-spacing:2px;margin-bottom:8px;'>"
-                    "ESTADÍSTICAS</div>", unsafe_allow_html=True)
-        for lb,vl,cl in [("RONDAS",str(rondas_comp)+"/"+str(TOTAL_RONDAS),"#00d4ff"),
-                          ("CORRECTAS",str(correctas),"#22c55e"),
-                          ("INCORRECTAS",str(incorrectas),"#ef4444"),
-                          ("PRECISIÓN",str(pct_c)+"%","#f59e0b"),
-                          ("PROMEDIO",str(prom),"#8b5cf6"),
-                          ("DIFICULTAD",dificultad,"#00d4ff")]:
-            st.markdown(
-                "<div style='display:flex;justify-content:space-between;align-items:center;"
-                "background:rgba(5,10,20,.8);border:1px solid rgba(0,212,255,.1);"
-                "border-radius:8px;padding:8px 14px;margin-bottom:5px;'>"
-                "<span style='font-family:Orbitron,sans-serif;font-size:.58rem;"
-                "color:rgba(255,255,255,.35);letter-spacing:1px;'>"+lb+"</span>"
-                "<span style='font-family:Orbitron,sans-serif;font-weight:700;"
-                "font-size:.9rem;color:"+cl+";'>"+vl+"</span></div>",
-                unsafe_allow_html=True)
+    st.markdown("### Indicadores Finales")
+    f1, f2, f3, f4 = st.columns(4)
+    with f1: barra_indicador("Economía",      ind_fin.get("economia",0),       "💰")
+    with f2: barra_indicador("Medio Ambiente",ind_fin.get("medio_ambiente",0), "🌿")
+    with f3: barra_indicador("Energía",       ind_fin.get("energia",0),        "⚡")
+    with f4: barra_indicador("Bienestar",     ind_fin.get("bienestar_social",0),"❤️")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if logros:
-        st.markdown("<div style='font-family:Orbitron,sans-serif;font-size:.62rem;"
-                    "color:rgba(245,158,11,.7);letter-spacing:2px;margin-bottom:10px;'>"
-                    "🏅 LOGROS DESBLOQUEADOS</div>", unsafe_allow_html=True)
-        cols_l = st.columns(min(len(logros),4))
-        for i,lkey in enumerate(logros):
-            l = LOGROS.get(lkey,{})
-            with cols_l[i%4]:
-                st.markdown(
-                    "<div style='background:rgba(245,158,11,0.08);"
-                    "border:1px solid rgba(245,158,11,0.3);border-radius:10px;"
-                    "padding:12px;text-align:center;'>"
-                    "<div style='font-family:Apple Color Emoji,Segoe UI Emoji,sans-serif;"
-                    "font-size:1.5rem;'>"+l.get("icon","🏅")+"</div>"
-                    "<div style='font-family:Orbitron,sans-serif;font-size:.63rem;"
-                    "color:#f59e0b;font-weight:700;margin:4px 0 2px;'>"+l.get("nombre","")+"</div>"
-                    "<div style='font-size:.62rem;color:rgba(255,255,255,.3);'>"+l.get("desc","")+"</div>"
-                    "</div>", unsafe_allow_html=True)
-
-    # ── Misiones cumplidas ───────────────────────────────────────
-    misiones_cumplidas = st.session_state.get("misiones_cumplidas", [])
-    est_ganadas        = st.session_state.get("estrellas_ganadas_partida", 0)
-    ya_canjeadas       = st.session_state.get("misiones_canjeadas", False)
-
-    if misiones_cumplidas:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(
-            "<div style='font-family:Syne,sans-serif;font-size:1rem;font-weight:700;"
-            "color:rgba(251,191,36,.8);letter-spacing:2px;margin-bottom:10px;'>"
-            "📋 MISIONES CUMPLIDAS</div>", unsafe_allow_html=True)
-
-        m_cols = st.columns(min(len(misiones_cumplidas), 4))
-        for mi, mkey in enumerate(misiones_cumplidas):
-            md = MISIONES.get(mkey, {})
-            with m_cols[mi % 4]:
-                st.markdown(
-                    f"<div style='background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);"
-                    f"border-radius:12px;padding:12px;text-align:center;margin-bottom:6px;'>"
-                    f"<div style='font-size:1.5rem;'>{md.get('icon','⭐')}</div>"
-                    f"<div style='font-family:Syne,sans-serif;font-size:.62rem;color:#fbbf24;"
-                    f"font-weight:700;margin:4px 0 2px;'>{md.get('nombre','')}</div>"
-                    f"<div style='font-size:.55rem;color:rgba(255,255,255,.3);'>{md.get('desc','')}</div>"
-                    f"<div style='font-size:.65rem;color:#facc15;font-weight:700;margin-top:4px;'>"
-                    f"⭐ +{md.get('estrellas',0)}</div></div>", unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if not ya_canjeadas and est_ganadas > 0:
-            col_cj, _ = st.columns([2,3])
-            with col_cj:
-                st.markdown(
-                    f"<div style='background:rgba(251,191,36,0.1);border:2px solid rgba(251,191,36,0.5);"
-                    f"border-radius:12px;padding:12px;text-align:center;'>"
-                    f"<div style='font-family:Orbitron,sans-serif;font-size:.7rem;color:#fbbf24;"
-                    f"font-weight:700;'>ESTRELLAS A CANJEAR</div>"
-                    f"<div style='font-size:2rem;font-weight:900;color:#fbbf24;'>⭐ {est_ganadas}</div>"
-                    f"</div>", unsafe_allow_html=True)
-                if st.button(f"⭐ CANJEAR {est_ganadas} ESTRELLAS", use_container_width=True, key="btn_canjear"):
-                    if gid:
-                        actualizar_estrellas(gid, est_ganadas)
-                    st.session_state["misiones_canjeadas"]       = True
-                    st.session_state["estrellas_ganadas_partida"] = 0
-                    st.rerun()
-        elif ya_canjeadas:
-            st.markdown(
-                "<div style='background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);"
-                "border-radius:10px;padding:10px;text-align:center;'>"
-                "<span style='color:#22c55e;font-family:Syne,sans-serif;font-size:.8rem;"
-                "font-weight:700;'>✅ Estrellas ya canjeadas en esta partida</span></div>",
-                unsafe_allow_html=True)
-
-    # ── Mapa final ────────────────────────────────────────────────
-    # Mapa final
-    eco=ind_fin.get("economia",50); amb=ind_fin.get("medio_ambiente",50)
-    ene=ind_fin.get("energia",50);  bie=ind_fin.get("bienestar_social",50)
-    def _zc(v): return "#22c55e" if v>60 else "#f59e0b" if v>30 else "#ef4444"
-    def _zi(v,a,b,c): return a if v>60 else b if v>30 else c
-    def _zona(icon,label,val):
-        c=_zc(val)
-        return ("<div style='background:rgba(5,10,20,0.8);border:1px solid "+c+"44;"
-                "border-radius:12px;padding:14px;text-align:center;'>"
-                "<div style='font-family:Apple Color Emoji,Segoe UI Emoji,sans-serif;"
-                "font-size:2rem;line-height:1;'>"+icon+"</div>"
-                "<div style='font-family:Orbitron,sans-serif;font-size:.6rem;color:"+c+";"
-                "letter-spacing:1px;font-weight:700;margin:5px 0 3px;'>"+label+"</div>"
-                "<div style='font-family:Orbitron,sans-serif;font-size:1rem;"
-                "font-weight:900;color:"+c+";'>"+str(val)+"</div>"
-                "<div style='height:5px;background:rgba(255,255,255,.08);"
-                "border-radius:3px;margin-top:8px;overflow:hidden;'>"
-                "<div style='width:"+str(val)+"%;height:5px;border-radius:3px;"
-                "background:"+c+";box-shadow:0 0 8px "+c+";'></div></div></div>")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        "<div style='font-family:Orbitron,sans-serif;font-size:.62rem;"
-        "color:rgba(0,212,255,.5);letter-spacing:3px;text-align:center;"
-        "margin-bottom:10px;'>🗺️ MAPA FINAL DE LA CIUDAD</div>"
-        "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;"
-        "max-width:500px;margin:0 auto;'>"
-        +_zona(_zi(eco,"🏭","🏗️","💸"),"Industrial",eco)
-        +_zona(_zi(amb,"🌳","🌿","🏜️"),"Ambiental",amb)
-        +_zona(_zi(ene,"⚡","🔋","🌑"),"Energética",ene)
-        +_zona(_zi(bie,"🏘️","🏚️","😰"),"Residencial",bie)
-        +"</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    c1,c2,c3 = st.columns(3)
+    c1, c2, c3 = st.columns(3)
     with c1:
-        if st.button("🔄 JUGAR DE NUEVO", use_container_width=True):
+        if st.button("🔄 Reiniciar Juego", use_container_width=True):
+            gid = st.session_state.get("grupo_id")
             if gid:
-                reiniciar_progreso(gid)  # resetea indicadores + partida_terminada=0
-            # Mantener la misma dificultad actual
-            dif_actual = st.session_state.get("dificultad", "Medio")
+                reiniciar_progreso(gid)
             st.session_state.update({
-                "pregunta_actual": None, "respuesta_correcta": False,
-                "decision_elegida": None, "decision_efectos": None,
-                "evento_ronda": None, "fase_ronda": "decision",
-                "preguntas_usadas": [], "timer_inicio": None, "tiempo_agotado": False,
-                "correctas": 0, "incorrectas": 0, "ninguno_critico": True,
-                "logros_ganados": [], "energia_rondas_altas": 0,
-                "ranking_guardado": False,
-                "dificultad": dif_actual,
-                "misiones_cumplidas": [], "misiones_canjeadas": False,
-                "estrellas_ganadas_partida": 0, "combo_max": 0,
-                "rapidas": 0, "eventos_negativos": 0, "eventos_positivos": 0,
-                "estrellas_usadas": 0,
+                "pregunta_actual":None,"respuesta_correcta":False,
+                "decision_elegida":None,"decision_efectos":None,
+                "evento_ronda":None,"fase_ronda":"decision",
+                "preguntas_usadas":[],"timer_inicio":None,
+                "tiempo_agotado":False,"correctas":0,"incorrectas":0,
             })
-            navegar("lobby")
+            navegar("juego")
     with c2:
-        if st.button("🏆 VER RANKING", use_container_width=True): navegar("ranking")
+        if st.button("🏆 Ver Ranking", use_container_width=True):
+            navegar("ranking")
     with c3:
-        if st.button("🏠 MENÚ PRINCIPAL", use_container_width=True): navegar("lobby")
+        if st.button("🏠 Volver al Inicio", use_container_width=True):
+            navegar("inicio")

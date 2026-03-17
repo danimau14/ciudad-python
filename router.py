@@ -1,7 +1,6 @@
 import streamlit as st
-from screen_inicio import pantalla_inicio, pantalla_lobby, pantalla_instrucciones, pantalla_logros
-from screen_registro import pantalla_registro
-from screen_agregar_estudiantes import pantalla_agregar_estudiantes
+from screen_inicio import pantalla_inicio, pantalla_instrucciones, pantalla_lobby, pantalla_logros
+from screen_agregar_estudiantes import pantalla_registro, pantalla_agregar_estudiantes
 from screen_login import pantalla_login
 from screen_juego import pantalla_juego
 from screen_fin import pantalla_fin
