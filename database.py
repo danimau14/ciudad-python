@@ -1,6 +1,7 @@
-import sqlite3, time, hashlib
+import sqlite3, time, hashlib, os
 
-DB_PATH = "database.db"
+# /tmp siempre tiene permisos de escritura en Streamlit Cloud
+DB_PATH = os.path.join("/tmp", "database.db")
 
 
 def get_conn():
