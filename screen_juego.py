@@ -155,7 +155,7 @@ def pantalla_juego():
                              disabled=not disp, use_container_width=True):
                     st.session_state["decision_elegida"]  = nom_dec
                     st.session_state["decision_efectos"]  = {k:v for k,v in ef.items() if k!="emoji"}
-                    st.session_state["pregunta_actual"]   = seleccionar_pregunta()
+                    st.session_state["pregunta_actual"]   = seleccionar_pregunta(st.session_state.get("dificultad","Medio"))
                     st.session_state["timer_inicio"]      = None
                     st.session_state["tiempo_agotado"]    = False
                     st.session_state["fase_ronda"]        = "pregunta"
@@ -307,9 +307,10 @@ def pantalla_juego():
         progreso_r = obtener_progreso(gid)
         ind_r = {k: progreso_r[k] for k in ["economia","medio_ambiente","energia","bienestar_social"]}
 
+        # Cooldown siempre se aplica independiente de si acertó o no
+        actualizar_cooldown(gid, nom_dec, ronda)
         if correcto:
             nueva_ind_r = aplicar_efectos(ind_r, ef_dec)
-            actualizar_cooldown(gid, nom_dec, ronda)
             st.markdown("**Efectos aplicados:**")
             ef_cols = st.columns(4)
             for ci,(k,v) in enumerate(ef_dec.items()):

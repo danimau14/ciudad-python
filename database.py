@@ -262,6 +262,18 @@ def guardar_ranking(gid, nombre, puntaje, correctas, incorrectas, dificultad, lo
         conn.close()
 
 
+
+
+def dificultad_jugada(gid, dificultad):
+    """Retorna True si el grupo ya tiene una partida registrada en ese nivel."""
+    conn = get_conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id FROM ranking WHERE grupo_id=? AND dificultad=?",
+                  (gid, dificultad))
+        return c.fetchone() is not None
+    finally:
+        conn.close()
 def obtener_ranking(dificultad=None):
     conn = get_conn()
     try:
