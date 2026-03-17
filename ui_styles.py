@@ -4,10 +4,10 @@ import streamlit as st
 def inyectar_css():
     st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;600;700;800&family=Rajdhani:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] { font-family: 'Exo 2', sans-serif; }
+html, body, [class*="css"] { font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.01em; }
 
 /* ══ FONDO: grid digital + partículas ══ */
 .stApp {
@@ -79,6 +79,11 @@ html, body, [class*="css"] { font-family: 'Exo 2', sans-serif; }
     margin-bottom: 12px;
     box-shadow: 0 0 20px rgba(34,197,94,0.08);
 }
+
+/* ══ TIPOGRAFÍA SYNE para subtítulos ══ */
+.syne { font-family: 'Syne', sans-serif !important; }
+p, li, span, div { font-family: 'Space Grotesk', sans-serif; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 
 /* ══ TÍTULO PRINCIPAL ══ */
 .game-title {

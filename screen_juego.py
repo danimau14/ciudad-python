@@ -11,7 +11,7 @@ from database import (
 from decisions import DECISIONES
 from questions import seleccionar_pregunta
 from events import EVENTOS, EVENTOS_EPICOS, generar_evento
-from game_engine import aplicar_efectos
+from game_engine import aplicar_efectos, aplicar_penalizacion
 from ui_components import barra_indicador, cabecera_juego
 
 
@@ -371,7 +371,19 @@ def pantalla_juego():
                             "<div style='font-size:1rem;font-weight:900;color:"+cv+";'>"+sg+str(v)+"</div>"
                             "</div>", unsafe_allow_html=True)
         else:
-            nueva_ind_r = ind_r
+            # Penalización según dificultad y si la ronda es par
+            dif_pen = st.session_state.get("dificultad", "Medio")
+            nueva_ind_r = aplicar_penalizacion(ind_r, dif_pen, ronda)
+            pen_pts = st.session_state.get("dificultad","Medio")
+            from game_engine import penalizacion_incorrecta
+            pen_val = penalizacion_incorrecta(dif_pen, ronda)
+            par_txt = " (×2 ronda par)" if ronda % 2 == 0 else ""
+            st.markdown(
+                f"<div style='background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);"
+                f"border-radius:10px;padding:10px 16px;margin-top:8px;text-align:center;'>"
+                f"<span style='color:#ef4444;font-family:Orbitron,sans-serif;font-size:.75rem;"
+                f"font-weight:700;'>⚠️ PENALIZACIÓN: −{pen_val} pts a cada indicador{par_txt}</span>"
+                f"</div>", unsafe_allow_html=True)
 
         # Verificar fin del juego
         vals_r = list(nueva_ind_r.values())
@@ -482,7 +494,7 @@ def pantalla_juego():
                      use_container_width=True):
             actualizar_progreso(gid, nueva_ind_ev["economia"], nueva_ind_ev["medio_ambiente"],
                                 nueva_ind_ev["energia"], nueva_ind_ev["bienestar_social"], ronda+1)
-            if any(v <= 20 for v in nueva_ind_ev.values()):
+            if any(v <= 30 for v in nueva_ind_ev.values()):
                 st.session_state["ninguno_critico"] = False
             decrementar_cooldowns(gid)
             st.session_state.update({

@@ -1,7 +1,8 @@
 import streamlit as st
 from navigation import navegar
-from database import guardar_ranking, reiniciar_progreso, marcar_partida_terminada
+from database import guardar_ranking, reiniciar_progreso, marcar_partida_terminada, actualizar_estrellas, obtener_estrellas
 from achievements import LOGROS, calcular_logros, calcular_puntaje
+from missions import MISIONES, evaluar_misiones
 from config import IND_COLOR, IND_LABEL, TOTAL_RONDAS, DIFICULTADES
 from ui_components import barra_indicador
 
@@ -20,6 +21,27 @@ def pantalla_fin():
     logros = calcular_logros(ind_fin, stats)
     st.session_state["logros_obtenidos"] = logros
     puntaje= calcular_puntaje(ind_fin, correctas, incorrectas, logros, dificultad)
+
+    # Evaluar misiones
+    stats_m = {
+        "correctas": correctas, "incorrectas": incorrectas,
+        "combo_max": st.session_state.get("combo_max",0),
+        "rapidas": st.session_state.get("rapidas",0),
+        "eventos_negativos": st.session_state.get("eventos_negativos",0),
+        "eventos_positivos": st.session_state.get("eventos_positivos",0),
+        "estrellas_usadas": st.session_state.get("estrellas_usadas",0),
+        "ninguno_critico": st.session_state.get("ninguno_critico",True),
+        "resultado": resultado, "dificultad": dificultad,
+    }
+    misiones_cumplidas = evaluar_misiones(stats_m, ind_fin)
+    st.session_state["misiones_cumplidas"] = misiones_cumplidas
+    # Calcular estrellas ganadas por misiones (solo si no canjeadas aún)
+    if not st.session_state.get("misiones_canjeadas", False):
+        est_ganadas = sum(MISIONES[m]["estrellas"] for m in misiones_cumplidas if m in MISIONES)
+        st.session_state["estrellas_ganadas_partida"] = est_ganadas
+    else:
+        est_ganadas = 0
+        st.session_state["estrellas_ganadas_partida"] = 0
 
     # Colapso si puntaje final < 40
     if puntaje < 40:
@@ -105,6 +127,58 @@ def pantalla_fin():
                     "<div style='font-size:.62rem;color:rgba(255,255,255,.3);'>"+l.get("desc","")+"</div>"
                     "</div>", unsafe_allow_html=True)
 
+    # ── Misiones cumplidas ───────────────────────────────────────
+    misiones_cumplidas = st.session_state.get("misiones_cumplidas", [])
+    est_ganadas        = st.session_state.get("estrellas_ganadas_partida", 0)
+    ya_canjeadas       = st.session_state.get("misiones_canjeadas", False)
+
+    if misiones_cumplidas:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='font-family:Syne,sans-serif;font-size:1rem;font-weight:700;"
+            "color:rgba(251,191,36,.8);letter-spacing:2px;margin-bottom:10px;'>"
+            "📋 MISIONES CUMPLIDAS</div>", unsafe_allow_html=True)
+
+        m_cols = st.columns(min(len(misiones_cumplidas), 4))
+        for mi, mkey in enumerate(misiones_cumplidas):
+            md = MISIONES.get(mkey, {})
+            with m_cols[mi % 4]:
+                st.markdown(
+                    f"<div style='background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);"
+                    f"border-radius:12px;padding:12px;text-align:center;margin-bottom:6px;'>"
+                    f"<div style='font-size:1.5rem;'>{md.get('icon','⭐')}</div>"
+                    f"<div style='font-family:Syne,sans-serif;font-size:.62rem;color:#fbbf24;"
+                    f"font-weight:700;margin:4px 0 2px;'>{md.get('nombre','')}</div>"
+                    f"<div style='font-size:.55rem;color:rgba(255,255,255,.3);'>{md.get('desc','')}</div>"
+                    f"<div style='font-size:.65rem;color:#facc15;font-weight:700;margin-top:4px;'>"
+                    f"⭐ +{md.get('estrellas',0)}</div></div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if not ya_canjeadas and est_ganadas > 0:
+            col_cj, _ = st.columns([2,3])
+            with col_cj:
+                st.markdown(
+                    f"<div style='background:rgba(251,191,36,0.1);border:2px solid rgba(251,191,36,0.5);"
+                    f"border-radius:12px;padding:12px;text-align:center;'>"
+                    f"<div style='font-family:Orbitron,sans-serif;font-size:.7rem;color:#fbbf24;"
+                    f"font-weight:700;'>ESTRELLAS A CANJEAR</div>"
+                    f"<div style='font-size:2rem;font-weight:900;color:#fbbf24;'>⭐ {est_ganadas}</div>"
+                    f"</div>", unsafe_allow_html=True)
+                if st.button(f"⭐ CANJEAR {est_ganadas} ESTRELLAS", use_container_width=True, key="btn_canjear"):
+                    if gid:
+                        actualizar_estrellas(gid, est_ganadas)
+                    st.session_state["misiones_canjeadas"]       = True
+                    st.session_state["estrellas_ganadas_partida"] = 0
+                    st.rerun()
+        elif ya_canjeadas:
+            st.markdown(
+                "<div style='background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);"
+                "border-radius:10px;padding:10px;text-align:center;'>"
+                "<span style='color:#22c55e;font-family:Syne,sans-serif;font-size:.8rem;"
+                "font-weight:700;'>✅ Estrellas ya canjeadas en esta partida</span></div>",
+                unsafe_allow_html=True)
+
+    # ── Mapa final ────────────────────────────────────────────────
     # Mapa final
     eco=ind_fin.get("economia",50); amb=ind_fin.get("medio_ambiente",50)
     ene=ind_fin.get("energia",50);  bie=ind_fin.get("bienestar_social",50)
@@ -155,6 +229,10 @@ def pantalla_fin():
                 "logros_ganados": [], "energia_rondas_altas": 0,
                 "ranking_guardado": False,
                 "dificultad": dif_actual,
+                "misiones_cumplidas": [], "misiones_canjeadas": False,
+                "estrellas_ganadas_partida": 0, "combo_max": 0,
+                "rapidas": 0, "eventos_negativos": 0, "eventos_positivos": 0,
+                "estrellas_usadas": 0,
             })
             navegar("lobby")
     with c2:

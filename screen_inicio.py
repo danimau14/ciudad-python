@@ -108,6 +108,10 @@ def pantalla_lobby():
         with br:
             if st.button("🏆  RANKING", use_container_width=True, key="btn_rank"):
                 navegar("ranking")
+        with st.columns(2)[0]:  # debajo de INSTRUCCIONES y RANKING
+            if st.button("📋  MISIONES", use_container_width=True, key="btn_misiones"):
+                navegar("misiones")
+
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🏅  VER LOGROS", use_container_width=True, key="btn_logros"):
