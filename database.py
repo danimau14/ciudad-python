@@ -1,8 +1,6 @@
 import sqlite3
 import hashlib
 import os
-import base64
-import streamlit as st
 
 _DIR    = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(_DIR, "database.db")
@@ -69,72 +67,8 @@ _TABLAS = [
 ]
 
 
-def _github_save():
-    try:
-        import requests
-        token  = st.secrets.get("GITHUB_TOKEN", "")
-        repo   = st.secrets.get("GITHUB_REPO", "")
-        branch = st.secrets.get("GITHUB_BRANCH", "main")
-        if not token or not repo:
-            return
-        url = f"https://api.github.com/repos/{repo}/contents/database.db"
-        headers = {"Authorization": f"token {token}",
-                   "Accept": "application/vnd.github.v3+json"}
-        with open(DB_PATH, "rb") as f:
-            content = base64.b64encode(f.read()).decode()
-        r = requests.get(url, headers=headers)
-        sha = r.json().get("sha", "") if r.status_code == 200 else ""
-        payload = {"message": "chore: auto-save database.db",
-                   "content": content, "branch": branch}
-        if sha:
-            payload["sha"] = sha
-        requests.put(url, json=payload, headers=headers)
-    except Exception:
-        pass
-
-
-def _github_restore():
-    try:
-        import requests
-        token  = st.secrets.get("GITHUB_TOKEN", "")
-        repo   = st.secrets.get("GITHUB_REPO", "")
-        branch = st.secrets.get("GITHUB_BRANCH", "main")
-        if not token or not repo:
-            return
-        url = f"https://api.github.com/repos/{repo}/contents/database.db"
-        headers = {"Authorization": f"token {token}",
-                   "Accept": "application/vnd.github.v3+json"}
-        r = requests.get(url, headers=headers, params={"ref": branch})
-        if r.status_code == 200:
-            data = base64.b64decode(r.json()["content"])
-            with open(DB_PATH, "wb") as f:
-                f.write(data)
-    except Exception:
-        pass
-
-
-def _nueva_conn():
-    """Abre una conexión SQLite limpia sin tocar tablas."""
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def _tablas_ok(conn):
-    """True si la tabla grupos existe."""
-    try:
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='grupos'"
-        )
-        return cur.fetchone() is not None
-    except Exception:
-        return False
-
-
 def _crear_tablas():
-    """Crea todas las tablas usando una conexión dedicada y la cierra."""
-    conn = _nueva_conn()
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     cur  = conn.cursor()
     for sql in _TABLAS:
         cur.execute(sql)
@@ -143,29 +77,18 @@ def _crear_tablas():
 
 
 def getconn():
-    """
-    Devuelve una conexión garantizando que las tablas existen.
-    La creación de tablas usa su propia conexión dedicada que se cierra
-    antes de devolver la conexión de trabajo — evita estado sucio.
-    """
-    # Paso 1: comprobar con conexión temporal
-    tmp = _nueva_conn()
-    ok  = _tablas_ok(tmp)
-    tmp.close()
-
-    if not ok:
-        # Paso 2: intentar restaurar desde GitHub
-        _github_restore()
-        tmp = _nueva_conn()
-        ok  = _tablas_ok(tmp)
-        tmp.close()
-
-    if not ok:
-        # Paso 3: crear tablas desde cero con conexión propia
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='grupos'"
+    )
+    if cur.fetchone() is None:
+        conn.close()
         _crear_tablas()
-
-    # Devolver conexión limpia lista para usar
-    return _nueva_conn()
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+    return conn
 
 
 def inicializardb():
@@ -189,7 +112,6 @@ def registrargrupo(nombre, pw):
         conn.commit()
         gid = c.lastrowid
         conn.close()
-        _github_save()
         return True, gid
     except sqlite3.IntegrityError:
         conn.close()
@@ -229,7 +151,6 @@ def guardarestudiante(gid, nombre):
               (gid, nombre.strip()))
     conn.commit()
     conn.close()
-    _github_save()
 
 guardar_estudiante = guardarestudiante
 
@@ -273,7 +194,6 @@ def actualizarprogreso(gid, eco, amb, ene, bie, ronda):
         WHERE grupoid=?""", (eco, amb, ene, bie, ronda, gid))
     conn.commit()
     conn.close()
-    _github_save()
 
 actualizar_progreso = actualizarprogreso
 
@@ -287,7 +207,6 @@ def reiniciarprogreso(gid):
     c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=?", (gid,))
     conn.commit()
     conn.close()
-    _github_save()
 
 reiniciar_progreso = reiniciarprogreso
 
@@ -315,7 +234,6 @@ def actualizarcooldown(gid, decision, rondausada):
               (gid, decision, disponibleen))
     conn.commit()
     conn.close()
-    _github_save()
 
 actualizar_cooldown = actualizarcooldown
 
@@ -343,7 +261,6 @@ def guardar_logro(gid, logro_id):
               (gid, logro_id))
     conn.commit()
     conn.close()
-    _github_save()
 
 
 # ── Misiones ──────────────────────────────────────────────────────────────────
@@ -363,7 +280,6 @@ def guardar_mision(gid, mision_id):
               (gid, mision_id))
     conn.commit()
     conn.close()
-    _github_save()
 
 
 # ── Estrellas ─────────────────────────────────────────────────────────────────
@@ -383,7 +299,6 @@ def guardar_estrellas(gid, cantidad):
     c.execute("UPDATE estrellas_grupo SET total=total+? WHERE grupoid=?", (cantidad, gid))
     conn.commit()
     conn.close()
-    _github_save()
 
 
 # ── Ranking ───────────────────────────────────────────────────────────────────
@@ -395,7 +310,6 @@ def guardar_ranking(gid, puntaje, dificultad="Normal"):
               (gid, nombre, puntaje, dificultad))
     conn.commit()
     conn.close()
-    _github_save()
 
 
 def obtener_ranking(dificultad=None, limite=10):
