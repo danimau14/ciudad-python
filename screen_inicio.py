@@ -3,10 +3,6 @@ import streamlit.components.v1 as components
 from session_manager import navegar
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  PANTALLA DE INICIO
-# ══════════════════════════════════════════════════════════════════════════════
-
 def pantalla_inicio():
 
     st.markdown("""
@@ -21,92 +17,73 @@ def pantalla_inicio():
         overflow-x: hidden;
     }
 
-    /* ── Nebulosa ── */
+    /* Nebulosa de fondo */
     [data-testid="stAppViewContainer"]::after {
         content: '';
-        position: fixed;
-        inset: 0;
+        position: fixed; inset: 0;
         background:
-            radial-gradient(ellipse 75% 55% at 12% 22%, rgba(123,47,255,0.32) 0%, transparent 62%),
-            radial-gradient(ellipse 60% 70% at 88% 78%, rgba(99,102,241,0.26) 0%, transparent 62%),
-            radial-gradient(ellipse 50% 38% at 50% 98%, rgba(167,139,250,0.20) 0%, transparent 62%);
-        pointer-events: none;
-        z-index: 0;
-        animation: nebula-shift 14s ease-in-out infinite alternate;
+            radial-gradient(ellipse 75% 55% at 12% 22%, rgba(123,47,255,0.30) 0%, transparent 62%),
+            radial-gradient(ellipse 60% 70% at 88% 78%, rgba(99,102,241,0.24) 0%, transparent 62%),
+            radial-gradient(ellipse 50% 38% at 50% 98%, rgba(167,139,250,0.18) 0%, transparent 62%);
+        pointer-events: none; z-index: 0;
+        animation: nebula 14s ease-in-out infinite alternate;
     }
-    @keyframes nebula-shift {
-        0%   { opacity: 0.65; transform: scale(1);    }
-        100% { opacity: 1.0;  transform: scale(1.06); }
+    @keyframes nebula {
+        0%   { opacity: 0.7; transform: scale(1);    }
+        100% { opacity: 1.0; transform: scale(1.05); }
     }
 
-    /* ── Silueta ciudad ── */
-    .city-skyline-bg {
-        position: fixed;
-        bottom: 0; left: 0;
-        width: 100%; height: 280px;
+    /* Silueta ciudad */
+    .city-bg {
+        position: fixed; bottom: 0; left: 0;
+        width: 100%; height: 260px;
         z-index: 0; pointer-events: none;
-        animation: city-glow 4s ease-in-out infinite alternate;
+        animation: cityglow 4s ease-in-out infinite alternate;
     }
-    @keyframes city-glow {
-        0%   { opacity: 0.15;
-               filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.38)); }
-        100% { opacity: 0.30;
-               filter: drop-shadow(0 -10px 70px rgba(123,47,255,0.78))
-                       drop-shadow(0 -2px 30px rgba(255,215,0,0.28)); }
+    @keyframes cityglow {
+        0%   { opacity: 0.14; filter: drop-shadow(0 -8px 35px rgba(123,47,255,0.35)); }
+        100% { opacity: 0.28; filter: drop-shadow(0 -10px 65px rgba(123,47,255,0.72))
+                                      drop-shadow(0 -2px 28px rgba(255,215,0,0.25)); }
     }
 
-    /* ── Animaciones generales ── */
+    /* Keyframes generales */
     @keyframes float {
-        0%, 100% { transform: translateY(0px);   }
-        50%       { transform: translateY(-12px); }
+        0%, 100% { transform: translateY(0);    }
+        50%       { transform: translateY(-11px); }
     }
-    @keyframes panel-glow {
-        0%, 100% { box-shadow: 0 0 22px #7b2fff44, 0 0 55px #7b2fff20; }
-        50%       { box-shadow: 0 0 45px #7b2fff99, 0 0 95px #7b2fff55; }
+    @keyframes pglow {
+        0%, 100% { box-shadow: 0 0 20px #7b2fff44, 0 0 50px #7b2fff18; }
+        50%       { box-shadow: 0 0 42px #7b2fff99, 0 0 90px #7b2fff50; }
     }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
+    @keyframes fadein {
+        from { opacity: 0; transform: translateY(28px); }
         to   { opacity: 1; transform: translateY(0);    }
     }
-    @keyframes energy-line {
+    @keyframes eline {
         0%   { left: -100%; width: 55%; }
         100% { left: 110%;  width: 75%; }
     }
-    @keyframes btn-shine {
+    @keyframes shine {
         0%   { left: -80%; }
         100% { left: 130%; }
     }
-
-    /* ── Animación título: bounce por línea ── */
-    @keyframes title-bounce {
+    @keyframes tbounce {
         0%, 100% { transform: translateY(0);    }
         40%       { transform: translateY(-8px); }
         60%       { transform: translateY(-4px); }
     }
-    /* ── Glitch ocasional sobre el título completo ── */
-    @keyframes title-glitch {
-        0%,  88%, 100% {
-            transform: translateX(0) skewX(0deg);
-            filter: none;
-        }
-        89% {
-            transform: translateX(-4px) skewX(-8deg);
-            filter: drop-shadow(-3px 0 #ff4d6d) drop-shadow(3px 0 #00ffff);
-            color: #ff4d6d;
-        }
-        91% {
-            transform: translateX(4px) skewX(8deg);
-            filter: drop-shadow(3px 0 #ff4d6d) drop-shadow(-3px 0 #00ffff);
-            color: #00ffff;
-        }
-        93% {
-            transform: translateX(0) skewX(0deg);
-            filter: none;
-            color: #ffffff;
-        }
+    @keyframes tglitch {
+        0%,87%,100% { transform:skewX(0);   color:#fff;
+                      text-shadow:0 0 16px #7b2fff99,0 0 30px #7b2fff55; }
+        88%          { transform:skewX(-7deg); color:#ff4d6d;
+                      text-shadow:-3px 0 #00ffff,3px 0 #ff4d6d; }
+        90%          { transform:skewX(7deg);  color:#00ffff;
+                      text-shadow:3px 0 #ff4d6d,-3px 0 #00ffff; }
+        92%          { transform:skewX(0);   color:#fff;
+                      text-shadow:0 0 16px #7b2fff99,0 0 30px #7b2fff55; }
     }
 
-    /* ── Layout ── */
+    /* Layout centrado */
     .block-container {
         display: flex !important;
         flex-direction: column !important;
@@ -114,221 +91,177 @@ def pantalla_inicio():
         justify-content: center !important;
         min-height: 100vh !important;
         padding: 1.5rem 1rem !important;
-        max-width: 460px !important;
+        max-width: 440px !important;
         margin: 0 auto !important;
-        position: relative;
-        z-index: 1;
+        position: relative; z-index: 1;
     }
 
-    /* ════════════════════════════════════════════
-       PANEL SUPERIOR — ícono + badge + título
-       ════════════════════════════════════════════ */
-    .inicio-panel {
-        background: rgba(18, 4, 52, 0.93);
+    /* === PANEL SUPERIOR === */
+    .ip {
+        background: rgba(18,4,52,0.93);
         border: 1.5px solid rgba(123,47,255,0.52);
         border-bottom: none;
         border-radius: 24px 24px 0 0;
-        padding: 36px 28px 28px;
+        padding: 34px 26px 24px;
         text-align: center;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
         width: 100%;
-        animation: panel-glow 4s ease-in-out infinite, fadeInUp 0.7s ease;
-        position: relative;
-        overflow: hidden;
-        z-index: 2;
-        margin-bottom: 0;
+        animation: pglow 4s ease-in-out infinite, fadein 0.7s ease;
+        position: relative; overflow: hidden; z-index: 2;
     }
-    .inicio-panel::before {
-        content: '';
-        position: absolute;
-        top: 0; height: 2px;
+    /* Línea de energía */
+    .ip::before {
+        content: ''; position: absolute; top: 0; height: 2px;
         background: linear-gradient(90deg,
-            transparent, #7b2fff, #FFD700, #00ffff, transparent);
-        animation: energy-line 2.8s linear infinite;
+            transparent,#7b2fff,#FFD700,#00ffff,transparent);
+        animation: eline 2.8s linear infinite;
     }
 
-    /* ── Ícono ── */
-    .city-icon {
-        font-size: 3.5rem;
-        display: block;
-        margin-bottom: 12px;
+    /* Ícono */
+    .cicon {
+        font-size: 3.4rem; display: block; margin-bottom: 11px;
         animation: float 4s ease-in-out infinite;
-        filter: drop-shadow(0 0 22px #7b2fffcc)
-                drop-shadow(0 0 50px #7b2fff88)
-                drop-shadow(0 0 8px #FFD70066);
+        filter: drop-shadow(0 0 20px #7b2fffcc)
+                drop-shadow(0 0 45px #7b2fff88)
+                drop-shadow(0 0 8px #FFD70055);
     }
 
-    /* ── Badge ── */
-    .inicio-badge {
+    /* Badge */
+    .ibadge {
         display: inline-block;
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.68rem;
-        font-weight: 600;
-        letter-spacing: 2px;
-        text-transform: uppercase;
+        font-size: 0.67rem; font-weight: 600;
+        letter-spacing: 2px; text-transform: uppercase;
         color: #a78bfa;
-        background: rgba(123,47,255,0.15);
-        border: 1px solid rgba(123,47,255,0.40);
-        border-radius: 20px;
-        padding: 4px 14px;
-        margin-bottom: 20px;
+        background: rgba(123,47,255,0.14);
+        border: 1px solid rgba(123,47,255,0.38);
+        border-radius: 20px; padding: 4px 13px; margin-bottom: 18px;
     }
 
-    /* ════════════════════════════════════════════
-       TÍTULO — dos líneas fijas, sin cortes
-       Solución definitiva: texto completo por línea
-       NO letras individuales → nunca se rompe
-       ════════════════════════════════════════════ */
-    .inicio-title {
+    /* === TÍTULO ===
+       - Texto completo por línea (sin spans individuales)
+       - font-size 15px: "CIUDAD EN" ≈ 130px, "EQUILIBRIO" ≈ 145px
+         → ambos caben en el panel de ~388px de contenido
+       - white-space: nowrap garantiza que nunca se parta
+    */
+    .ititle {
         font-family: 'Press Start 2P', monospace;
-        font-size: 20px;
-        color: #ffffff;
-        margin: 0 0 8px;
-        line-height: 1;
+        font-size: 15px;
+        color: #fff;
+        margin: 0 0 6px;
         text-align: center;
+        line-height: 1;
     }
-    /* Línea 1: CIUDAD EN */
     .tl1 {
-        display: block;
-        white-space: nowrap;
-        margin-bottom: 14px;
-        text-shadow: 0 0 16px #7b2fff99, 0 0 30px #7b2fff55;
-        animation: title-bounce 2s ease-in-out infinite,
-                   title-glitch 7s step-end  infinite;
+        display: block; white-space: nowrap; margin-bottom: 13px;
+        text-shadow: 0 0 14px #7b2fff99, 0 0 28px #7b2fff55;
+        animation: tbounce 2s ease-in-out infinite,
+                   tglitch 7s step-end  infinite;
     }
-    /* Línea 2: EQUILIBRIO */
     .tl2 {
-        display: block;
-        white-space: nowrap;
-        text-shadow: 0 0 16px #7b2fff99, 0 0 30px #7b2fff55;
-        animation: title-bounce 2s ease-in-out infinite,
-                   title-glitch 7s step-end  infinite;
-        animation-delay: 0.15s, 0.4s;
+        display: block; white-space: nowrap;
+        text-shadow: 0 0 14px #7b2fff99, 0 0 28px #7b2fff55;
+        animation: tbounce 2s ease-in-out infinite,
+                   tglitch 7s step-end  infinite;
+        animation-delay: 0.12s, 0.35s;
     }
 
-    /* ── Subtítulo ── */
-    .inicio-sub {
+    /* Subtítulo */
+    .isub {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.80rem;
-        color: #ccccff;
-        font-weight: 300;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        margin: 18px 0 16px;
+        font-size: 0.78rem; color: #ccccff;
+        font-weight: 300; letter-spacing: 3px;
+        text-transform: uppercase; margin: 16px 0 14px;
     }
 
-    /* ── Separador ── */
-    .inicio-sep {
+    /* Separador */
+    .isep {
         height: 2px;
         background: linear-gradient(90deg,
-            transparent 0%, #7b2fff 30%, #FFD700 50%, #7b2fff 70%, transparent 100%);
-        border-radius: 2px;
-        margin: 0 auto;
-        width: 80%; opacity: 0.9;
+            transparent 0%,#7b2fff 30%,#FFD700 50%,#7b2fff 70%,transparent 100%);
+        border-radius: 2px; margin: 0 auto;
+        width: 78%; opacity: 0.9;
     }
 
-    /* ════════════════════════════════════════════
-       ZONA INFERIOR — helper + botones + footer
-       Continúa visualmente el panel de arriba
-       ════════════════════════════════════════════ */
-    .btn-zone {
-        background: rgba(18, 4, 52, 0.93);
+    /* === ZONA BOTONES + FOOTER === */
+    .bzone {
+        background: rgba(18,4,52,0.93);
         border: 1.5px solid rgba(123,47,255,0.52);
         border-top: none;
         border-radius: 0 0 24px 24px;
-        padding: 20px 28px 28px;
+        padding: 18px 26px 26px;
         width: 100%;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
-        animation: panel-glow 4s ease-in-out infinite;
-        position: relative;
-        z-index: 2;
+        animation: pglow 4s ease-in-out infinite;
+        position: relative; z-index: 2;
     }
 
-    /* ── Helper ── */
-    .inicio-helper {
+    /* Helper */
+    .ihelper {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.70rem;
-        color: rgba(167,139,250,0.40);
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        text-align: center;
-        margin: 0 0 16px;
+        font-size: 0.68rem;
+        color: rgba(167,139,250,0.38);
+        letter-spacing: 1.5px; text-transform: uppercase;
+        text-align: center; margin: 0 0 14px;
     }
 
-    /* ── Botón primario dorado ── */
-    .btn-primary .stButton button {
+    /* Botón primario dorado */
+    .bprimary .stButton button {
         font-family: 'Rajdhani', sans-serif !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 2px !important;
-        text-transform: uppercase !important;
-        border-radius: 12px !important;
-        padding: 0.72rem 2rem !important;
+        font-size: 1rem !important; font-weight: 700 !important;
+        letter-spacing: 2px !important; text-transform: uppercase !important;
+        border-radius: 12px !important; padding: 0.70rem 2rem !important;
         width: 100% !important;
         background: linear-gradient(135deg, #FFD700, #FFA500) !important;
-        color: #12003e !important;
-        border: none !important;
-        box-shadow: 0 4px 26px rgba(255,215,0,0.42) !important;
+        color: #12003e !important; border: none !important;
+        box-shadow: 0 4px 24px rgba(255,215,0,0.42) !important;
         transition: all 0.25s ease !important;
-        cursor: pointer !important;
-        position: relative !important;
+        cursor: pointer !important; position: relative !important;
         overflow: hidden !important;
     }
-    .btn-primary .stButton button::after {
-        content: '';
-        position: absolute;
-        top: 0; left: -80%;
+    .bprimary .stButton button::after {
+        content: ''; position: absolute; top: 0; left: -80%;
         width: 50%; height: 100%;
         background: linear-gradient(90deg,
-            transparent, rgba(255,255,255,0.40), transparent);
+            transparent,rgba(255,255,255,0.40),transparent);
         transform: skewX(-20deg);
-        animation: btn-shine 2.4s ease-in-out infinite;
+        animation: shine 2.4s ease-in-out infinite;
     }
-    .btn-primary .stButton button:hover {
+    .bprimary .stButton button:hover {
         background: linear-gradient(135deg, #FFE44D, #FFB733) !important;
-        box-shadow: 0 6px 40px rgba(255,215,0,0.70) !important;
+        box-shadow: 0 6px 38px rgba(255,215,0,0.68) !important;
         transform: translateY(-3px) !important;
     }
 
-    /* ── Botón secundario púrpura ── */
-    .btn-secondary .stButton button {
+    /* Botón secundario púrpura */
+    .bsecondary .stButton button {
         font-family: 'Rajdhani', sans-serif !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 2px !important;
-        text-transform: uppercase !important;
-        border-radius: 12px !important;
-        padding: 0.72rem 2rem !important;
+        font-size: 1rem !important; font-weight: 700 !important;
+        letter-spacing: 2px !important; text-transform: uppercase !important;
+        border-radius: 12px !important; padding: 0.70rem 2rem !important;
         width: 100% !important;
-        background: transparent !important;
-        color: #c4b5fd !important;
+        background: transparent !important; color: #c4b5fd !important;
         border: 1.5px solid #7b2fff !important;
-        box-shadow: 0 0 16px rgba(123,47,255,0.28) !important;
-        transition: all 0.25s ease !important;
-        cursor: pointer !important;
+        box-shadow: 0 0 14px rgba(123,47,255,0.26) !important;
+        transition: all 0.25s ease !important; cursor: pointer !important;
     }
-    .btn-secondary .stButton button:hover {
+    .bsecondary .stButton button:hover {
         background: linear-gradient(135deg,
-            rgba(123,47,255,0.26), rgba(99,102,241,0.22)) !important;
-        border-color: #a78bfa !important;
-        color: #ffffff !important;
-        box-shadow: 0 0 36px rgba(123,47,255,0.66),
-                    0 0 68px rgba(123,47,255,0.32) !important;
+            rgba(123,47,255,0.24),rgba(99,102,241,0.20)) !important;
+        border-color: #a78bfa !important; color: #ffffff !important;
+        box-shadow: 0 0 34px rgba(123,47,255,0.62),
+                    0 0 65px rgba(123,47,255,0.30) !important;
         transform: translateY(-3px) !important;
     }
 
-    /* ── Footer dentro del panel ── */
-    .inicio-footer {
+    /* Footer */
+    .ifooter {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.64rem;
-        color: rgba(167,139,250,0.30);
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        text-align: center;
-        margin-top: 20px;
-        margin-bottom: 0;
+        font-size: 0.63rem; color: rgba(167,139,250,0.28);
+        letter-spacing: 1.5px; text-transform: uppercase;
+        text-align: center; margin-top: 18px; margin-bottom: 0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -336,49 +269,48 @@ def pantalla_inicio():
     # ── Canvas estrellas ──────────────────────────────────────────────────────
     components.html("""
     <style>
-        body { margin:0; padding:0; background:transparent; }
-        #sf { position:fixed; top:0; left:0;
-              width:100vw; height:100vh;
-              z-index:-1; pointer-events:none; }
+        body{margin:0;padding:0;background:transparent;}
+        #sf{position:fixed;top:0;left:0;width:100vw;height:100vh;
+            z-index:-1;pointer-events:none;}
     </style>
     <canvas id="sf"></canvas>
     <script>
     (function(){
-        const c=document.getElementById('sf'), ctx=c.getContext('2d');
-        c.width=window.innerWidth; c.height=window.innerHeight;
+        const c=document.getElementById('sf'),ctx=c.getContext('2d');
+        c.width=window.innerWidth;c.height=window.innerHeight;
         const COL=['#ffffff','#c4b5fd','#a78bfa','#818cf8','#e0d7ff'];
         const S=Array.from({length:200},()=>({
-            x:Math.random()*c.width, y:Math.random()*c.height,
-            r:Math.random()*1.7+0.2, a:Math.random()*0.6+0.2,
+            x:Math.random()*c.width,y:Math.random()*c.height,
+            r:Math.random()*1.7+0.2,a:Math.random()*0.6+0.2,
             da:(Math.random()*0.013+0.004)*(Math.random()<.5?1:-1),
-            dx:(Math.random()-.5)*.2, dy:(Math.random()-.5)*.14,
+            dx:(Math.random()-.5)*.2,dy:(Math.random()-.5)*.14,
             col:COL[Math.floor(Math.random()*COL.length)]
         }));
         function draw(){
             ctx.clearRect(0,0,c.width,c.height);
             S.forEach(s=>{
-                s.x+=s.dx; s.y+=s.dy; s.a+=s.da;
-                if(s.a>.95||s.a<.1) s.da*=-1;
-                if(s.x<0)s.x=c.width; if(s.x>c.width)s.x=0;
-                if(s.y<0)s.y=c.height; if(s.y>c.height)s.y=0;
-                ctx.save(); ctx.globalAlpha=s.a;
-                ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-                ctx.fillStyle=s.col; ctx.shadowColor=s.col;
-                ctx.shadowBlur=s.r*5; ctx.fill(); ctx.restore();
+                s.x+=s.dx;s.y+=s.dy;s.a+=s.da;
+                if(s.a>.95||s.a<.1)s.da*=-1;
+                if(s.x<0)s.x=c.width;if(s.x>c.width)s.x=0;
+                if(s.y<0)s.y=c.height;if(s.y>c.height)s.y=0;
+                ctx.save();ctx.globalAlpha=s.a;
+                ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+                ctx.fillStyle=s.col;ctx.shadowColor=s.col;
+                ctx.shadowBlur=s.r*5;ctx.fill();ctx.restore();
             });
             requestAnimationFrame(draw);
         }
         draw();
         window.addEventListener('resize',()=>{
-            c.width=window.innerWidth; c.height=window.innerHeight;
+            c.width=window.innerWidth;c.height=window.innerHeight;
         });
     })();
     </script>
     """, height=0, scrolling=False)
 
-    # ── Silueta SVG skyline ───────────────────────────────────────────────────
+    # ── Silueta skyline ───────────────────────────────────────────────────────
     st.markdown("""
-    <svg class="city-skyline-bg" viewBox="0 0 1440 280"
+    <svg class="city-bg" viewBox="0 0 1440 260"
          xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
       <defs>
         <linearGradient id="cg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -387,46 +319,51 @@ def pantalla_inicio():
         </linearGradient>
       </defs>
       <path fill="url(#cg)" d="
-        M0,280 L0,200 L30,200 L30,160 L50,160 L50,140 L70,140 L70,100
-        L80,100 L80,80 L90,80 L90,60 L95,60 L95,80 L100,80 L100,100
-        L110,100 L110,130 L130,130 L130,110 L145,110 L145,90 L155,90
-        L155,70 L160,70 L160,50 L165,50 L165,30 L170,30 L170,50
-        L175,50 L175,70 L180,70 L180,90 L195,90 L195,110 L210,110
-        L210,80 L220,80 L220,60 L230,60 L230,40 L235,40 L235,20
-        L240,20 L240,40 L245,40 L245,60 L255,60 L255,80 L270,80
-        L270,100 L290,100 L290,70 L300,70 L300,50 L310,50 L310,70
-        L320,70 L320,90 L340,90 L340,60 L350,60 L350,40 L360,40
-        L360,55 L370,55 L370,75 L390,75 L390,95 L410,95 L410,65
-        L420,65 L420,45 L430,45 L430,25 L435,25 L435,10 L440,10
-        L440,25 L445,25 L445,45 L455,45 L455,65 L470,65 L470,90
-        L490,90 L490,110 L510,110 L510,80 L520,80 L520,55 L530,55
-        L530,35 L535,35 L535,55 L545,55 L545,75 L560,75 L560,100
-        L580,100 L580,70 L590,70 L590,50 L600,50 L600,70 L610,70
-        L610,90 L630,90 L630,60 L640,60 L640,40 L650,40 L650,20
-        L655,20 L655,5 L660,5 L660,20 L665,20 L665,40 L675,40
-        L675,60 L690,60 L690,85 L710,85 L710,105 L730,105 L730,75
-        L740,75 L740,55 L750,55 L750,75 L760,75 L760,95 L780,95
-        L780,65 L790,65 L790,45 L800,45 L800,65 L815,65 L815,85
-        L835,85 L835,55 L845,55 L845,35 L855,35 L855,55 L865,55
-        L865,75 L885,75 L885,95 L905,95 L905,65 L915,65 L915,45
-        L925,45 L925,65 L935,65 L935,85 L955,85 L955,110 L975,110
-        L975,80 L985,80 L985,55 L995,55 L995,35 L1000,35 L1000,20
-        L1005,20 L1005,35 L1010,35 L1010,55 L1020,55 L1020,80
-        L1040,80 L1040,100 L1060,100 L1060,70 L1070,70 L1070,50
-        L1080,50 L1080,70 L1090,70 L1090,90 L1110,90 L1110,60
-        L1120,60 L1120,40 L1130,40 L1130,60 L1145,60 L1145,80
-        L1165,80 L1165,100 L1185,100 L1185,70 L1195,70 L1195,50
-        L1205,50 L1205,70 L1220,70 L1220,90 L1240,90 L1240,60
-        L1250,60 L1250,40 L1260,40 L1260,20 L1265,20 L1265,40
-        L1275,40 L1275,60 L1290,60 L1290,85 L1310,85 L1310,105
-        L1330,105 L1330,75 L1340,75 L1340,55 L1355,55 L1355,75
-        L1370,75 L1370,95 L1390,95 L1390,65 L1410,65 L1410,85
-        L1440,85 L1440,280 Z"/>
-      <g fill="#FFD700" opacity="0.60">
-        <rect x="237" y="24" width="3" height="4"/>
-        <rect x="432" y="14" width="3" height="4"/>
-        <rect x="657" y="9"  width="3" height="4"/>
-        <rect x="1002" y="24" width="3" height="4"/>
+        M0,260 L0,190 L40,190 L40,150 L60,150 L60,120 L75,120 L75,90
+        L85,90 L85,70 L92,70 L92,50 L98,50 L98,70 L105,70 L105,90
+        L120,90 L120,120 L145,120 L145,95 L158,95 L158,70 L165,70
+        L165,45 L170,45 L170,25 L175,25 L175,45 L180,45 L180,70
+        L188,70 L188,95 L205,95 L205,70 L215,70 L215,48 L222,48
+        L222,28 L228,28 L228,48 L235,48 L235,70 L250,70 L250,95
+        L270,95 L270,65 L280,65 L280,45 L290,45 L290,65 L305,65
+        L305,90 L325,90 L325,58 L335,58 L335,38 L342,38 L342,18
+        L348,18 L348,38 L355,38 L355,58 L370,58 L370,85 L390,85
+        L390,58 L400,58 L400,38 L408,38 L408,58 L420,58 L420,85
+        L440,85 L440,60 L452,60 L452,40 L460,40 L460,20 L466,20
+        L466,5  L472,5  L472,20 L478,20 L478,40 L486,40 L486,60
+        L500,60 L500,85 L520,85 L520,60 L530,60 L530,40 L538,40
+        L538,60 L550,60 L550,85 L570,85 L570,58 L580,58 L580,38
+        L588,38 L588,58 L600,58 L600,82 L620,82 L620,55 L630,55
+        L630,35 L637,35 L637,18 L643,18 L643,35 L650,35 L650,55
+        L665,55 L665,80 L685,80 L685,55 L695,55 L695,35 L703,35
+        L703,55 L715,55 L715,80 L735,80 L735,55 L745,55 L745,35
+        L752,35 L752,55 L764,55 L764,80 L784,80 L784,55 L794,55
+        L794,35 L801,35 L801,18 L808,18 L808,35 L815,35 L815,55
+        L830,55 L830,80 L850,80 L850,55 L860,55 L860,35 L868,35
+        L868,55 L880,55 L880,80 L900,80 L900,55 L910,55 L910,35
+        L917,35 L917,55 L929,55 L929,80 L949,80 L949,55 L959,55
+        L959,35 L967,35 L967,18 L973,18 L973,35 L980,35 L980,55
+        L995,55 L995,80 L1015,80 L1015,55 L1025,55 L1025,35
+        L1032,35 L1032,55 L1044,55 L1044,80 L1064,80 L1064,55
+        L1074,55 L1074,35 L1082,35 L1082,55 L1094,55 L1094,80
+        L1114,80 L1114,55 L1124,55 L1124,35 L1131,35 L1131,18
+        L1138,18 L1138,35 L1145,35 L1145,55 L1160,55 L1160,80
+        L1180,80 L1180,55 L1190,55 L1190,35 L1198,35 L1198,55
+        L1210,55 L1210,80 L1230,80 L1230,55 L1240,55 L1240,35
+        L1248,35 L1248,55 L1260,55 L1260,80 L1280,80 L1280,55
+        L1290,55 L1290,35 L1297,35 L1297,55 L1309,55 L1309,80
+        L1329,80 L1329,55 L1339,55 L1339,35 L1347,35 L1347,18
+        L1353,18 L1353,35 L1360,35 L1360,55 L1375,55 L1375,80
+        L1395,80 L1395,55 L1410,55 L1410,80 L1440,80 L1440,260 Z"/>
+      <g fill="#FFD700" opacity="0.55">
+        <rect x="170" y="28"  width="3" height="4"/>
+        <rect x="342" y="22"  width="3" height="4"/>
+        <rect x="466" y="9"   width="3" height="4"/>
+        <rect x="637" y="22"  width="3" height="4"/>
+        <rect x="801" y="22"  width="3" height="4"/>
+        <rect x="967" y="22"  width="3" height="4"/>
+        <rect x="1131" y="22" width="3" height="4"/>
+        <rect x="1347" y="22" width="3" height="4"/>
       </g>
     </svg>
     """, unsafe_allow_html=True)
@@ -435,49 +372,48 @@ def pantalla_inicio():
     # PANEL SUPERIOR — ícono + badge + título + subtítulo + separador
     # ══════════════════════════════════════════════════════════════════════════
     st.markdown("""
-    <div class="inicio-panel">
-        <span class="city-icon">🏙️</span>
-        <div class="inicio-badge">🌐 Pensamiento Sistémico 🌐</div>
-        <h1 class="inicio-title">
+    <div class="ip">
+        <span class="cicon">🏙️</span>
+        <div class="ibadge">🌐 Pensamiento Sistémico 🌐</div>
+        <h1 class="ititle">
             <span class="tl1">CIUDAD EN</span>
             <span class="tl2">EQUILIBRIO</span>
         </h1>
-        <p class="inicio-sub">Gestiona tu ciudad · Salva el futuro</p>
-        <div class="inicio-sep"></div>
+        <p class="isub">Gestiona tu ciudad · Salva el futuro</p>
+        <div class="isep"></div>
     </div>
     """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # ZONA INFERIOR — helper + botones + footer (dentro del panel visual)
+    # ZONA INFERIOR — helper + botones + footer (continúa el panel)
     # ══════════════════════════════════════════════════════════════════════════
-    st.markdown('<div class="btn-zone">', unsafe_allow_html=True)
+    st.markdown('<div class="bzone">', unsafe_allow_html=True)
 
     st.markdown(
-        '<p class="inicio-helper">⬇ Selecciona una opción para continuar ⬇</p>',
+        '<p class="ihelper">⬇ Selecciona una opción para continuar ⬇</p>',
         unsafe_allow_html=True)
 
-    st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
+    st.markdown('<div class="bprimary">', unsafe_allow_html=True)
     if st.button("🔐  INICIAR SESIÓN", key="btn_login", use_container_width=True):
         navegar("login")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
-    st.markdown('<div class="btn-secondary">', unsafe_allow_html=True)
+    st.markdown('<div class="bsecondary">', unsafe_allow_html=True)
     if st.button("📝  REGISTRAR GRUPO", key="btn_registro", use_container_width=True):
         navegar("registro")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(
-        f"<p class='inicio-footer'>⚡ Ciudad en Equilibrio · v2.0 · 2026 ⚡</p>",
+        "<p class='ifooter'>⚡ Ciudad en Equilibrio · v2.0 · 2026 ⚡</p>",
         unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)  # cierra .btn-zone
+    st.markdown('</div>', unsafe_allow_html=True)  # cierra .bzone
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PANTALLA DE INSTRUCCIONES
-#  Requerida por router.py — se accede desde el Lobby, NO desde inicio.
+#  PANTALLA INSTRUCCIONES  (requerida por router.py)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_instrucciones():
@@ -488,28 +424,26 @@ def pantalla_instrucciones():
     html, body, [data-testid="stAppViewContainer"] { background: #0d0025 !important; }
     .inst-title {
         font-family: 'Press Start 2P', monospace;
-        font-size: clamp(0.65rem, 2vw, 0.9rem);
-        color: #ffffff;
-        text-shadow: 0 0 20px #7b2fff99;
-        text-align: center;
-        margin-bottom: 28px; line-height: 1.9;
+        font-size: clamp(0.62rem, 2vw, 0.88rem);
+        color: #fff; text-shadow: 0 0 20px #7b2fff99;
+        text-align: center; margin-bottom: 26px; line-height: 1.9;
     }
     .inst-card {
         background: rgba(18,4,52,0.88);
-        border: 1px solid rgba(123,47,255,0.38);
-        border-radius: 16px; padding: 18px 22px;
-        margin-bottom: 12px; backdrop-filter: blur(16px);
+        border: 1px solid rgba(123,47,255,0.36);
+        border-radius: 16px; padding: 16px 20px;
+        margin-bottom: 11px; backdrop-filter: blur(16px);
     }
     .inst-card-title {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.95rem; font-weight: 700;
+        font-size: 0.93rem; font-weight: 700;
         letter-spacing: 2px; text-transform: uppercase;
-        color: #FFD700; margin: 0 0 10px;
+        color: #FFD700; margin: 0 0 9px;
     }
     .inst-item {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.86rem; color: #c4b5fd;
-        line-height: 1.75; margin: 3px 0; padding-left: 8px;
+        font-size: 0.84rem; color: #c4b5fd;
+        line-height: 1.72; margin: 3px 0; padding-left: 8px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -518,47 +452,39 @@ def pantalla_instrucciones():
     with col:
         st.markdown('<h1 class="inst-title">📖 INSTRUCCIONES</h1>',
                     unsafe_allow_html=True)
-
         secciones = [
             ("🏙️ Objetivo",
              ["Administra la ciudad durante <b>10 rondas</b> manteniendo los 4 indicadores en equilibrio.",
-              "Si cualquier indicador llega a <b>0</b>, la ciudad colapsa y pierdes.",
+              "Si cualquier indicador llega a <b>0</b>, la ciudad colapsa.",
               "Gana completando las 10 rondas sin colapso."]),
             ("📊 Los 4 Indicadores",
-             ["💰 <b>Economía</b> — Finanzas y desarrollo económico",
-              "🌿 <b>Medio Ambiente</b> — Salud ecológica de la ciudad",
-              "⚡ <b>Energía</b> — Suministro y sostenibilidad energética",
-              "❤️ <b>Bienestar Social</b> — Calidad de vida de los ciudadanos"]),
+             ["💰 <b>Economía</b> — Finanzas y desarrollo",
+              "🌿 <b>Medio Ambiente</b> — Salud ecológica",
+              "⚡ <b>Energía</b> — Suministro energético",
+              "❤️ <b>Bienestar Social</b> — Calidad de vida"]),
             ("🔄 Flujo de cada Ronda",
-             ["1️⃣ El estudiante en turno elige una <b>decisión de ciudad</b>",
-              "2️⃣ Responde una <b>pregunta académica</b> en 30 segundos",
-              "✅ Acierto: se aplican los efectos de la decisión",
-              "❌ Fallo: penalización según la dificultad seleccionada",
-              "3️⃣ Ocurre un <b>evento aleatorio</b> que afecta los indicadores"]),
+             ["1️⃣ Elige una <b>decisión de ciudad</b>",
+              "2️⃣ Responde una <b>pregunta académica</b> en 30 s",
+              "✅ Acierto → efectos de la decisión aplicados",
+              "❌ Fallo → penalización según dificultad",
+              "3️⃣ Ocurre un <b>evento aleatorio</b>"]),
             ("⚙️ Dificultades",
-             ["🟢 <b>Fácil</b> — Penalización baja · eventos más favorables",
-              "🟡 <b>Normal</b> — Balance equilibrado de retos",
-              "🔴 <b>Difícil</b> — Penalización alta · más eventos negativos"]),
-            ("⭐ Estrellas y Logros",
-             ["Gana estrellas al completar partidas y misiones.",
-              "Úsalas para activar atributos especiales durante el juego.",
-              "Desbloquea logros cumpliendo objetivos específicos."]),
+             ["🟢 <b>Fácil</b> — Penalización baja",
+              "🟡 <b>Normal</b> — Balance equilibrado",
+              "🔴 <b>Difícil</b> — Penalización alta"]),
             ("💡 Consejos",
-             ["Mantén todos los indicadores por encima de <b>30</b> para evitar colapso.",
-              "Indicadores verdes (&gt; 60) = estables · amarillos (30–60) = vigilar.",
-              "Coordina las decisiones del grupo para mantener el equilibrio."]),
+             ["Mantén todos los indicadores &gt; 30 para evitar colapso.",
+              "Verde (&gt; 60) = estable · Amarillo (30–60) = vigilar.",
+              "Coordina las decisiones del grupo."]),
         ]
-
         for titulo, items in secciones:
             items_html = "".join(
                 f"<div class='inst-item'>• {i}</div>" for i in items)
             st.markdown(
                 f"<div class='inst-card'>"
                 f"<div class='inst-card-title'>{titulo}</div>"
-                f"{items_html}"
-                f"</div>",
+                f"{items_html}</div>",
                 unsafe_allow_html=True)
-
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("⬅  VOLVER AL LOBBY", use_container_width=True):
             navegar("lobby")
