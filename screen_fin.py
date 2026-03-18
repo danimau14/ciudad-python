@@ -1,217 +1,201 @@
 import streamlit as st
-import time
-from database import (reiniciar_progreso, guardar_ranking, sumar_estrellas,
-                      obtener_estrellas, actualizar_stats, obtener_stats)
 from session_manager import navegar
-from config import TOTAL_RONDAS, DIFICULTADES, UMBRAL_ROJO, LOGROS
-from utils import evaluar_logros, evaluar_misiones_partida, calcular_puntaje, hay_colapso
-from database import canjear_mision
+from database import (reiniciar_progreso, guardar_puntaje, obtener_estrellas,
+                      evaluar_logros, evaluar_misiones)
+from config import DIFICULTADES, IND_COLOR, IND_LABEL
+from ui_styles import inyectar_css
 
 
-def _barra(nombre, valor, emoji):
+def _barra_ind(nombre, valor, emoji):
     valor = max(0, min(100, valor))
-    color = "#10b981" if valor >= 60 else "#f59e0b" if valor >= UMBRAL_ROJO else "#ef4444"
-    badge = "Estable" if valor >= 60 else "Precaución" if valor >= UMBRAL_ROJO else "Crítico"
-    st.markdown(f'''<div style="background:rgba(255,255,255,.04);border:1px solid {color}44;
-        border-radius:16px;padding:14px 18px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:7px">
-            <span style="font-weight:700;color:#f1f5f9;font-family:Outfit,sans-serif">
-                {emoji} {nombre}</span>
-            <span style="font-size:.72rem;color:{color};font-weight:700;
-                background:{color}22;border-radius:20px;padding:2px 8px">{badge}</span>
-        </div>
-        <div style="background:rgba(255,255,255,.08);border-radius:6px;height:9px">
-            <div style="width:{valor}%;background:{color};height:9px;border-radius:6px;
-                transition:width .4s ease"></div>
-        </div>
-        <div style="text-align:right;margin-top:5px;font-size:.82rem;
-            font-weight:700;color:{color}">{valor}/100</div>
-    </div>''', unsafe_allow_html=True)
+    if valor >= 60:   color, badge, bg, borde = "#10b981","Estable",  "rgba(16,185,129,.08)","rgba(16,185,129,.3)"
+    elif valor >= 30: color, badge, bg, borde = "#f59e0b","Precaución","rgba(245,158,11,.08)","rgba(245,158,11,.3)"
+    else:             color, badge, bg, borde = "#ef4444","Crítico",   "rgba(239,68,68,.1)",  "rgba(239,68,68,.35)"
+    st.markdown(
+        "<div style='background:" + bg + ";border:1px solid " + borde + ";"
+        "border-radius:14px;padding:14px 18px;margin-bottom:10px'>"
+        "<div style='display:flex;justify-content:space-between;margin-bottom:8px'>"
+        "<span style='font-weight:700;color:#f1f5f9;font-size:.88rem'>" + emoji + " " + nombre + "</span>"
+        "<span style='font-size:.7rem;background:" + color + "22;color:" + color + ";"
+        "border:1px solid " + color + "44;border-radius:20px;padding:2px 9px;"
+        "font-family:Courier Prime,monospace'>" + badge + "</span>"
+        "</div>"
+        "<div style='background:rgba(255,255,255,.08);border-radius:6px;height:8px'>"
+        "<div style='width:" + str(valor) + "%;background:" + color + ";height:8px;"
+        "border-radius:6px;transition:width .4s ease'></div></div>"
+        "<div style='text-align:right;margin-top:5px;font-size:.82rem;font-weight:700;color:" + color + "'>"
+        + str(valor) + "/100</div></div>",
+        unsafe_allow_html=True
+    )
+
+
+def _nivel_puntaje(puntaje):
+    """Devuelve (label, color, emoji, descripcion) según puntaje."""
+    if puntaje >= 85:
+        return "LEGENDARIO",  "#fbbf24", "👑", "Gestión magistral de la ciudad"
+    elif puntaje >= 70:
+        return "EXCELENTE",   "#34d399", "🏆", "Ciudad próspera y equilibrada"
+    elif puntaje >= 55:
+        return "BUENO",       "#60a5fa", "🌟", "Ciudad estable con áreas de mejora"
+    elif puntaje >= 40:
+        return "REGULAR",     "#f59e0b", "⚠️", "Ciudad en precaución"
+    else:
+        return "CRÍTICO",     "#ef4444", "🚨", "La ciudad está en crisis"
 
 
 def pantalla_fin():
-    resultado    = st.session_state.get("resultado", "desconocido")
-    ind_fin      = st.session_state.get("indicadores_finales", {})
-    rondas_comp  = st.session_state.get("rondas_completadas", 0)
-    correctas    = st.session_state.get("correctas", 0)
-    incorrectas  = st.session_state.get("incorrectas", 0)
-    gid          = st.session_state.get("grupo_id")
-    nombre_grupo = st.session_state.get("grupo_nombre", "")
-    dificultad   = st.session_state.get("dificultad_sel", "Normal")
-    racha_max    = st.session_state.get("racha_max", 0)
-    decisiones_usadas_set = st.session_state.get("decisiones_usadas_set", set())
-    correctas_por_est     = st.session_state.get("correctas_por_est", {})
-    estudiantes           = st.session_state.get("estudiantes_juego", [])
-    tiempo_seg            = int(time.time() - st.session_state.get("_inicio_partida", time.time()))
-    victoria              = resultado == "victoria"
+    inyectar_css()
 
-    # ── Evaluar logros + guardar ranking (una sola vez) ───────────────────────
-    if not st.session_state.get("_ranking_guardado"):
-        # Logros nuevos
-        nuevos_logros = evaluar_logros(
-            gid, ind_fin, correctas, incorrectas, dificultad,
-            racha_max, decisiones_usadas_set, tiempo_seg,
-            estudiantes, correctas_por_est)
-        st.session_state["logros_partida"] = nuevos_logros
+    resultado   = st.session_state.get("resultado",    "desconocido")
+    ind_fin     = st.session_state.get("indicadores_finales", {})
+    rondas_comp = st.session_state.get("rondas_completadas", 0)
+    puntaje     = st.session_state.get("puntaje_final", int(sum(ind_fin.values()) / max(len(ind_fin),1)))
+    gid         = st.session_state.get("grupo_id")
+    dif         = st.session_state.get("dificultad", "Normal")
+    dif_cfg     = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
 
-        # Estrellas por victoria
-        estrellas_ganadas = 0
-        if victoria:
-            cfg_dif = DIFICULTADES.get(dificultad, DIFICULTADES["Normal"])
-            estrellas_ganadas = cfg_dif["estrellas"]
-            sumar_estrellas(gid, estrellas_ganadas)
-        st.session_state["_estrellas_ganadas"] = estrellas_ganadas
+    # Recalcular resultado según reglas
+    colapso = puntaje < 50 or any(v < 20 for v in ind_fin.values())
+    resultado = "colapso" if colapso else "victoria"
 
-        # Puntaje
-        puntaje = calcular_puntaje(ind_fin, correctas, incorrectas)
-        logros_nombres = [l["nombre"] for l in LOGROS if l["id"] in nuevos_logros]
+    if resultado == "victoria":
+        col_r, bg_r, ico, tit = "#10b981","rgba(16,185,129,.12)","🎉","¡Ciudad Equilibrada — 10 Rondas!"
+        sub = "El grupo administró la ciudad durante todas las rondas exitosamente."
+        if gid: st.balloons()
+    else:
+        col_r, bg_r, ico, tit = "#ef4444","rgba(239,68,68,.12)","💥","La Ciudad Colapsó"
+        razon = ""
+        if puntaje < 50:
+            razon = " (puntaje promedio " + str(puntaje) + " < 50)"
+        criticos = [IND_LABEL.get(k,k) for k,v in ind_fin.items() if v < 20]
+        if criticos:
+            razon += " · Indicador(es) crítico(s): " + ", ".join(criticos)
+        sub = "Un indicador llegó al límite crítico o el promedio fue insuficiente." + razon
+
+    # ── Tarjeta principal ─────────────────────────────────────────────────────
+    nivel_lbl, nivel_color, nivel_ico, nivel_desc = _nivel_puntaje(puntaje)
+    estrellas_ganadas = dif_cfg["estrellas"] if resultado == "victoria" else max(1, dif_cfg["estrellas"] // 2)
+
+    st.markdown(
+        "<div style='background:" + bg_r + ";border:2px solid " + col_r + "44;"
+        "border-radius:20px;padding:36px;text-align:center;margin-bottom:24px'>"
+        "<div style='font-size:3.5rem;margin-bottom:8px'>" + ico + "</div>"
+        "<h1 style='color:" + col_r + ";margin:10px 0 8px;font-size:1.8rem'>" + tit + "</h1>"
+        "<p style='color:rgba(255,255,255,.5);margin-bottom:18px;font-size:.9rem'>" + sub + "</p>"
+
+        # Stats rápidas
+        "<div style='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:20px'>"
+        "<span style='background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3);"
+        "border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Courier Prime,monospace'>"
+        "✅ " + str(st.session_state.get("correctas_ronda",0)) + " correctas</span>"
+        "<span style='background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.25);"
+        "border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Courier Prime,monospace'>"
+        "❌ " + str(st.session_state.get("incorrectas_ronda",0)) + " incorrectas</span>"
+        "<span style='background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.25);"
+        "border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Courier Prime,monospace'>"
+        "🔄 " + str(rondas_comp) + "/10 rondas</span>"
+        "<span style='background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.25);"
+        "border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Courier Prime,monospace'>"
+        "🎯 " + str(puntaje) + " pts</span>"
+        "</div>"
+
+        # Badge dificultad
+        "<div style='margin-bottom:16px'>"
+        "<span style='background:rgba(255,255,255,.06);color:#94a3b8;"
+        "border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:4px 14px;"
+        "font-size:.78rem;font-family:Courier Prime,monospace'>"
+        "🎮 " + dif + "</span>"
+        "</div>"
+
+        # ── NIVEL DE PUNTUACIÓN ───────────────────────────────────────────────
+        "<div style='background:rgba(15,15,25,.6);border:2px solid " + nivel_color + "44;"
+        "border-radius:16px;padding:18px 24px;margin:0 auto;max-width:400px'>"
+        "<div style='font-size:.68rem;color:rgba(255,255,255,.35);text-transform:uppercase;"
+        "letter-spacing:2px;font-family:Courier Prime,monospace;margin-bottom:6px'>"
+        "NIVEL DE PUNTUACIÓN FINAL</div>"
+        "<div style='font-size:2.5rem;margin-bottom:4px'>" + nivel_ico + "</div>"
+        "<div style='font-family:Press Start 2P,monospace;font-size:1.1rem;color:" + nivel_color + ";"
+        "margin-bottom:6px'>" + nivel_lbl + "</div>"
+        "<div style='font-size:2rem;font-weight:900;color:#f1f5f9;margin-bottom:4px'>"
+        + str(puntaje) + " <span style='font-size:1rem;color:rgba(255,255,255,.4)'>/ 100</span></div>"
+        "<div style='font-size:.8rem;color:rgba(255,255,255,.4);font-family:Courier Prime,monospace'>"
+        + nivel_desc + "</div>"
+        "<div style='margin-top:10px;font-size:.8rem;color:#fbbf24;font-family:Courier Prime,monospace'>"
+        "⭐ +" + str(estrellas_ganadas) + " estrellas ganadas</div>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+    # Guardar en ranking
+    if gid:
         try:
-            guardar_ranking(gid, nombre_grupo, puntaje, correctas,
-                            incorrectas, dificultad, logros_nombres)
+            guardar_puntaje(gid, puntaje, dif, rondas_comp)
+        except Exception:
+            pass
+        try:
+            evaluar_logros(gid, st.session_state)
+            evaluar_misiones(gid, st.session_state)
         except Exception:
             pass
 
-        # Actualizar stats globales
-        stats = obtener_stats(gid)
-        d_key = {"Fácil":"victorias_facil","Normal":"victorias_normal","Difícil":"victorias_dificil"}
-        actualizar_stats(gid,
-            partidas_total   = stats.get("partidas_total",0) + 1,
-            correctas_total  = stats.get("correctas_total",0) + correctas,
-            racha_max        = max(stats.get("racha_max",0), racha_max),
-            **({d_key[dificultad]: stats.get(d_key[dificultad],0)+1} if victoria else {}),
+    # ── Nuevos logros desbloqueados ───────────────────────────────────────────
+    nuevos_logros = st.session_state.get("nuevos_logros", [])
+    if nuevos_logros:
+        logros_html = " ".join(
+            "<span style='background:rgba(167,139,250,.15);color:#c4b5fd;"
+            "border:1px solid rgba(167,139,250,.3);border-radius:20px;"
+            "padding:5px 14px;font-size:.8rem;font-family:Courier Prime,monospace'>"
+            + l + "</span>"
+            for l in nuevos_logros
+        )
+        st.markdown(
+            "<div style='background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);"
+            "border-radius:16px;padding:18px;margin-bottom:18px;text-align:center'>"
+            "<div style='font-size:.72rem;color:rgba(167,139,250,.6);text-transform:uppercase;"
+            "letter-spacing:2px;font-family:Courier Prime,monospace;margin-bottom:10px'>"
+            "🏅 NUEVOS LOGROS DESBLOQUEADOS</div>"
+            "<div>" + logros_html + "</div></div>",
+            unsafe_allow_html=True
         )
 
-        st.session_state["_ranking_guardado"] = True
-        st.session_state["_puntaje_fin"]      = puntaje
-        st.session_state["_misiones_pendientes"] = evaluar_misiones_partida(
-            gid, ind_fin, correctas, dificultad, racha_max, victoria)
-
-    logros_part       = st.session_state.get("logros_partida", [])
-    estrellas_ganadas = st.session_state.get("_estrellas_ganadas", 0)
-    puntaje           = st.session_state.get("_puntaje_fin", 0)
-    misiones_pend     = st.session_state.get("_misiones_pendientes", [])
-
-    # ── Banner resultado ──────────────────────────────────────────────────────
-    if victoria:
-        st.balloons()
-        col_r  = "#10b981"
-        bg_r   = "rgba(16,185,129,.12)"
-        ico, tit = "🏆", "¡Ciudad Equilibrada!"
-        sub    = f"El grupo administró la ciudad durante las {TOTAL_RONDAS} rondas exitosamente."
-    else:
-        col_r  = "#ef4444"
-        bg_r   = "rgba(239,68,68,.12)"
-        ico, tit = "💥", "La Ciudad Colapsó"
-        sub    = "Un indicador llegó al límite crítico o el promedio fue insuficiente."
-
-    cfg_dif   = DIFICULTADES.get(dificultad, DIFICULTADES["Normal"])
-    dif_color = {"Fácil":"#10b981","Normal":"#f59e0b","Difícil":"#ef4444"}.get(dificultad,"#a78bfa")
-    dif_ico   = {"Fácil":"🟢","Normal":"🟡","Difícil":"🔴"}.get(dificultad,"⚪")
-
-    st.markdown(f'''<div style="background:{bg_r};border:2px solid {col_r}44;
-        border-radius:22px;padding:36px;text-align:center;margin-bottom:22px">
-        <div style="font-size:3.5rem">{ico}</div>
-        <h1 style="color:{col_r};margin:10px 0 6px;font-size:clamp(1.4rem,5vw,2rem);
-            font-family:Outfit,sans-serif">{tit}</h1>
-        <p style="color:rgba(255,255,255,.5);margin-bottom:16px">{sub}</p>
-        <div style="display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-bottom:12px">
-            <span style="color:#34d399;font-weight:700">✅ {correctas} correctas</span>
-            <span style="color:#f87171;font-weight:700">❌ {incorrectas} incorrectas</span>
-            <span style="color:#60a5fa;font-weight:700">🔄 {rondas_comp}/{TOTAL_RONDAS} rondas</span>
-            <span style="color:#a78bfa;font-weight:700">🎯 {puntaje} pts</span>
-        </div>
-        <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap">
-            <span style="background:{dif_color}22;color:{dif_color};border:1px solid {dif_color}44;
-                border-radius:20px;padding:3px 14px;font-size:.82rem;font-weight:700">
-                {dif_ico} {dificultad}</span>
-            {f'<span style="background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.35);border-radius:20px;padding:3px 14px;font-size:.82rem;font-weight:700">+{estrellas_ganadas} ⭐ ganadas</span>' if estrellas_ganadas else ""}
-        </div>
-    </div>''', unsafe_allow_html=True)
-
-    # ── Logros desbloqueados ──────────────────────────────────────────────────
-    if logros_part:
-        logros_map = {l["id"]: l for l in LOGROS}
-        badges = " ".join(
-            f'<span style="display:inline-block;background:rgba(167,139,250,.15);color:#a78bfa;'
-            f'border:1px solid rgba(167,139,250,.4);border-radius:20px;padding:4px 14px;'
-            f'font-size:.85rem;margin:3px;font-family:Outfit,sans-serif">'
-            f'🏅 {logros_map[lid]["nombre"] if lid in logros_map else lid}</span>'
-            for lid in logros_part)
-        st.markdown(f'''<div class="card-glow" style="text-align:center;padding:18px;margin-bottom:18px">
-            <div style="color:rgba(255,255,255,.4);font-size:.75rem;text-transform:uppercase;
-                letter-spacing:1.5px;margin-bottom:10px">🏅 Nuevos Logros Desbloqueados</div>
-            {badges}</div>''', unsafe_allow_html=True)
-
-    # ── Misiones cumplidas para canjear ───────────────────────────────────────
-    if misiones_pend:
-        st.markdown('<div style="font-size:1rem;font-weight:700;color:#f1f5f9;'
-                    'font-family:Outfit,sans-serif;margin-bottom:10px">'
-                    '📋 Misiones completadas — Canjea tus estrellas</div>',
-                    unsafe_allow_html=True)
-        for m in misiones_pend:
-            col_m1, col_m2 = st.columns([3, 1])
-            with col_m1:
-                st.markdown(f'''<div style="background:rgba(16,185,129,.07);
-                    border:1px solid rgba(16,185,129,.25);border-radius:14px;
-                    padding:12px 16px;margin-bottom:6px">
-                    <div style="font-weight:700;color:#f1f5f9;font-family:Outfit,sans-serif">
-                        {m["nombre"]}</div>
-                    <div style="color:rgba(255,255,255,.4);font-size:.82rem">{m["desc"]}</div>
-                </div>''', unsafe_allow_html=True)
-            with col_m2:
-                if st.button(f"⭐ +{m['recompensa']}", key=f"canje_{m['id']}",
-                             use_container_width=True):
-                    if canjear_mision(gid, m["id"], m["recompensa"]):
-                        st.success(f"+{m['recompensa']} ⭐ canjeadas")
-                        # Eliminar de pendientes para no mostrar de nuevo
-                        st.session_state["_misiones_pendientes"] = [
-                            x for x in misiones_pend if x["id"] != m["id"]]
-                        st.rerun()
-        st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Indicadores finales ───────────────────────────────────────────────────
-    st.markdown('<div style="font-size:1rem;font-weight:700;color:#f1f5f9;'
-                'font-family:Outfit,sans-serif;margin-bottom:10px">📊 Indicadores Finales</div>',
-                unsafe_allow_html=True)
+    # ── Indicadores Finales ───────────────────────────────────────────────────
+    st.markdown("### 📊 Indicadores Finales")
     f1, f2, f3, f4 = st.columns(4)
-    with f1: _barra("Economía",       ind_fin.get("economia",0),         "💰")
-    with f2: _barra("Medio Ambiente", ind_fin.get("medio_ambiente",0),   "🌿")
-    with f3: _barra("Energía",        ind_fin.get("energia",0),          "⚡")
-    with f4: _barra("Bienestar",      ind_fin.get("bienestar_social",0), "❤️")
+    with f1: _barra_ind("Economía",       ind_fin.get("economia",0),        "💰")
+    with f2: _barra_ind("Medio Ambiente",  ind_fin.get("medio_ambiente",0),  "🌿")
+    with f3: _barra_ind("Energía",         ind_fin.get("energia",0),         "⚡")
+    with f4: _barra_ind("Bienestar",       ind_fin.get("bienestar_social",0),"❤️")
 
-    # ── Estrellas actuales ────────────────────────────────────────────────────
-    estrellas_actuales = obtener_estrellas(gid)
-    st.markdown(f'''<div style="text-align:center;margin:18px 0 10px">
-        <span style="color:#fbbf24;font-size:1.1rem">⭐</span>
-        <span style="color:rgba(255,255,255,.5);font-size:.85rem;margin-left:6px">
-            Total de estrellas: </span>
-        <span style="color:#fbbf24;font-weight:800;font-size:1rem">{estrellas_actuales}</span>
-    </div>''', unsafe_allow_html=True)
+    # ── Estrellas totales ─────────────────────────────────────────────────────
+    estrellas_total = obtener_estrellas(gid) if gid else 0
+    st.markdown(
+        "<div style='text-align:center;margin:16px 0'>"
+        "<span style='font-size:1.1rem'>⭐</span>"
+        "<span style='color:#fbbf24;font-weight:700;font-size:1.1rem;margin:0 6px'>"
+        "Total de estrellas: " + str(estrellas_total) + "</span>"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Botones de navegación ─────────────────────────────────────────────────
     c1, c2, c3 = st.columns(3)
     with c1:
-        if st.button("🔄 Jugar de Nuevo", use_container_width=True):
-            if gid: reiniciar_progreso(gid, dificultad)
-            st.session_state.update({
-                "pregunta_actual":    None,  "respuesta_correcta": False,
-                "decision_elegida":   None,  "decision_efectos":   None,
-                "evento_ronda":       None,  "fase_ronda":         "decision",
-                "preguntas_usadas":   [],    "timer_inicio":       None,
-                "tiempo_agotado":     False, "correctas":          0,
-                "incorrectas":        0,     "logros_partida":     [],
-                "_ranking_guardado":  False, "racha_actual":       0,
-                "racha_max":          0,     "decisiones_usadas_set": set(),
-                "correctas_por_est":  {},    "atributos_activos":  {},
-                "_estrellas_ganadas": 0,     "_puntaje_fin":       0,
-                "_misiones_pendientes": [],  "_inicio_partida":    __import__("time").time(),
-            })
-            navegar("lobby")
+        if st.button("🔄  JUGAR DE NUEVO", use_container_width=True):
+            if gid:
+                reiniciar_progreso(gid)
+            st.session_state.update(
+                pregunta_actual=None, respuesta_correcta=False,
+                decision_elegida=None, decision_efectos=None,
+                evento_ronda=None, fase_ronda="decision",
+                preguntas_usadas=[], timer_inicio=None,
+                tiempo_agotado=False, nuevos_logros=[],
+                correctas_ronda=0, incorrectas_ronda=0,
+            )
+            navegar("juego")
     with c2:
-        if st.button("🏆 Ver Ranking", use_container_width=True):
+        if st.button("🏆  VER RANKING", use_container_width=True):
             navegar("ranking")
     with c3:
-        if st.button("🏠 Volver al Lobby", use_container_width=True):
+        if st.button("🏙️  VOLVER AL LOBBY", use_container_width=True):
             navegar("lobby")
