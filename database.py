@@ -20,17 +20,20 @@ _TABLAS = [
     )""",
     """CREATE TABLE IF NOT EXISTS progresojuego (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER UNIQUE NOT NULL,
+        grupoid INTEGER NOT NULL,
+        dificultad TEXT NOT NULL DEFAULT 'Normal',
         economia INTEGER DEFAULT 50,
         medioambiente INTEGER DEFAULT 50,
         energia INTEGER DEFAULT 50,
         bienestarsocial INTEGER DEFAULT 50,
         rondaactual INTEGER DEFAULT 1,
+        UNIQUE(grupoid, dificultad),
         FOREIGN KEY(grupoid) REFERENCES grupos(id)
     )""",
     """CREATE TABLE IF NOT EXISTS cooldowndecisiones (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         grupoid INTEGER NOT NULL,
+        dificultad TEXT NOT NULL DEFAULT 'Normal',
         decision TEXT NOT NULL,
         rondasrestantes INTEGER NOT NULL,
         FOREIGN KEY(grupoid) REFERENCES grupos(id)
@@ -80,9 +83,7 @@ def getconn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='grupos'"
-    )
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='grupos'")
     if cur.fetchone() is None:
         conn.close()
         _crear_tablas()
@@ -158,8 +159,7 @@ guardar_estudiante = guardarestudiante
 def obtenerestudiantes(gid):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id",
-              (gid,))
+    c.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,))
     rows = c.fetchall()
     conn.close()
     return [r["nombreestudiante"] for r in rows]
@@ -167,18 +167,18 @@ def obtenerestudiantes(gid):
 obtener_estudiantes = obtenerestudiantes
 
 
-# ── Progreso ──────────────────────────────────────────────────────────────────
-def obtenerprogreso(gid):
+# ── Progreso por dificultad ───────────────────────────────────────────────────
+def obtenerprogreso(gid, dificultad="Normal"):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT * FROM progresojuego WHERE grupoid=?", (gid,))
+    c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
     row = c.fetchone()
     if not row:
         c.execute("""INSERT INTO progresojuego
-            (grupoid,economia,medioambiente,energia,bienestarsocial,rondaactual)
-            VALUES(?,50,50,50,50,1)""", (gid,))
+            (grupoid,dificultad,economia,medioambiente,energia,bienestarsocial,rondaactual)
+            VALUES(?,?,50,50,50,50,1)""", (gid, dificultad))
         conn.commit()
-        c.execute("SELECT * FROM progresojuego WHERE grupoid=?", (gid,))
+        c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
         row = c.fetchone()
     conn.close()
     return dict(row)
@@ -186,37 +186,37 @@ def obtenerprogreso(gid):
 obtener_progreso = obtenerprogreso
 
 
-def actualizarprogreso(gid, eco, amb, ene, bie, ronda):
+def actualizarprogreso(gid, eco, amb, ene, bie, ronda, dificultad="Normal"):
     conn = getconn()
     c = conn.cursor()
     c.execute("""UPDATE progresojuego
         SET economia=?,medioambiente=?,energia=?,bienestarsocial=?,rondaactual=?
-        WHERE grupoid=?""", (eco, amb, ene, bie, ronda, gid))
+        WHERE grupoid=? AND dificultad=?""", (eco, amb, ene, bie, ronda, gid, dificultad))
     conn.commit()
     conn.close()
 
 actualizar_progreso = actualizarprogreso
 
 
-def reiniciarprogreso(gid):
+def reiniciarprogreso(gid, dificultad="Normal"):
     conn = getconn()
     c = conn.cursor()
     c.execute("""UPDATE progresojuego
         SET economia=50,medioambiente=50,energia=50,bienestarsocial=50,rondaactual=1
-        WHERE grupoid=?""", (gid,))
-    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=?", (gid,))
+        WHERE grupoid=? AND dificultad=?""", (gid, dificultad))
+    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?", (gid, dificultad))
     conn.commit()
     conn.close()
 
 reiniciar_progreso = reiniciarprogreso
 
 
-# ── Cooldowns ─────────────────────────────────────────────────────────────────
-def obtenercooldowns(gid):
+# ── Cooldowns por dificultad ──────────────────────────────────────────────────
+def obtenercooldowns(gid, dificultad="Normal"):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=?",
-              (gid,))
+    c.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?",
+              (gid, dificultad))
     rows = c.fetchall()
     conn.close()
     return {r["decision"]: r["rondasrestantes"] for r in rows}
@@ -224,21 +224,21 @@ def obtenercooldowns(gid):
 obtener_cooldowns = obtenercooldowns
 
 
-def actualizarcooldown(gid, decision, rondausada):
+def actualizarcooldown(gid, decision, rondausada, dificultad="Normal"):
     conn = getconn()
     c = conn.cursor()
     disponibleen = rondausada + COOLDOWN
-    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=?",
-              (gid, decision))
-    c.execute("INSERT INTO cooldowndecisiones(grupoid,decision,rondasrestantes) VALUES(?,?,?)",
-              (gid, decision, disponibleen))
+    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=? AND dificultad=?",
+              (gid, decision, dificultad))
+    c.execute("INSERT INTO cooldowndecisiones(grupoid,dificultad,decision,rondasrestantes) VALUES(?,?,?,?)",
+              (gid, dificultad, decision, disponibleen))
     conn.commit()
     conn.close()
 
 actualizar_cooldown = actualizarcooldown
 
 
-def decrementarcooldowns(gid):
+def decrementarcooldowns(gid, dificultad="Normal"):
     pass
 
 decrementar_cooldowns = decrementarcooldowns
@@ -257,8 +257,7 @@ def obtener_logros_grupo(gid):
 def guardar_logro(gid, logro_id):
     conn = getconn()
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)",
-              (gid, logro_id))
+    c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
     conn.commit()
     conn.close()
 
@@ -276,8 +275,7 @@ def obtener_misiones_canjeadas(gid):
 def guardar_mision(gid, mision_id):
     conn = getconn()
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)",
-              (gid, mision_id))
+    c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
     conn.commit()
     conn.close()
 
@@ -316,12 +314,12 @@ def obtener_ranking(dificultad=None, limite=10):
     conn = getconn()
     c = conn.cursor()
     if dificultad:
-        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha
-                     FROM ranking WHERE dificultad=?
-                     ORDER BY puntaje DESC LIMIT ?""", (dificultad, limite))
+        c.execute("""SELECT r.nombregrupo, r.puntaje, r.dificultad, r.fecha, r.grupoid
+                     FROM ranking r WHERE r.dificultad=?
+                     ORDER BY r.puntaje DESC LIMIT ?""", (dificultad, limite))
     else:
-        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha
-                     FROM ranking ORDER BY puntaje DESC LIMIT ?""", (limite,))
+        c.execute("""SELECT r.nombregrupo, r.puntaje, r.dificultad, r.fecha, r.grupoid
+                     FROM ranking r ORDER BY r.puntaje DESC LIMIT ?""", (limite,))
     rows = c.fetchall()
     conn.close()
     return [dict(r) for r in rows]

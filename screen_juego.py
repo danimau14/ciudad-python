@@ -10,7 +10,6 @@ from config import (TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN, DECISIONES, EVENTOS
 from ui_styles import pixel_divider
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
 def _clamp(v): return max(0, min(100, v))
 
 
@@ -34,31 +33,26 @@ def _barra_indicador(nombre, valor, color, emoji):
 
 def _seleccionar_pregunta():
     dif_partida = st.session_state.get("dificultad_sel", "Normal")
-    mezcla = MEZCLA_PREGUNTAS.get(dif_partida, MEZCLA_PREGUNTAS["Normal"])
-    usadas = set(st.session_state.get("preguntas_usadas", []))
+    mezcla      = MEZCLA_PREGUNTAS.get(dif_partida, MEZCLA_PREGUNTAS["Normal"])
+    usadas      = set(st.session_state.get("preguntas_usadas", []))
     disponibles = [i for i, _ in enumerate(PREGUNTAS) if i not in usadas]
     if not disponibles:
         st.session_state["preguntas_usadas"] = []
         disponibles = list(range(len(PREGUNTAS)))
-
-    # Agrupar por dificultad
     por_dif = {"facil": [], "normal": [], "dificil": []}
     for i in disponibles:
         d = PREGUNTAS[i].get("dif", "normal")
         if d in por_dif:
             por_dif[d].append(i)
-
-    # Elegir nivel con peso
     niveles = [k for k, v in mezcla.items() if por_dif[k]]
     pesos   = [mezcla[k] for k in niveles]
     if not niveles:
         idx = random.choice(disponibles)
     else:
-        total_p = sum(pesos)
-        pesos_n = [p / total_p for p in pesos]
-        nivel = random.choices(niveles, weights=pesos_n, k=1)[0]
-        idx = random.choice(por_dif[nivel])
-
+        total_p  = sum(pesos)
+        pesos_n  = [p / total_p for p in pesos]
+        nivel    = random.choices(niveles, weights=pesos_n, k=1)[0]
+        idx      = random.choice(por_dif[nivel])
     st.session_state.setdefault("preguntas_usadas", []).append(idx)
     return PREGUNTAS[idx]
 
@@ -71,7 +65,8 @@ def _aplicar_efectos(ind, efectos):
     return r
 
 
-def _cabecera(nombre_grp, estudiantes, ronda, est_turno):
+def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif):
+    DIF_COLOR = {"Fácil": "#10b981", "Normal": "#f59e0b", "Difícil": "#ef4444"}
     top1, top2 = st.columns([3, 1])
     with top1:
         chips = " ".join(
@@ -80,26 +75,32 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno):
             f"border-radius:20px;padding:3px 12px;margin:2px;font-size:.82rem;"
             f"color:{'#c4b5fd' if e == est_turno else '#94a3b8'};display:inline-block'>{e}</span>"
             for e in estudiantes)
+        dif_badge = (f"<span style='background:{DIF_COLOR.get(dif,'#a78bfa')}22;"
+                     f"color:{DIF_COLOR.get(dif,'#a78bfa')};border:1px solid "
+                     f"{DIF_COLOR.get(dif,'#a78bfa')}55;border-radius:20px;padding:2px 12px;"
+                     f"font-size:.72rem;font-weight:700;margin-left:6px'>{dif}</span>")
         st.markdown(
             f"<h2 style='margin:0;font-family:Press Start 2P,monospace;font-size:1rem;"
-            f"color:#a78bfa'>{nombre_grp}</h2>"
+            f"color:#a78bfa'>{nombre_grp}{dif_badge}</h2>"
             f"<div style='margin-top:6px'>{chips}</div>",
             unsafe_allow_html=True)
     with top2:
-        with st.expander("⚙️"):
-            if st.button("🏠 Salir al lobby", use_container_width=True):
+        with st.expander("⚙️ Opciones"):
+            if st.button("📖 Instrucciones", use_container_width=True):
+                st.session_state["_from_juego"] = True
+                navegar("instrucciones")
+            if st.button("🏠 Volver al Lobby", use_container_width=True):
                 navegar("lobby")
 
     m1, m2, m3, m4 = st.columns(4)
     pct = int((ronda - 1) / TOTAL_RONDAS * 100)
-    fase_label = {"decision": "Elegir Decisión", "pregunta": "Responder Pregunta",
-                  "evento": "Evento Aleatorio", "resultado_pregunta": "Resultado"}
+    fase_label = {"decision": "Elegir Decisión", "pregunta": "Responder",
+                  "evento": "Evento", "resultado_pregunta": "Resultado"}
     fase_actual = st.session_state.get("fase_ronda", "decision")
     with m1: st.metric("Ronda", f"{ronda}/{TOTAL_RONDAS}")
     with m2: st.metric("Turno", est_turno)
     with m3: st.metric("Progreso", f"{pct}%")
     with m4: st.metric("Fase", fase_label.get(fase_actual, fase_actual))
-
     st.markdown(
         f"<div style='background:rgba(255,255,255,.07);border-radius:4px;height:5px;margin:2px 0 14px'>"
         f"<div style='width:{pct}%;background:linear-gradient(90deg,#a78bfa,#60a5fa);"
@@ -107,22 +108,22 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno):
         unsafe_allow_html=True)
 
 
-# ── Pantalla principal ────────────────────────────────────────────────────────
 def pantalla_juego():
     gid = st.session_state.get("grupo_id")
     if not gid:
         navegar("inicio")
         return
 
-    progreso    = obtener_progreso(gid)
+    dif         = st.session_state.get("dificultad_sel", "Normal")
+    progreso    = obtener_progreso(gid, dif)
     estudiantes = obtener_estudiantes(gid)
-    cooldowns   = obtener_cooldowns(gid)
+    cooldowns   = obtener_cooldowns(gid, dif)
     ronda       = progreso["rondaactual"]
     nombre_grp  = st.session_state.get("grupo_nombre", "")
     idx_turno   = (ronda - 1) % len(estudiantes)
     est_turno   = estudiantes[idx_turno]
 
-    dif_cfg = DIFICULTADES.get(st.session_state.get("dificultad_sel", "Normal"), DIFICULTADES["Normal"])
+    dif_cfg      = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
     penalizacion = dif_cfg["penalizacion"]
 
     ind = {
@@ -132,7 +133,6 @@ def pantalla_juego():
         "bienestar_social": progreso["bienestarsocial"],
     }
 
-    # Fin por rondas completadas
     if ronda > TOTAL_RONDAS:
         st.session_state.update(
             resultado="victoria",
@@ -142,9 +142,8 @@ def pantalla_juego():
         navegar("fin")
         return
 
-    _cabecera(nombre_grp, estudiantes, ronda, est_turno)
+    _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif)
 
-    # Indicadores
     ci1, ci2, ci3, ci4 = st.columns(4)
     for col, key in zip([ci1, ci2, ci3, ci4],
                         ["economia", "medio_ambiente", "energia", "bienestar_social"]):
@@ -164,36 +163,32 @@ def pantalla_juego():
             unsafe_allow_html=True)
         cols = st.columns(4)
         for i, (nom_dec, ef) in enumerate(DECISIONES.items()):
-            col = cols[i % 4]
+            col          = cols[i % 4]
             disponibleen = cooldowns.get(nom_dec, 0)
-            disp = disponibleen == 0 or ronda >= disponibleen
+            disp         = disponibleen == 0 or ronda >= disponibleen
             rondas_falta = max(0, disponibleen - ronda) if disponibleen > 0 else 0
-
             filas_ef = ""
             for k, v in ef.items():
                 if k == "emoji":
                     continue
                 color_ind, em_ind = IND_COLOR.get(k, ("#94a3b8", ""))
-                signo = "+" if v > 0 else ""
+                signo   = "+" if v > 0 else ""
                 col_val = "#4ade80" if v > 0 else "#f87171"
                 filas_ef += (
                     f"<div style='display:flex;justify-content:space-between;align-items:center;"
                     f"padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)'>"
                     f"<span style='color:{color_ind};font-size:.74rem'>{em_ind} {IND_LABEL.get(k,k)}</span>"
                     f"<span style='color:{col_val};font-size:.82rem;font-weight:700'>{signo}{v}</span></div>")
-
-            borde = "rgba(167,139,250,.45)" if disp else "rgba(245,158,11,.35)"
-            bg    = "rgba(167,139,250,.07)" if disp else "rgba(245,158,11,.04)"
-            opac  = 1 if disp else 0.55
+            borde   = "rgba(167,139,250,.45)" if disp else "rgba(245,158,11,.35)"
+            bg      = "rgba(167,139,250,.07)" if disp else "rgba(245,158,11,.04)"
+            opac    = 1 if disp else 0.55
             btn_txt = "Elegir" if disp else "Bloqueada"
-
             overlay = ""
             if not disp:
-                puntos = "".join(
+                puntos  = "".join(
                     f"<span style='display:inline-block;width:10px;height:10px;border-radius:50%;"
                     f"background:{'#fbbf24' if j < rondas_falta else 'rgba(255,255,255,.15)'};"
-                    f"margin:2px'></span>"
-                    for j in range(COOLDOWN))
+                    f"margin:2px'></span>" for j in range(COOLDOWN))
                 overlay = (
                     f"<div style='position:absolute;inset:0;border-radius:14px;"
                     f"background:rgba(0,0,0,.45);display:flex;flex-direction:column;"
@@ -204,7 +199,6 @@ def pantalla_juego():
                     f"{puntos}"
                     f"<span style='color:rgba(255,255,255,.4);font-size:.66rem'>"
                     f"Disponible ronda {disponibleen}</span></div>")
-
             with col:
                 st.markdown(
                     f"<div style='position:relative;background:{bg};border:1px solid {borde};"
@@ -224,13 +218,16 @@ def pantalla_juego():
                     st.session_state["timer_inicio"]     = None
                     st.session_state["tiempo_agotado"]   = False
                     st.session_state["fase_ronda"]       = "pregunta"
+                    dec_usadas = st.session_state.get("decisiones_usadas_partida", set())
+                    dec_usadas.add(nom_dec)
+                    st.session_state["decisiones_usadas_partida"] = dec_usadas
                     st.rerun()
 
     # ── FASE: PREGUNTA ────────────────────────────────────────────────────────
     elif fase == "pregunta":
-        pregunta  = st.session_state["pregunta_actual"]
-        nom_dec   = st.session_state["decision_elegida"]
-        ef_dec    = st.session_state["decision_efectos"]
+        pregunta = st.session_state["pregunta_actual"]
+        nom_dec  = st.session_state["decision_elegida"]
+        ef_dec   = st.session_state["decision_efectos"]
 
         if st.session_state.get("timer_inicio") is None:
             st.session_state["timer_inicio"] = time.time()
@@ -243,7 +240,6 @@ def pantalla_juego():
         seg          = int(restante)
         col_timer    = "#10b981" if pct_timer > 0.5 else "#f59e0b" if pct_timer > 0.25 else "#ef4444"
 
-        # Resumen decisión
         ef_resumen = " ".join(
             f"<span style='color:{IND_COLOR[k][0]}'>{IND_COLOR[k][1]} "
             f"{'+'if v>0 else ''}{v}</span>"
@@ -258,7 +254,6 @@ def pantalla_juego():
             f"<span style='color:rgba(255,255,255,.35);font-size:.78rem'>{ef_resumen}</span></div>",
             unsafe_allow_html=True)
 
-        # Timer
         st.markdown(
             f"<div style='background:rgba(0,0,0,.25);border:1px solid {col_timer}44;"
             f"border-radius:16px;padding:14px 20px;margin-bottom:16px'>"
@@ -270,17 +265,16 @@ def pantalla_juego():
             f"<div style='width:{int(pct_timer*100)}%;height:12px;border-radius:6px;"
             f"background:linear-gradient(90deg,{col_timer}aa,{col_timer});"
             f"transition:width .95s linear'></div></div>"
-            f"{'<div style="color:#ef4444;font-size:.75rem;font-weight:600;margin-top:6px;text-align:center;animation:pulse 0.5s infinite">¡Responde ya!</div>' if seg <= 8 else ''}"
+            f"{'<div style=\"color:#ef4444;font-size:.75rem;font-weight:600;margin-top:6px;text-align:center\">¡Responde ya!</div>' if seg <= 8 else ''}"
             f"</div>",
             unsafe_allow_html=True)
 
         if restante <= 0:
-            st.session_state["tiempo_agotado"]   = True
+            st.session_state["tiempo_agotado"]    = True
             st.session_state["respuesta_correcta"] = False
-            st.session_state["fase_ronda"]       = "resultado_pregunta"
+            st.session_state["fase_ronda"]        = "resultado_pregunta"
             st.rerun()
 
-        # Pregunta
         cat_color = {"Python":"#6366f1","PSeInt":"#8b5cf6","Cálculo":"#06b6d4",
                      "Derivadas":"#10b981","Física MRU":"#f59e0b","Física MRUA":"#ef4444",
                      "Matrices":"#ec4899","Lógica":"#f97316","Álgebra":"#84cc16",
@@ -298,11 +292,12 @@ def pantalla_juego():
             f"<span style='background:{dif_col}22;color:{dif_col};"
             f"border:1px solid {dif_col}55;border-radius:20px;padding:2px 12px;"
             f"font-size:.72rem;font-weight:600'>{dif_lbl}</span></div>"
-            f"<h3 style='color:#f1f5f9;margin:10px 0 0;font-size:clamp(.95rem,2.5vw,1.1rem)'>"
-            f"{pregunta['q']}</h3></div>",
+            f"<p style='color:#f1f5f9;margin:10px 0 0;"
+            f"font-family:Georgia,serif;font-size:clamp(1rem,2.5vw,1.15rem);line-height:1.6'>"
+            f"{pregunta['q']}</p></div>",
             unsafe_allow_html=True)
 
-        opciones = [f"{chr(65+i)}) {op}" for i, op in enumerate(pregunta["ops"])]
+        opciones  = [f"{chr(65+i)}) {op}" for i, op in enumerate(pregunta["ops"])]
         respuesta = st.radio("Selecciona tu respuesta", opciones, key="radio_resp")
         if st.button("✅ Confirmar Respuesta", use_container_width=True, type="primary"):
             idx_resp = opciones.index(respuesta)
@@ -333,9 +328,13 @@ def pantalla_juego():
                 unsafe_allow_html=True)
             actualizar_progreso(gid,
                 nuevo_ind["economia"], nuevo_ind["medio_ambiente"],
-                nuevo_ind["energia"], nuevo_ind["bienestar_social"], ronda)
-            actualizar_cooldown(gid, nom_dec, ronda)
-            st.session_state["correctas"] = st.session_state.get("correctas", 0) + 1
+                nuevo_ind["energia"], nuevo_ind["bienestar_social"], ronda, dif)
+            actualizar_cooldown(gid, nom_dec, ronda, dif)
+            st.session_state["correctas"]    = st.session_state.get("correctas", 0) + 1
+            racha = st.session_state.get("racha_actual", 0) + 1
+            st.session_state["racha_actual"] = racha
+            if racha > st.session_state.get("mejor_racha", 0):
+                st.session_state["mejor_racha"] = racha
         else:
             texto_ok  = pregunta["ops"][pregunta["ok"]]
             causa     = "Tiempo agotado" if agotado else ""
@@ -345,14 +344,15 @@ def pantalla_juego():
                 f"<div style='background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);"
                 f"border-radius:16px;padding:22px 26px;text-align:center;margin-bottom:14px'>"
                 f"<div style='font-size:2.5rem'>❌</div>"
-                f"{'<h3 style=chr(39)color:#f87171;margin:8px 0 4px chr(39)>Tiempo Agotado</h3>' if agotado else '<h3 style=chr(39)color:#f87171;margin:8px 0 4px chr(39)>Respuesta Incorrecta</h3>'}"
+                f"{'<h3 style=\"color:#f87171;margin:8px 0 4px\">Tiempo Agotado</h3>' if agotado else '<h3 style=\"color:#f87171;margin:8px 0 4px\">Respuesta Incorrecta</h3>'}"
                 f"<p style='color:#fca5a5'>La correcta era <b>{texto_ok}</b></p>"
                 f"<p style='color:#fca5a5'>{aviso_par}</p></div>",
                 unsafe_allow_html=True)
             actualizar_progreso(gid,
                 nuevo_ind["economia"], nuevo_ind["medio_ambiente"],
-                nuevo_ind["energia"], nuevo_ind["bienestar_social"], ronda)
-            st.session_state["incorrectas"] = st.session_state.get("incorrectas", 0) + 1
+                nuevo_ind["energia"], nuevo_ind["bienestar_social"], ronda, dif)
+            st.session_state["incorrectas"]  = st.session_state.get("incorrectas", 0) + 1
+            st.session_state["racha_actual"] = 0
 
         st.session_state["fase_ronda"] = "evento"
         if st.button("Continuar →", use_container_width=True):
@@ -361,25 +361,25 @@ def pantalla_juego():
     # ── FASE: EVENTO ──────────────────────────────────────────────────────────
     elif fase == "evento":
         if st.session_state.get("evento_ronda") is None:
-            dif_cfg2 = DIFICULTADES.get(st.session_state.get("dificultad_sel", "Normal"), DIFICULTADES["Normal"])
+            dif_cfg2 = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
             peso_neg = dif_cfg2["eventos_peso"]["negativos"]
-            pool = (EVENTOS_NEGATIVOS if random.random() < peso_neg else EVENTOS_POSITIVOS)
+            pool     = (EVENTOS_NEGATIVOS if random.random() < peso_neg else EVENTOS_POSITIVOS)
             st.session_state["evento_ronda"] = random.choice(pool)
 
-        evento = st.session_state["evento_ronda"]
+        evento   = st.session_state["evento_ronda"]
         positivo = evento["valor"] > 0
-        col_ev = "#10b981" if positivo else "#ef4444"
-        bg_ev  = "rgba(16,185,129,.1)" if positivo else "rgba(239,68,68,.1)"
-        icono  = "🌟" if positivo else "⚠️"
+        col_ev   = "#10b981" if positivo else "#ef4444"
+        bg_ev    = "rgba(16,185,129,.1)" if positivo else "rgba(239,68,68,.1)"
+        icono    = "🌟" if positivo else "⚠️"
 
-        progreso2 = obtener_progreso(gid)
+        progreso2 = obtener_progreso(gid, dif)
         ind2 = {
             "economia":         progreso2["economia"],
             "medio_ambiente":   progreso2["medioambiente"],
             "energia":          progreso2["energia"],
             "bienestar_social": progreso2["bienestarsocial"],
         }
-        ind_ev = evento["indicador"]
+        ind_ev        = evento["indicador"]
         valor_antes   = ind2.get(ind_ev, 50)
         nuevo_ind2    = dict(ind2)
         nuevo_ind2[ind_ev] = _clamp(valor_antes + evento["valor"])
@@ -407,7 +407,7 @@ def pantalla_juego():
             actualizar_progreso(gid,
                 nuevo_ind2["economia"], nuevo_ind2["medio_ambiente"],
                 nuevo_ind2["energia"], nuevo_ind2["bienestar_social"],
-                ronda + 1)
+                ronda + 1, dif)
             st.session_state.update(
                 pregunta_actual=None, respuesta_correcta=False,
                 decision_elegida=None, decision_efectos=None,

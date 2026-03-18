@@ -12,13 +12,13 @@ def pantalla_lobby():
         navegar("inicio")
         return
 
+    dif         = st.session_state.get("dificultad_sel", "Normal")
     nombre_grp  = nombregrupoporid(gid)
     estudiantes = obtener_estudiantes(gid)
-    progreso    = obtener_progreso(gid)
+    progreso    = obtener_progreso(gid, dif)
     estrellas   = obtener_estrellas(gid)
     logros_ids  = set(obtener_logros_grupo(gid))
     ronda       = progreso.get("rondaactual", 1)
-    dif         = st.session_state.get("dificultad_sel", "Normal")
 
     pixel_header(nombre_grp, f"Lobby · {dif} · {estrellas} ⭐", "🏙️")
 
@@ -30,7 +30,7 @@ def pantalla_lobby():
         "energia":          progreso.get("energia", 50),
         "bienestar_social": progreso.get("bienestarsocial", 50),
     }
-    for col, key in zip([m1,m2,m3,m4], vals):
+    for col, key in zip([m1, m2, m3, m4], vals):
         color, emoji = IND_COLOR[key]
         with col:
             st.metric(f"{emoji} {IND_LABEL[key]}", vals[key])
@@ -52,7 +52,7 @@ def pantalla_lobby():
                 f"<div style='color:{'#c4b5fd' if es_turno else '#94a3b8'};"
                 f"font-weight:{'700' if es_turno else '400'};font-size:.85rem;"
                 f"margin-top:6px'>{est}</div>"
-                f"{'<div style=chr(39)color:#a78bfa;font-size:.7rem;margin-top:4px chr(39)>Turno actual</div>' if es_turno else ''}"
+                f"{'<div style=\"color:#a78bfa;font-size:.7rem;margin-top:4px\">Turno actual</div>' if es_turno else ''}"
                 f"</div>",
                 unsafe_allow_html=True)
 
@@ -60,12 +60,14 @@ def pantalla_lobby():
 
     # ── Dificultad ─────────────────────────────────────────────────────────────
     st.markdown("### ⚙️ Dificultad de Partida")
-    dif_opts = ["Fácil", "Normal", "Difícil"]
+    dif_opts   = ["Fácil", "Normal", "Difícil"]
     dif_actual = st.session_state.get("dificultad_sel", "Normal")
-    nueva_dif = st.radio("", dif_opts,
-                         index=dif_opts.index(dif_actual),
-                         horizontal=True, key="dif_radio_lobby")
-    st.session_state["dificultad_sel"] = nueva_dif
+    nueva_dif  = st.radio("", dif_opts,
+                          index=dif_opts.index(dif_actual),
+                          horizontal=True, key="dif_radio_lobby")
+    if nueva_dif != dif_actual:
+        st.session_state["dificultad_sel"] = nueva_dif
+        st.rerun()
 
     pixel_divider("#34d399")
 
@@ -108,20 +110,25 @@ def pantalla_lobby():
             navegar("logros")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("📖  INSTRUCCIONES", use_container_width=True):
             navegar("instrucciones")
     with c2:
         if st.button("🔄  REINICIAR PARTIDA", use_container_width=True):
-            reiniciar_progreso(gid)
+            reiniciar_progreso(gid, dif)
             st.session_state.update(
                 fase_ronda="decision", pregunta_actual=None,
                 respuesta_correcta=False, decision_elegida=None,
                 decision_efectos=None, evento_ronda=None,
                 preguntas_usadas=[], timer_inicio=None,
                 tiempo_agotado=False, correctas=0, incorrectas=0,
-                _ranking_guardado=False,
+                _ranking_guardado=False, decisiones_usadas_partida=set(),
+                mejor_racha=0, racha_actual=0,
             )
             st.success("Partida reiniciada. ¡Lista para empezar!")
             st.rerun()
+    with c3:
+        if st.button("🚪  CERRAR SESIÓN", use_container_width=True):
+            st.session_state.clear()
+            navegar("inicio")

@@ -11,7 +11,6 @@ def _clamp(v): return max(0, min(100, v))
 
 
 def _evaluar_misiones(gid, ind_fin, correctas, rondas, dif):
-    """Canjea automáticamente misiones completadas."""
     ya_canjeadas = set(obtener_misiones_canjeadas(gid))
     nuevas = []
     for m in MISIONES:
@@ -20,23 +19,15 @@ def _evaluar_misiones(gid, ind_fin, correctas, rondas, dif):
         tipo = m.get("tipo", "")
         meta = m.get("meta", 1)
         ok   = False
-        if tipo == "partidas":
-            ok = rondas >= 10
-        elif tipo == "racha":
-            ok = st.session_state.get("mejor_racha", 0) >= meta
-        elif tipo == "indicador":
-            ok = ind_fin.get(m.get("ind", ""), 0) >= meta
-        elif tipo == "sin_rojo":
-            ok = all(v >= 30 for v in ind_fin.values())
-        elif tipo == "victoria":
-            ok = (rondas >= 10 and
-                  (m.get("dif", "todas") == "todas" or m.get("dif") == dif))
-        elif tipo == "correctas":
-            ok = correctas >= meta
-        elif tipo == "todos_sobre":
-            ok = all(v >= meta for v in ind_fin.values())
-        elif tipo == "decisiones_usadas":
-            ok = len(st.session_state.get("decisiones_usadas_partida", set())) >= meta
+        if tipo == "partidas"           : ok = rondas >= 10
+        elif tipo == "racha"            : ok = st.session_state.get("mejor_racha", 0) >= meta
+        elif tipo == "indicador"        : ok = ind_fin.get(m.get("ind", ""), 0) >= meta
+        elif tipo == "sin_rojo"         : ok = all(v >= 30 for v in ind_fin.values())
+        elif tipo == "victoria"         : ok = (rondas >= 10 and
+                                                (m.get("dif","todas") == "todas" or m.get("dif") == dif))
+        elif tipo == "correctas"        : ok = correctas >= meta
+        elif tipo == "todos_sobre"      : ok = all(v >= meta for v in ind_fin.values())
+        elif tipo == "decisiones_usadas": ok = len(st.session_state.get("decisiones_usadas_partida", set())) >= meta
         if ok:
             guardar_mision(gid, m["id"])
             nuevas.append(m)
@@ -44,28 +35,24 @@ def _evaluar_misiones(gid, ind_fin, correctas, rondas, dif):
 
 
 def _evaluar_logros(gid, ind_fin, correctas, rondas, dif):
-    """Guarda logros desbloqueados en esta partida."""
-    ya = set(obtener_logros_grupo(gid))
+    ya    = set(obtener_logros_grupo(gid))
     nuevos = []
-    prom = sum(ind_fin.values()) / 4 if ind_fin else 0
     for l in LOGROS:
         if l["id"] in ya:
             continue
         tipo = l.get("tipo", "")
         meta = l.get("meta", 1)
         ok   = False
-        if tipo == "partidas"              : ok = rondas >= 10
-        elif tipo == "correctas_partida"   : ok = correctas >= meta
-        elif tipo == "victoria"            : ok = (rondas >= 10 and
-                                                   (l.get("dif","todas") == "todas" or l.get("dif") == dif))
-        elif tipo == "indicador_fin"       : ok = ind_fin.get(l.get("ind",""),0) >= meta
-        elif tipo == "todos_sobre"         : ok = all(v >= meta for v in ind_fin.values())
-        elif tipo == "racha"               : ok = st.session_state.get("mejor_racha",0) >= meta
-        elif tipo == "correctas_total"     :
-            ok = st.session_state.get("correctas_total_acum",0) >= meta
-        elif tipo == "decisiones_todas"    :
-            ok = len(st.session_state.get("decisiones_usadas_partida",set())) >= meta
-        elif tipo == "tam_grupo"           :
+        if tipo == "partidas"            : ok = rondas >= 10
+        elif tipo == "correctas_partida" : ok = correctas >= meta
+        elif tipo == "victoria"          : ok = (rondas >= 10 and
+                                                 (l.get("dif","todas") == "todas" or l.get("dif") == dif))
+        elif tipo == "indicador_fin"     : ok = ind_fin.get(l.get("ind",""),0) >= meta
+        elif tipo == "todos_sobre"       : ok = all(v >= meta for v in ind_fin.values())
+        elif tipo == "racha"             : ok = st.session_state.get("mejor_racha",0) >= meta
+        elif tipo == "correctas_total"   : ok = st.session_state.get("correctas_total_acum",0) >= meta
+        elif tipo == "decisiones_todas"  : ok = len(st.session_state.get("decisiones_usadas_partida",set())) >= meta
+        elif tipo == "tam_grupo"         :
             from database import obtener_estudiantes
             ok = len(obtener_estudiantes(gid)) >= meta
         if ok:
@@ -85,7 +72,6 @@ def pantalla_fin():
     dif_cfg     = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
     estrellas_ganadas = dif_cfg.get("estrellas", 2) if resultado == "victoria" else 0
 
-    # Guardar estrellas, ranking y logros solo 1 vez
     if gid and not st.session_state.get("_ranking_guardado"):
         if estrellas_ganadas > 0:
             guardar_estrellas(gid, estrellas_ganadas)
@@ -95,52 +81,47 @@ def pantalla_fin():
         _evaluar_logros(gid, ind_fin, correctas, rondas_comp, dif)
         st.session_state["_ranking_guardado"] = True
 
-    # ── Cabecera resultado ────────────────────────────────────────────────────
     if resultado == "victoria":
         st.balloons()
-        col_r  = "#10b981"
-        bg_r   = "rgba(16,185,129,.12)"
-        ico    = "🏆"
-        tit    = "¡Ciudad Equilibrada!"
-        sub    = "El grupo administró la ciudad durante las 10 rondas."
+        col_r = "#10b981"; bg_r = "rgba(16,185,129,.12)"; ico = "🏆"
+        tit   = "¡Ciudad Equilibrada!"; sub = "El grupo administró la ciudad durante las 10 rondas."
     else:
-        col_r  = "#ef4444"
-        bg_r   = "rgba(239,68,68,.12)"
-        ico    = "💥"
-        tit    = "La Ciudad Colapsó"
-        sub    = "Un indicador llegó al límite crítico."
+        col_r = "#ef4444"; bg_r = "rgba(239,68,68,.12)"; ico = "💥"
+        tit   = "La Ciudad Colapsó"; sub = "Un indicador llegó al límite crítico."
+
+    DIF_COLOR = {"Fácil":"#10b981","Normal":"#f59e0b","Difícil":"#ef4444"}
+    dif_badge = (f"<span style='background:{DIF_COLOR.get(dif,'#a78bfa')}22;"
+                 f"color:{DIF_COLOR.get(dif,'#a78bfa')};border:1px solid "
+                 f"{DIF_COLOR.get(dif,'#a78bfa')}55;border-radius:20px;padding:3px 14px;"
+                 f"font-size:.78rem;font-weight:700;margin-left:8px'>{dif}</span>")
 
     st.markdown(
         f"<div style='background:{bg_r};border:2px solid {col_r}44;"
         f"border-radius:20px;padding:40px;text-align:center;margin-bottom:24px'>"
         f"<div style='font-size:4rem'>{ico}</div>"
-        f"<h1 style='color:{col_r};margin:12px 0 8px;font-size:1.9rem'>{tit}</h1>"
+        f"<h1 style='color:{col_r};margin:12px 0 8px;font-size:1.9rem'>{tit}{dif_badge}</h1>"
         f"<p style='color:rgba(255,255,255,.55)'>{sub}</p>"
-        f"<p style='color:{col_r};font-size:1.1rem;font-weight:600'>"
-        f"Rondas {rondas_comp}/{10}</p>"
-        f"{'<p style=chr(39)color:#fbbf24;font-size:1rem chr(39)>+' + str(estrellas_ganadas) + ' ⭐ ganadas</p>' if estrellas_ganadas else ''}"
+        f"<p style='color:{col_r};font-size:1.1rem;font-weight:600'>Rondas {rondas_comp}/10</p>"
+        f"{'<p style=\"color:#fbbf24;font-size:1rem\">+' + str(estrellas_ganadas) + ' ⭐ ganadas</p>' if estrellas_ganadas else ''}"
         f"</div>",
         unsafe_allow_html=True)
 
-    # ── Stats partida ─────────────────────────────────────────────────────────
     total_est = obtener_estrellas(gid) if gid else 0
     html_stats = (
         stat_badge("Correctas",   correctas,   "#34d399", "✅") +
         stat_badge("Incorrectas", incorrectas, "#ef4444", "❌") +
+        stat_badge("Dificultad",  dif,         DIF_COLOR.get(dif,"#a78bfa"), "⚙️") +
         stat_badge("Estrellas",   f"{total_est} ⭐", "#fbbf24", "⭐")
     )
-    st.markdown(
-        f"<div style='text-align:center;margin-bottom:22px'>{html_stats}</div>",
-        unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;margin-bottom:22px'>{html_stats}</div>",
+                unsafe_allow_html=True)
 
-    # ── Indicadores finales ───────────────────────────────────────────────────
     pixel_divider("#a78bfa", "INDICADORES FINALES")
     f1, f2, f3, f4 = st.columns(4)
     for col, key in zip([f1, f2, f3, f4],
                         ["economia","medio_ambiente","energia","bienestar_social"]):
         color, emoji = IND_COLOR[key]
-        val = ind_fin.get(key, 0)
-        val = _clamp(val)
+        val   = _clamp(ind_fin.get(key, 0))
         badge = "Estable" if val >= 60 else "Precaución" if val >= 30 else "Crítico"
         b_col = "#10b981" if val >= 60 else "#f59e0b" if val >= 30 else "#ef4444"
         with col:
@@ -158,13 +139,11 @@ def pantalla_fin():
                 unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Botones ───────────────────────────────────────────────────────────────
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         if st.button("🔄  REINICIAR", use_container_width=True):
             if gid:
-                reiniciar_progreso(gid)
+                reiniciar_progreso(gid, dif)
             st.session_state.update(
                 fase_ronda="decision", pregunta_actual=None,
                 respuesta_correcta=False, decision_elegida=None,
@@ -172,12 +151,15 @@ def pantalla_fin():
                 preguntas_usadas=[], timer_inicio=None,
                 tiempo_agotado=False, correctas=0, incorrectas=0,
                 logros_partida=[], _ranking_guardado=False,
-                decisiones_usadas_partida=set(),
+                decisiones_usadas_partida=set(), mejor_racha=0, racha_actual=0,
             )
             navegar("juego")
     with c2:
         if st.button("🏆  RANKING", use_container_width=True):
             navegar("ranking")
     with c3:
-        if st.button("🏠  INICIO", use_container_width=True):
+        if st.button("🏠  LOBBY", use_container_width=True):
+            navegar("lobby")
+    with c4:
+        if st.button("🚪  INICIO", use_container_width=True):
             navegar("inicio")
