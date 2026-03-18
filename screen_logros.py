@@ -1,89 +1,102 @@
 import streamlit as st
 from session_manager import navegar
-
-LOGROS_DEF = [
-    {"id":"primera_ronda",     "nombre":"Primera Ronda",       "icono":"🌱",
-     "desc":"Completa tu primera ronda.",
-     "como":"Llega al final de la Ronda 1 sin abandonar la partida."},
-    {"id":"ecologista",        "nombre":"Ecologista",          "icono":"🌳",
-     "desc":"Elige 'Crear parque natural' en una partida.",
-     "como":"En la fase de decisión selecciona 'Crear parque natural'."},
-    {"id":"respuesta_rapida",  "nombre":"Respuesta Rápida",    "icono":"⚡",
-     "desc":"Responde correctamente en menos de 10 segundos.",
-     "como":"Confirma tu respuesta antes de que el temporizador baje de 20."},
-    {"id":"sin_errores",       "nombre":"Sin Errores",         "icono":"🎯",
-     "desc":"Completa una ronda sin fallar ninguna pregunta.",
-     "como":"Responde todas las preguntas de la ronda correctamente."},
-    {"id":"ciudad_equilibrada","nombre":"Ciudad Equilibrada",  "icono":"🏙️",
-     "desc":"Termina con todos los indicadores ≥ 50.",
-     "como":"Completa las 10 rondas con los 4 indicadores en 50 o más."},
-    {"id":"superviviente",     "nombre":"Superviviente",       "icono":"🛡️",
-     "desc":"Termina con al menos un indicador en estado crítico.",
-     "como":"Completa la partida con algún indicador entre 1 y 29."},
-    {"id":"maestro_python",    "nombre":"Maestro Python",      "icono":"🐍",
-     "desc":"Responde correctamente 5 preguntas de Python seguidas.",
-     "como":"Acierta 5 preguntas consecutivas de la categoría Python."},
-    {"id":"matematico",        "nombre":"Matemático",          "icono":"📐",
-     "desc":"Acierta preguntas de Cálculo, Derivadas y Matrices en una partida.",
-     "como":"Responde correctamente al menos 1 pregunta de cada una de esas 3 categorías."},
-    {"id":"estratega",         "nombre":"Estratega",           "icono":"♟️",
-     "desc":"Usa cada decisión al menos una vez en una partida.",
-     "como":"Selecciona las 8 decisiones disponibles a lo largo de la partida."},
-    {"id":"perfecto",          "nombre":"Partida Perfecta",    "icono":"💎",
-     "desc":"Termina con todos los indicadores ≥ 70.",
-     "como":"Lleva los 4 indicadores a 70 o más al completar las 10 rondas."},
-]
+from database import obtener_logros_grupo
+from config import LOGROS
 
 
 def pantalla_logros():
-    logros_obtenidos = st.session_state.get("logros_obtenidos", [])
-    obtenidos_n = len([l for l in LOGROS_DEF if l["id"] in logros_obtenidos])
-    total_n     = len(LOGROS_DEF)
+    gid = st.session_state.get("grupo_id")
+    if not gid:
+        navegar("inicio"); return
 
-    st.markdown('<div class="game-title" style="font-size:1.8rem">🏅 Logros</div>',
-                unsafe_allow_html=True)
-    st.markdown(f'''<div style="text-align:center;margin:8px 0 16px">
-        <span style="color:rgba(255,255,255,0.5)">Obtenidos: </span>
-        <span style="color:#a78bfa;font-weight:800;font-size:1.1rem">
-            {obtenidos_n} / {total_n}</span>
-    </div>''', unsafe_allow_html=True)
-    st.progress(obtenidos_n / total_n if total_n else 0)
+    logros_ids = obtener_logros_grupo(gid)
+    total  = len(LOGROS)
+    obt    = len([l for l in LOGROS if l["id"] in logros_ids])
+
+    st.markdown('<div class="game-title" style="font-size:clamp(1.6rem,5vw,2.2rem)">🏅 Logros</div>', unsafe_allow_html=True)
+    st.markdown(f'''<div style="text-align:center;color:rgba(255,255,255,.35);
+        font-size:.85rem;margin-bottom:16px">{obt} / {total} desbloqueados</div>''',
+        unsafe_allow_html=True)
+
+    # Barra de progreso global
+    st.progress(obt / total if total else 0, text=f"{obt}/{total} logros")
     st.markdown("<br>", unsafe_allow_html=True)
 
-    for logro in LOGROS_DEF:
-        obtenido = logro["id"] in logros_obtenidos
-        if obtenido:
-            borde = "#a78bfa"
-            bg    = "rgba(167,139,250,0.09)"
-            glow  = "box-shadow:0 0 20px rgba(167,139,250,0.2);"
-            badge = '<span style="background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid rgba(167,139,250,0.5);border-radius:20px;padding:2px 10px;font-size:0.78rem;font-weight:700">✅ OBTENIDO</span>'
-            ico_color = "#f1f5f9"
-        else:
-            borde = "rgba(255,255,255,0.07)"
-            bg    = "rgba(255,255,255,0.02)"
-            glow  = "filter:grayscale(0.6);"
-            badge = '<span style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2px 10px;font-size:0.78rem">🔒 BLOQUEADO</span>'
-            ico_color = "rgba(255,255,255,0.3)"
+    # Agrupar por tipo para mejor lectura
+    grupos = {}
+    for l in LOGROS:
+        t = l.get("tipo","otros")
+        grupos.setdefault(t, []).append(l)
 
-        with st.expander(f"{logro['icono']}  {logro['nombre']}"):
-            st.markdown(f'''<div style="background:{bg};border:1.5px solid {borde};
-                border-radius:14px;padding:18px 22px;{glow}">
-                <div style="display:flex;justify-content:space-between;
-                    align-items:center;margin-bottom:12px">
-                    <span style="font-size:2rem;{glow}">{logro['icono']}</span>
-                    {badge}
-                </div>
-                <p style="color:#f1f5f9;font-weight:600;margin:0 0 10px;font-size:0.95rem">
-                    {logro['desc']}</p>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-                    border-radius:10px;padding:10px 14px">
-                    <span style="color:rgba(255,255,255,0.35);font-size:0.72rem;
-                        text-transform:uppercase;letter-spacing:1px">
-                        ¿Cómo obtenerlo?</span><br>
-                    <span style="color:#cbd5e1;font-size:0.88rem">{logro['como']}</span>
-                </div>
-            </div>''', unsafe_allow_html=True)
+    etiquetas = {
+        "rondas":"🎮 Primeras Veces","partidas":"📅 Partidas",
+        "correctas_total":"📚 Preguntas","correctas_partida":"🎯 Partida Perfecta",
+        "correctas_partida_dif":"💫 Sin Fallos","racha":"🔥 Rachas",
+        "velocidad":"⚡ Velocidad","victoria":"🏆 Victorias",
+        "victoria_3":"👑 Leyenda","victoria_dif_count":"💎 Élite",
+        "indicador_fin":"📊 Indicadores","todos_sobre":"🌈 Ciudad Perfecta",
+        "min_global":"🛡️ Resistencia","recuperacion":"🚑 Recuperación",
+        "decision_count":"🔬 Decisiones","decisiones_todas":"🗺️ Explorador",
+        "sin_decision":"♻️ Eco","estrellas":"⭐ Estrellas",
+        "atributo_count":"🛡️ Atributos","segunda_ok":"🔄 Segunda Vida",
+        "misiones_count":"📋 Misiones","exacto":"🎲 Especiales",
+        "eventos_neg_seguidos":"🌪️ Supervivencia","doble_indicador":"🚀 Futuro",
+        "rango":"🧩 Equilibrio","tiempo_partida":"🏃 Velocidad Total",
+        "recuperacion_total":"😤 Nunca Me Rindo","todos_aciertan":"🤝 Equipo",
+        "tam_grupo":"🗣️ Social","dias_jugados":"🎮 Dedicación",
+        "ranking_top":"🥇 Ranking","casi_tiempo":"🕐 Tiempo",
+    }
+
+    for tipo, logros_grupo in grupos.items():
+        label = etiquetas.get(tipo, f"🏅 {tipo.replace('_',' ').title()}")
+        with st.expander(label, expanded=False):
+            cols = st.columns(2)
+            for ci, logro in enumerate(logros_grupo):
+                obtenido = logro["id"] in logros_ids
+                with cols[ci % 2]:
+                    if obtenido:
+                        st.markdown(f'''<div style="background:rgba(167,139,250,.1);
+                            border:2px solid rgba(167,139,250,.5);border-radius:18px;
+                            padding:14px 16px;margin-bottom:10px;
+                            box-shadow:0 0 20px rgba(167,139,250,.1)">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                                <span style="font-size:1.5rem">{logro["emoji"]}</span>
+                                <div>
+                                    <div style="font-weight:800;color:#a78bfa;font-size:.9rem">
+                                        {logro["nombre"]}</div>
+                                    <span style="background:rgba(167,139,250,.2);color:#a78bfa;
+                                        border-radius:20px;padding:2px 8px;font-size:.68rem;
+                                        font-weight:700">✅ OBTENIDO</span>
+                                </div>
+                            </div>
+                            <div style="color:#94a3b8;font-size:.8rem">{logro["desc"]}</div>
+                            {f'<div style="color:#fbbf24;font-size:.75rem;margin-top:5px">+{logro["estrellas"]} ⭐</div>' if logro.get("estrellas") else ""}
+                        </div>''', unsafe_allow_html=True)
+                    else:
+                        with st.container():
+                            st.markdown(f'''<div style="background:rgba(255,255,255,.022);
+                                border:1px solid rgba(255,255,255,.07);border-radius:18px;
+                                padding:14px 16px;margin-bottom:10px">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                                    <span style="font-size:1.5rem;filter:grayscale(1) opacity(.4)">
+                                        {logro["emoji"]}</span>
+                                    <div>
+                                        <div style="font-weight:700;color:rgba(255,255,255,.35);
+                                            font-size:.9rem">{logro["nombre"]}</div>
+                                        <span style="color:rgba(255,255,255,.2);font-size:.68rem">
+                                            🔒 BLOQUEADO</span>
+                                    </div>
+                                </div>
+                                <div style="color:rgba(255,255,255,.2);font-size:.8rem">{logro["desc"]}</div>
+                            </div>''', unsafe_allow_html=True)
+                            with st.expander("💡 ¿Cómo obtenerlo?"):
+                                st.markdown(f'''<div style="color:#a78bfa;font-size:.85rem;
+                                    padding:4px 0">{logro["como"]}</div>''', unsafe_allow_html=True)
+                                if logro.get("estrellas"):
+                                    st.markdown(f'''<div style="color:#fbbf24;font-size:.78rem;
+                                        margin-top:4px">Recompensa: {logro["estrellas"]} ⭐</div>''',
+                                        unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("← Volver al Lobby", use_container_width=True):
+    if st.button("⬅️ Volver al Lobby", use_container_width=True):
         navegar("lobby")
