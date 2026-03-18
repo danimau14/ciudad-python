@@ -21,9 +21,8 @@ def pantalla_misiones():
     total       = len(MISIONES)
     pct         = int(completadas / total * 100) if total else 0
 
-    pixel_header("MISIONES", str(completadas) + "/" + str(total) + " completadas  ·  " + str(estrellas) + " estrellas", "📋")
+    pixel_header("MISIONES", str(completadas) + "/" + str(total) + " completadas  ·  " + str(estrellas) + " ⭐", "📋")
 
-    # Barra de progreso
     bar_html = (
         "<div style='background:rgba(255,255,255,.05);border-radius:8px;"
         "height:10px;margin-bottom:4px;overflow:hidden'>"
@@ -32,36 +31,32 @@ def pantalla_misiones():
         "</div>"
         "<div style='text-align:right;font-size:.68rem;color:rgba(255,255,255,.25);"
         "font-family:Courier Prime,monospace;margin-bottom:18px'>"
-        + str(completadas) + "/" + str(total) + " · " + str(pct) + "%"
-        "</div>"
+        + str(completadas) + "/" + str(total) + " · " + str(pct) + "% </div>"
     )
     st.markdown(bar_html, unsafe_allow_html=True)
 
-    # Stats rápidas
     total_recompensas = sum(m["recompensa"] for m in MISIONES if m["id"] in canjeadas)
     html_stats = (
-        stat_badge("Canjeadas",  completadas,        "#34d399", "✅") +
-        stat_badge("Pendientes", total-completadas,  "#64748b", "⏳") +
+        stat_badge("Canjeadas",  completadas,       "#34d399", "✅") +
+        stat_badge("Pendientes", total-completadas, "#64748b", "⏳") +
         stat_badge("Ganadas",    str(total_recompensas) + " ⭐", "#fbbf24", "⭐")
     )
     st.markdown(
         "<div style='text-align:center;margin-bottom:22px'>" + html_stats + "</div>",
-        unsafe_allow_html=True
-    )
+        unsafe_allow_html=True)
 
     pixel_divider("#a78bfa", "LISTA DE MISIONES")
 
-    # Lista de misiones
     for m in MISIONES:
-        canjeada   = m["id"] in canjeadas
-        dif_raw    = _dif_key(m.get("dif","todas"))
-        dif_color  = DIF_COLOR.get(dif_raw, "#a78bfa")
-        dif_label  = DIF_LABEL.get(dif_raw, "TODAS")
+        canjeada  = m["id"] in canjeadas
+        dif_raw   = _dif_key(m.get("dif","todas"))
+        dif_color = DIF_COLOR.get(dif_raw, "#a78bfa")
+        dif_label = DIF_LABEL.get(dif_raw, "TODAS")
 
         bg    = "rgba(52,211,153,.06)"   if canjeada else "rgba(15,15,25,.6)"
         borde = "rgba(52,211,153,.3)"    if canjeada else "rgba(167,139,250,.12)"
 
-        # Badge de dificultad
+        badge_dif = ""
         if dif_raw not in ("todas",):
             badge_dif = (
                 "<span style='font-size:.62rem;font-weight:700;text-transform:uppercase;"
@@ -69,10 +64,8 @@ def pantalla_misiones():
                 "border:1px solid " + dif_color + "44;border-radius:20px;padding:2px 9px;"
                 "font-family:Courier Prime,monospace'>" + dif_label + "</span>"
             )
-        else:
-            badge_dif = ""
 
-        # Badge estado
+        badge_estado = ""
         if canjeada:
             badge_estado = (
                 "<span style='font-size:.62rem;font-weight:700;text-transform:uppercase;"
@@ -80,8 +73,6 @@ def pantalla_misiones():
                 "border-radius:20px;padding:2px 9px;letter-spacing:1px;"
                 "font-family:Courier Prime,monospace'>COMPLETADA</span>"
             )
-        else:
-            badge_estado = ""
 
         icono_derecha = (
             "<span style='color:#34d399;font-size:1.3rem'>✅</span>"
@@ -110,20 +101,17 @@ def pantalla_misiones():
             st.markdown(
                 "<div style='display:flex;align-items:center;justify-content:center;"
                 "height:72px'>" + icono_derecha + "</div>",
-                unsafe_allow_html=True
-            )
+                unsafe_allow_html=True)
 
-    # Aviso de canje
     st.markdown(
         "<div style='background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);"
         "border-radius:14px;padding:14px 18px;margin-top:18px;margin-bottom:6px;"
         "font-family:Courier Prime,monospace;font-size:.8rem;color:rgba(255,255,255,.5);"
         "line-height:1.6'>"
-        "💡 Las misiones se <b style=\'color:#60a5fa\'>canjean automáticamente</b> "
+        "💡 Las misiones se <b style='color:#60a5fa'>canjean automáticamente</b> "
         "al finalizar una partida desde la pantalla de resultados."
         "</div>",
-        unsafe_allow_html=True
-    )
+        unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("⬅  VOLVER AL LOBBY", use_container_width=True):
