@@ -3,47 +3,13 @@ import hashlib
 import os
 import base64
 import streamlit as st
-from config import COOLDOWN
 
 DB_PATH = "database.db"
+COOLDOWN = 3  # importado inline para evitar dependencia circular
 
 
-# ── GitHub auto-save ──────────────────────────────────────────────────────────
+# ── GitHub persistencia ───────────────────────────────────────────────────────
 def _github_save():
-    """Sube database.db a GitHub para persistencia entre redeployos."""
-    try:
-        import requests
-        token  = st.secrets.get("GITHUB_TOKEN", "")
-        repo   = st.secrets.get("GITHUB_REPO", "")   # "usuario/ciudad-python"
-        branch = st.secrets.get("GITHUB_BRANCH", "main")
-        if not token or not repo:
-            return
-
-        url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
-
-        with open(DB_PATH, "rb") as f:
-            content = base64.b64encode(f.read()).decode()
-
-        # Obtener SHA actual del archivo (necesario para actualizar)
-        r = requests.get(url, headers=headers)
-        sha = r.json().get("sha", "") if r.status_code == 200 else ""
-
-        payload = {
-            "message": "chore: auto-save database.db",
-            "content": content,
-            "branch":  branch,
-        }
-        if sha:
-            payload["sha"] = sha
-
-        requests.put(url, json=payload, headers=headers)
-    except Exception:
-        pass  # Si falla no interrumpe el juego
-
-
-def _github_restore():
-    """Descarga database.db desde GitHub si no existe localmente."""
     try:
         import requests
         token  = st.secrets.get("GITHUB_TOKEN", "")
@@ -51,9 +17,30 @@ def _github_restore():
         branch = st.secrets.get("GITHUB_BRANCH", "main")
         if not token or not repo:
             return
-        if os.path.exists(DB_PATH):
-            return  # ya existe localmente
+        url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
+        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        with open(DB_PATH, "rb") as f:
+            content = base64.b64encode(f.read()).decode()
+        r = requests.get(url, headers=headers)
+        sha = r.json().get("sha", "") if r.status_code == 200 else ""
+        payload = {"message": "chore: auto-save database.db", "content": content, "branch": branch}
+        if sha:
+            payload["sha"] = sha
+        requests.put(url, json=payload, headers=headers)
+    except Exception:
+        pass
 
+
+def _github_restore():
+    try:
+        import requests
+        if os.path.exists(DB_PATH):
+            return
+        token  = st.secrets.get("GITHUB_TOKEN", "")
+        repo   = st.secrets.get("GITHUB_REPO", "")
+        branch = st.secrets.get("GITHUB_BRANCH", "main")
+        if not token or not repo:
+            return
         url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
         headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
         r = requests.get(url, headers=headers, params={"ref": branch})
@@ -67,13 +54,13 @@ def _github_restore():
 
 # ── Conexión ──────────────────────────────────────────────────────────────────
 def getconn():
-    _github_restore()  # Restaurar DB desde GitHub si no existe
+    _github_restore()
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-# ── Inicializar tablas ────────────────────────────────────────────────────────
+# ── Tablas ────────────────────────────────────────────────────────────────────
 def inicializardb():
     conn = getconn()
     c = conn.cursor()
@@ -104,8 +91,10 @@ def inicializardb():
     conn.commit()
     conn.close()
 
+# Alias con guion bajo para compatibilidad con app.py
+inicializar_db = inicializardb
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+
 def hp(p):
     return hashlib.sha256(p.encode()).hexdigest()
 
@@ -125,6 +114,8 @@ def registrargrupo(nombre, pw):
         conn.close()
         return False, None
 
+registrar_grupo = registrargrupo
+
 
 def logingrupo(nombre, pw):
     conn = getconn()
@@ -134,6 +125,8 @@ def logingrupo(nombre, pw):
     conn.close()
     return row["id"] if row else None
 
+login_grupo = logingrupo
+
 
 def nombregrupoporid(gid):
     conn = getconn()
@@ -142,6 +135,8 @@ def nombregrupoporid(gid):
     row = c.fetchone()
     conn.close()
     return row["nombregrupo"] if row else "Desconocido"
+
+nombre_grupo_por_id = nombregrupoporid
 
 
 # ── Estudiantes ───────────────────────────────────────────────────────────────
@@ -153,6 +148,8 @@ def guardarestudiante(gid, nombre):
     conn.close()
     _github_save()
 
+guardar_estudiante = guardarestudiante
+
 
 def obtenerestudiantes(gid):
     conn = getconn()
@@ -161,6 +158,8 @@ def obtenerestudiantes(gid):
     rows = c.fetchall()
     conn.close()
     return [r["nombreestudiante"] for r in rows]
+
+obtener_estudiantes = obtenerestudiantes
 
 
 # ── Progreso ──────────────────────────────────────────────────────────────────
@@ -179,6 +178,8 @@ def obtenerprogreso(gid):
     conn.close()
     return dict(row)
 
+obtener_progreso = obtenerprogreso
+
 
 def actualizarprogreso(gid, eco, amb, ene, bie, ronda):
     conn = getconn()
@@ -189,6 +190,8 @@ def actualizarprogreso(gid, eco, amb, ene, bie, ronda):
     conn.commit()
     conn.close()
     _github_save()
+
+actualizar_progreso = actualizarprogreso
 
 
 def reiniciarprogreso(gid):
@@ -202,6 +205,8 @@ def reiniciarprogreso(gid):
     conn.close()
     _github_save()
 
+reiniciar_progreso = reiniciarprogreso
+
 
 # ── Cooldowns ─────────────────────────────────────────────────────────────────
 def obtenercooldowns(gid):
@@ -211,6 +216,8 @@ def obtenercooldowns(gid):
     rows = c.fetchall()
     conn.close()
     return {r["decision"]: r["rondasrestantes"] for r in rows}
+
+obtener_cooldowns = obtenercooldowns
 
 
 def actualizarcooldown(gid, decision, rondausada):
@@ -224,6 +231,10 @@ def actualizarcooldown(gid, decision, rondausada):
     conn.close()
     _github_save()
 
+actualizar_cooldown = actualizarcooldown
+
 
 def decrementarcooldowns(gid):
     pass  # cooldowns usan ronda absoluta
+
+decrementar_cooldowns = decrementarcooldowns
