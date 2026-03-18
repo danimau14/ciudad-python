@@ -12,21 +12,24 @@ from config import (TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN, DECISIONES, EVENTOS
 def _clamp(v): return max(0, min(100, v))
 
 
-def _barra(nombre, valor, color, emoji):
+def _barra_ind(nombre, valor, color, emoji):
     v     = _clamp(valor)
-    badge = "Estable" if v >= 60 else "Precaución" if v >= 30 else "Crítico"
-    bc    = "#10b981" if v >= 60 else "#f59e0b" if v >= 30 else "#ef4444"
+    badge = "Estable"   if v >= 60 else "Precaución" if v >= 30 else "Crítico"
+    bc    = "#10b981"   if v >= 60 else "#f59e0b"    if v >= 30 else "#ef4444"
+    glow  = f"box-shadow:0 0 12px {color}40;" if v >= 60 else ""
     st.markdown(
-        f"<div style='background:rgba(255,255,255,.04);border:1px solid {color}22;"
-        f"border-radius:12px;padding:10px 14px;margin-bottom:6px'>"
-        f"<div style='display:flex;justify-content:space-between;margin-bottom:5px'>"
-        f"<span style='color:#f1f5f9;font-size:.78rem'>{emoji} {nombre}</span>"
-        f"<span style='color:{bc};font-size:.62rem;border:1px solid {bc}44;"
-        f"border-radius:20px;padding:1px 7px'>{badge}</span></div>"
-        f"<div style='background:rgba(255,255,255,.07);border-radius:4px;height:7px'>"
-        f"<div style='width:{v}%;background:{color};height:7px;border-radius:4px'></div></div>"
-        f"<div style='text-align:right;color:{color};font-size:.75rem;font-weight:700;"
-        f"margin-top:2px'>{v}/100</div></div>",
+        f"<div style='background:rgba(255,255,255,.03);border:1px solid {color}28;"
+        f"border-radius:14px;padding:12px 16px;{glow}'>"
+        f"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:7px'>"
+        f"<span style='color:#e2e8f0;font-size:.8rem;font-weight:600'>{emoji} {nombre}</span>"
+        f"<span style='color:{bc};font-size:.6rem;font-weight:700;font-family:Courier Prime,monospace;"
+        f"background:{bc}18;border:1px solid {bc}33;border-radius:20px;padding:1px 8px'>{badge}</span></div>"
+        f"<div style='background:rgba(255,255,255,.06);border-radius:6px;height:8px;overflow:hidden'>"
+        f"<div style='width:{v}%;background:linear-gradient(90deg,{color}99,{color});"
+        f"height:8px;border-radius:6px;transition:width .5s ease'></div></div>"
+        f"<div style='text-align:right;color:{color};font-size:.82rem;font-weight:800;"
+        f"font-family:Courier Prime,monospace;margin-top:4px'>{v}<span style='font-size:.6rem;"
+        f"color:rgba(255,255,255,.25)'>/100</span></div></div>",
         unsafe_allow_html=True)
 
 
@@ -63,25 +66,115 @@ def _aplicar_efectos(ind, efectos):
     return r
 
 
-def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif):
-    DIF_COLOR_MAP = {"Fácil": "#10b981", "Normal": "#f59e0b", "Difícil": "#ef4444"}
-    col_dif = DIF_COLOR_MAP.get(dif, "#a78bfa")
-    top1, top2 = st.columns([3, 1])
-    with top1:
-        chips = " ".join(
-            f"<span style='background:{'rgba(167,139,250,0.2)' if e == est_turno else 'rgba(255,255,255,0.04)'};"
-            f"border:1px solid {'rgba(167,139,250,0.45)' if e == est_turno else 'rgba(255,255,255,0.07)'};"
-            f"border-radius:20px;padding:4px 14px;margin:2px;font-size:.82rem;"
-            f"color:{'#c4b5fd' if e == est_turno else '#64748b'};display:inline-block'>{e}</span>"
-            for e in estudiantes)
+DIF_META = {
+    "Fácil":   {"color": "#10b981", "emoji": "🟢", "bg": "rgba(16,185,129,.12)"},
+    "Normal":  {"color": "#f59e0b", "emoji": "🟡", "bg": "rgba(245,158,11,.12)"},
+    "Difícil": {"color": "#ef4444", "emoji": "🔴", "bg": "rgba(239,68,68,.12)"},
+}
+
+
+def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind):
+    dm      = DIF_META.get(dif, DIF_META["Normal"])
+    pct     = int((ronda - 1) / TOTAL_RONDAS * 100)
+    fase_actual = st.session_state.get("fase_ronda", "decision")
+    fase_labels = {"decision": "⚙️ Decisión", "pregunta": "❓ Pregunta",
+                   "evento": "🌐 Evento", "resultado_pregunta": "📊 Resultado"}
+    fase_txt = fase_labels.get(fase_actual, fase_actual)
+
+    # ── Barra de ronda ────────────────────────────────────────────────────────
+    ronda_chips = ""
+    for i in range(1, TOTAL_RONDAS + 1):
+        if i < ronda:
+            c = "#a78bfa"; op = "1"
+        elif i == ronda:
+            c = dm["color"]; op = "1"
+        else:
+            c = "rgba(255,255,255,.12)"; op = "0.5"
+        ronda_chips += (
+            f"<span style='display:inline-block;width:22px;height:22px;border-radius:50%;"
+            f"background:{c};opacity:{op};font-size:.6rem;font-weight:700;color:#0f0f1e;"
+            f"text-align:center;line-height:22px;margin:1px'>{i}</span>")
+
+    # ── Bloque nombre + chips estudiantes ────────────────────────────────────
+    est_chips = ""
+    for e in estudiantes:
+        activo = (e == est_turno)
+        est_chips += (
+            f"<span style='display:inline-flex;align-items:center;gap:5px;"
+            f"background:{'rgba(167,139,250,.18)' if activo else 'rgba(255,255,255,.04)'};"
+            f"border:1px solid {'rgba(167,139,250,.5)' if activo else 'rgba(255,255,255,.08)'};"
+            f"border-radius:20px;padding:5px 14px;font-size:.78rem;"
+            f"color:{'#c4b5fd' if activo else '#64748b'};font-weight:{'700' if activo else '400'};margin:2px'>"
+            f"{'✏️ ' if activo else ''}{e}</span>")
+
+    # ── Indicadores en línea compactos ───────────────────────────────────────
+    ind_line = ""
+    for key in ["economia", "medio_ambiente", "energia", "bienestar_social"]:
+        color, emoji = IND_COLOR[key]
+        v = _clamp(ind.get(key, 50))
+        bc = "#10b981" if v >= 60 else "#f59e0b" if v >= 30 else "#ef4444"
+        ind_line += (
+            f"<div style='display:flex;flex-direction:column;align-items:center;"
+            f"background:rgba(255,255,255,.03);border:1px solid {color}22;"
+            f"border-radius:10px;padding:8px 12px;min-width:80px'>"
+            f"<span style='font-size:.9rem'>{emoji}</span>"
+            f"<span style='font-size:.68rem;color:rgba(255,255,255,.4);"
+            f"font-family:Courier Prime,monospace;margin:2px 0'>{IND_LABEL[key].split()[0]}</span>"
+            f"<span style='font-size:.9rem;font-weight:800;color:{bc};"
+            f"font-family:Courier Prime,monospace'>{v}</span>"
+            f"<div style='width:100%;background:rgba(255,255,255,.07);border-radius:3px;"
+            f"height:4px;margin-top:4px'>"
+            f"<div style='width:{v}%;background:{color};height:4px;border-radius:3px'></div>"
+            f"</div></div>")
+
+    col_hdr, col_cfg = st.columns([5, 1])
+    with col_hdr:
         st.markdown(
-            f"<h2 style='margin:0;font-family:Press Start 2P,monospace;font-size:.95rem;color:#a78bfa'>"
-            f"{nombre_grp}"
-            f"<span style='font-size:.6rem;margin-left:10px;color:{col_dif};"
-            f"border:1px solid {col_dif}44;border-radius:20px;padding:2px 10px'>{dif}</span></h2>"
-            f"<div style='margin-top:8px'>{chips}</div>",
+            f"<div style='background:linear-gradient(135deg,rgba(15,15,30,.98),rgba(20,20,45,.95));"
+            f"border:1px solid {dm['color']}30;border-radius:18px;padding:18px 22px;margin-bottom:14px;"
+            f"box-shadow:0 4px 30px rgba(0,0,0,.4),0 0 60px {dm['color']}0a'>"
+
+            # nombre + dif + ronda
+            f"<div style='display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px'>"
+            f"<span style='font-family:Press Start 2P,monospace;font-size:.95rem;"
+            f"background:linear-gradient(90deg,#a78bfa,#60a5fa);"
+            f"-webkit-background-clip:text;-webkit-text-fill-color:transparent'>{nombre_grp}</span>"
+            f"<span style='background:{dm['bg']};color:{dm['color']};"
+            f"border:1px solid {dm['color']}44;border-radius:20px;padding:3px 12px;"
+            f"font-size:.68rem;font-weight:700'>{dm['emoji']} {dif}</span>"
+            f"<span style='color:rgba(255,255,255,.25);font-size:.72rem;"
+            f"font-family:Courier Prime,monospace'>Ronda {ronda}/{TOTAL_RONDAS}</span>"
+            f"<span style='margin-left:auto;background:rgba(255,255,255,.05);"
+            f"border:1px solid rgba(255,255,255,.08);border-radius:20px;"
+            f"padding:3px 12px;font-size:.68rem;color:rgba(255,255,255,.4)'>{fase_txt}</span>"
+            f"</div>"
+
+            # chips estudiantes
+            f"<div style='margin-bottom:14px'>{est_chips}</div>"
+
+            # barra de rondas
+            f"<div style='display:flex;align-items:center;gap:6px;margin-bottom:12px'>"
+            f"<span style='font-size:.6rem;color:rgba(255,255,255,.25);"
+            f"font-family:Courier Prime,monospace'>RONDAS</span>"
+            f"<div>{ronda_chips}</div>"
+            f"<span style='font-size:.62rem;color:{dm['color']};font-weight:700;"
+            f"font-family:Courier Prime,monospace'>{pct}%</span></div>"
+
+            # barra progreso
+            f"<div style='background:rgba(255,255,255,.05);border-radius:4px;height:4px'>"
+            f"<div style='width:{pct}%;background:linear-gradient(90deg,#7c3aed,{dm['color']});"
+            f"height:4px;border-radius:4px;box-shadow:0 0 8px {dm['color']}60'></div></div>"
+            f"</div>",
             unsafe_allow_html=True)
-    with top2:
+
+        # indicadores en línea
+        st.markdown(
+            f"<div style='display:flex;gap:8px;flex-wrap:nowrap;justify-content:stretch;"
+            f"margin-bottom:14px'>{ind_line}</div>",
+            unsafe_allow_html=True)
+
+    with col_cfg:
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
         with st.expander("⚙️ Configuración"):
             if st.button("📖 Instrucciones", use_container_width=True):
                 st.session_state["_from_juego"] = True
@@ -90,20 +183,6 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif):
                 navegar("inicio")
             if st.button("⬅️ Volver al Lobby", use_container_width=True):
                 navegar("lobby")
-    pct = int((ronda - 1) / TOTAL_RONDAS * 100)
-    m1, m2, m3, m4 = st.columns(4)
-    fase_label = {"decision": "Elegir Decisión", "pregunta": "Responder",
-                  "evento": "Evento", "resultado_pregunta": "Resultado"}
-    fase_actual = st.session_state.get("fase_ronda", "decision")
-    with m1: st.metric("Ronda", f"{ronda}/{TOTAL_RONDAS}")
-    with m2: st.metric("Turno", est_turno)
-    with m3: st.metric("Progreso", f"{pct}%")
-    with m4: st.metric("Fase", fase_label.get(fase_actual, fase_actual))
-    st.markdown(
-        f"<div style='background:rgba(255,255,255,.06);border-radius:4px;height:5px;margin:4px 0 16px'>"
-        f"<div style='width:{pct}%;background:linear-gradient(90deg,#a78bfa,#60a5fa);"
-        f"height:5px;border-radius:4px'></div></div>",
-        unsafe_allow_html=True)
 
 
 def pantalla_juego():
@@ -112,15 +191,15 @@ def pantalla_juego():
         navegar("inicio")
         return
 
-    dif         = st.session_state.get("dificultad_sel", "Normal")
-    progreso    = obtener_progreso(gid, dif)
-    estudiantes = obtener_estudiantes(gid)
-    cooldowns   = obtener_cooldowns(gid, dif)
-    ronda       = progreso["rondaactual"]
-    nombre_grp  = st.session_state.get("grupo_nombre", "")
-    idx_turno   = (ronda - 1) % len(estudiantes)
-    est_turno   = estudiantes[idx_turno]
-    dif_cfg     = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
+    dif          = st.session_state.get("dificultad_sel", "Normal")
+    progreso     = obtener_progreso(gid, dif)
+    estudiantes  = obtener_estudiantes(gid)
+    cooldowns    = obtener_cooldowns(gid, dif)
+    ronda        = progreso["rondaactual"]
+    nombre_grp   = st.session_state.get("grupo_nombre", "")
+    idx_turno    = (ronda - 1) % len(estudiantes)
+    est_turno    = estudiantes[idx_turno]
+    dif_cfg      = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
     penalizacion = dif_cfg["penalizacion"]
 
     ind = {
@@ -131,21 +210,13 @@ def pantalla_juego():
     }
 
     if ronda > TOTAL_RONDAS:
-        st.session_state.update(
-            resultado="victoria",
-            indicadores_finales=ind,
-            rondas_completadas=TOTAL_RONDAS,
-        )
+        st.session_state.update(resultado="victoria",
+                                indicadores_finales=ind,
+                                rondas_completadas=TOTAL_RONDAS)
         navegar("fin")
         return
 
-    _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif)
-    ci1, ci2, ci3, ci4 = st.columns(4)
-    for col, key in zip([ci1, ci2, ci3, ci4],
-                        ["economia", "medio_ambiente", "energia", "bienestar_social"]):
-        color, emoji = IND_COLOR[key]
-        with col:
-            _barra(IND_LABEL[key], ind[key], color, emoji)
+    _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind)
 
     st.markdown("---")
     fase = st.session_state.get("fase_ronda", "decision")
@@ -189,9 +260,7 @@ def pantalla_juego():
                     f"<span style='font-size:1.3rem'>⏳</span>"
                     f"<span style='color:#fbbf24;font-weight:700;font-size:.85rem'>"
                     f"{rondas_falta} ronda{'s' if rondas_falta!=1 else ''}</span>"
-                    f"{dots}"
-                    f"<span style='color:rgba(255,255,255,.3);font-size:.62rem'>"
-                    f"Disponible ronda {disponibleen}</span></div>")
+                    f"{dots}</div>")
             with col:
                 st.markdown(
                     f"<div style='position:relative;background:{bg};border:1px solid {borde};"
@@ -239,11 +308,10 @@ def pantalla_juego():
         dec_emoji = DECISIONES.get(nom_dec, {}).get("emoji", "")
         st.markdown(
             f"<div style='background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);"
-            f"border-radius:12px;padding:10px 18px;margin-bottom:14px;display:flex;"
-            f"flex-wrap:wrap;gap:8px;align-items:center'>"
-            f"<span style='color:#a78bfa;font-size:.78rem'>Decisión:</span>"
+            f"border-radius:12px;padding:10px 18px;margin-bottom:14px'>"
+            f"<span style='color:#a78bfa;font-size:.78rem'>Decisión: </span>"
             f"<span style='color:#f1f5f9;font-weight:700'>{dec_emoji} {nom_dec}</span>"
-            f"<span style='color:rgba(255,255,255,.3);font-size:.75rem'>{ef_resumen}</span></div>",
+            f"&nbsp;&nbsp;<span style='color:rgba(255,255,255,.3);font-size:.75rem'>{ef_resumen}</span></div>",
             unsafe_allow_html=True)
 
         st.markdown(
@@ -275,7 +343,6 @@ def pantalla_juego():
         dif_lbl = {"facil":"FÁCIL","normal":"NORMAL","dificil":"DIFÍCIL"}.get(
             pregunta.get("dif","normal"), "")
 
-        # ── Tipografía mejorada para la pregunta ─────────────────────────────
         st.markdown(
             f"<div style='background:rgba(15,15,28,.9);border:1px solid {cat_color}28;"
             f"border-left:4px solid {cat_color};border-radius:14px;padding:22px 24px;margin-bottom:16px'>"
@@ -286,8 +353,7 @@ def pantalla_juego():
             f"<span style='background:{dif_col}18;color:{dif_col};"
             f"border:1px solid {dif_col}44;border-radius:20px;padding:2px 12px;"
             f"font-size:.7rem;font-weight:700;font-family:Courier Prime,monospace'>{dif_lbl}</span></div>"
-            f"<p style='color:#f0f4ff;margin:0;"
-            f"font-family:Georgia,\"Times New Roman\",serif;"
+            f"<p style='color:#f0f4ff;margin:0;font-family:Georgia,\"Times New Roman\",serif;"
             f"font-size:clamp(1.05rem,2.5vw,1.22rem);line-height:1.75;font-weight:400;"
             f"letter-spacing:0.01em'>{pregunta['q']}</p></div>",
             unsafe_allow_html=True)
@@ -318,8 +384,7 @@ def pantalla_juego():
                 f"border-radius:16px;padding:22px;text-align:center;margin-bottom:14px'>"
                 f"<div style='font-size:2.5rem'>✅</div>"
                 f"<h3 style='color:#34d399;margin:8px 0 4px'>¡Respuesta Correcta!</h3>"
-                f"<p style='color:#6ee7b7'>Los efectos de <b>{nom_dec}</b> se aplicaron.</p>"
-                f"</div>",
+                f"<p style='color:#6ee7b7'>Los efectos de <b>{nom_dec}</b> se aplicaron.</p></div>",
                 unsafe_allow_html=True)
             actualizar_progreso(gid, nuevo_ind["economia"], nuevo_ind["medio_ambiente"],
                                 nuevo_ind["energia"], nuevo_ind["bienestar_social"], ronda, dif)
@@ -403,6 +468,5 @@ def pantalla_juego():
                 pregunta_actual=None, respuesta_correcta=False,
                 decision_elegida=None, decision_efectos=None,
                 evento_ronda=None, fase_ronda="decision",
-                timer_inicio=None, tiempo_agotado=False,
-            )
+                timer_inicio=None, tiempo_agotado=False)
             st.rerun()

@@ -72,10 +72,10 @@ _TABLAS = [
 def _migrar(conn):
     cur = conn.cursor()
     migraciones = [
-        ("progresojuego",     "dificultad", "ALTER TABLE progresojuego ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
-        ("cooldowndecisiones","dificultad", "ALTER TABLE cooldowndecisiones ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
-        ("ranking",           "dificultad", "ALTER TABLE ranking ADD COLUMN dificultad TEXT DEFAULT 'Normal'"),
-        ("ranking",           "fecha",      "ALTER TABLE ranking ADD COLUMN fecha TEXT DEFAULT (date('now'))"),
+        ("progresojuego",      "dificultad", "ALTER TABLE progresojuego ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
+        ("cooldowndecisiones", "dificultad", "ALTER TABLE cooldowndecisiones ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
+        ("ranking",            "dificultad", "ALTER TABLE ranking ADD COLUMN dificultad TEXT DEFAULT 'Normal'"),
+        ("ranking",            "fecha",      "ALTER TABLE ranking ADD COLUMN fecha TEXT DEFAULT (date('now'))"),
     ]
     for tabla, columna, sql in migraciones:
         try:
@@ -173,48 +173,55 @@ obtener_estudiantes = obtenerestudiantes
 
 # ── Progreso por dificultad ───────────────────────────────────────────────────
 def obtenerprogreso(gid, dificultad="Normal"):
+    """
+    Obtiene o crea el registro de progreso para (gid, dificultad).
+    Usa SELECT → INSERT protegido con try/except → SELECT final.
+    Nunca lanza IntegrityError hacia afuera.
+    """
     conn = getconn(); c = conn.cursor()
 
-    # Intentar obtener registro existente
-    c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
-    row = c.fetchone()
+    def _buscar():
+        c.execute(
+            "SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=? ORDER BY id LIMIT 1",
+            (gid, dificultad))
+        return c.fetchone()
 
+    row = _buscar()
     if row is None:
-        # No existe → insertar uno nuevo
-        c.execute("""INSERT INTO progresojuego
-            (grupoid, dificultad, economia, medioambiente, energia, bienestarsocial, rondaactual)
-            VALUES (?, ?, 50, 50, 50, 50, 1)""", (gid, dificultad))
-        conn.commit()
-        # Volver a buscar con el id recién insertado
-        c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
-        row = c.fetchone()
+        try:
+            c.execute(
+                """INSERT INTO progresojuego
+                   (grupoid, dificultad, economia, medioambiente, energia, bienestarsocial, rondaactual)
+                   VALUES (?, ?, 50, 50, 50, 50, 1)""",
+                (gid, dificultad))
+            conn.commit()
+        except (sqlite3.IntegrityError, sqlite3.OperationalError):
+            conn.rollback()
+        row = _buscar()
 
-    if row is None:
-        # Fallback extremo: devolver valores por defecto sin tocar la BD
-        conn.close()
-        return {
-            "grupoid": gid, "dificultad": dificultad,
-            "economia": 50, "medioambiente": 50,
-            "energia": 50, "bienestarsocial": 50,
-            "rondaactual": 1,
-        }
-
-    resultado = dict(row)
     conn.close()
-    return resultado
+    if row is None:
+        return {"grupoid": gid, "dificultad": dificultad,
+                "economia": 50, "medioambiente": 50,
+                "energia": 50, "bienestarsocial": 50, "rondaactual": 1}
+    return dict(row)
 
 obtener_progreso = obtenerprogreso
 
 
 def actualizarprogreso(gid, eco, amb, ene, bie, ronda, dificultad="Normal"):
     conn = getconn(); c = conn.cursor()
-    # Asegura que el registro exista antes de actualizar
-    c.execute("""INSERT OR IGNORE INTO progresojuego
-        (grupoid, dificultad, economia, medioambiente, energia, bienestarsocial, rondaactual)
-        VALUES (?, ?, 50, 50, 50, 50, 1)""", (gid, dificultad))
-    c.execute("""UPDATE progresojuego
-        SET economia=?, medioambiente=?, energia=?, bienestarsocial=?, rondaactual=?
-        WHERE grupoid=? AND dificultad=?""", (eco, amb, ene, bie, ronda, gid, dificultad))
+    rows = c.execute(
+        "UPDATE progresojuego SET economia=?,medioambiente=?,energia=?,bienestarsocial=?,rondaactual=? "
+        "WHERE grupoid=? AND dificultad=?", (eco, amb, ene, bie, ronda, gid, dificultad)).rowcount
+    if rows == 0:
+        try:
+            c.execute(
+                """INSERT INTO progresojuego
+                   (grupoid,dificultad,economia,medioambiente,energia,bienestarsocial,rondaactual)
+                   VALUES(?,?,?,?,?,?,?)""", (gid, dificultad, eco, amb, ene, bie, ronda))
+        except (sqlite3.IntegrityError, sqlite3.OperationalError):
+            pass
     conn.commit(); conn.close()
 
 actualizar_progreso = actualizarprogreso
@@ -223,7 +230,7 @@ actualizar_progreso = actualizarprogreso
 def reiniciarprogreso(gid, dificultad="Normal"):
     conn = getconn(); c = conn.cursor()
     c.execute("""UPDATE progresojuego
-        SET economia=50, medioambiente=50, energia=50, bienestarsocial=50, rondaactual=1
+        SET economia=50,medioambiente=50,energia=50,bienestarsocial=50,rondaactual=1
         WHERE grupoid=? AND dificultad=?""", (gid, dificultad))
     c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?", (gid, dificultad))
     conn.commit(); conn.close()
@@ -234,8 +241,9 @@ reiniciar_progreso = reiniciarprogreso
 # ── Cooldowns ─────────────────────────────────────────────────────────────────
 def obtenercooldowns(gid, dificultad="Normal"):
     conn = getconn(); c = conn.cursor()
-    c.execute("SELECT decision, rondasrestantes FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?",
-              (gid, dificultad))
+    c.execute(
+        "SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?",
+        (gid, dificultad))
     rows = c.fetchall(); conn.close()
     return {r["decision"]: r["rondasrestantes"] for r in rows}
 
@@ -244,11 +252,10 @@ obtener_cooldowns = obtenercooldowns
 
 def actualizarcooldown(gid, decision, rondausada, dificultad="Normal"):
     conn = getconn(); c = conn.cursor()
-    disponibleen = rondausada + COOLDOWN
     c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=? AND dificultad=?",
               (gid, decision, dificultad))
-    c.execute("INSERT INTO cooldowndecisiones(grupoid, dificultad, decision, rondasrestantes) VALUES(?,?,?,?)",
-              (gid, dificultad, decision, disponibleen))
+    c.execute("INSERT INTO cooldowndecisiones(grupoid,dificultad,decision,rondasrestantes) VALUES(?,?,?,?)",
+              (gid, dificultad, decision, rondausada + COOLDOWN))
     conn.commit(); conn.close()
 
 actualizar_cooldown = actualizarcooldown
@@ -266,7 +273,7 @@ def obtener_logros_grupo(gid):
 
 def guardar_logro(gid, logro_id):
     conn = getconn()
-    conn.execute("INSERT OR IGNORE INTO logros_grupo(grupoid, logroid) VALUES(?,?)", (gid, logro_id))
+    conn.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
     conn.commit(); conn.close()
 
 
@@ -280,7 +287,7 @@ def obtener_misiones_canjeadas(gid):
 
 def guardar_mision(gid, mision_id):
     conn = getconn()
-    conn.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid, misionid) VALUES(?,?)", (gid, mision_id))
+    conn.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
     conn.commit(); conn.close()
 
 
@@ -294,7 +301,7 @@ def obtener_estrellas(gid):
 
 def guardar_estrellas(gid, cantidad):
     conn = getconn()
-    conn.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid, total) VALUES(?,0)", (gid,))
+    conn.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
     conn.execute("UPDATE estrellas_grupo SET total=total+? WHERE grupoid=?", (cantidad, gid))
     conn.commit(); conn.close()
 
@@ -303,7 +310,7 @@ def guardar_estrellas(gid, cantidad):
 def guardar_ranking(gid, puntaje, dificultad="Normal"):
     nombre = nombregrupoporid(gid)
     conn = getconn()
-    conn.execute("INSERT INTO ranking(grupoid, nombregrupo, puntaje, dificultad) VALUES(?,?,?,?)",
+    conn.execute("INSERT INTO ranking(grupoid,nombregrupo,puntaje,dificultad) VALUES(?,?,?,?)",
                  (gid, nombre, puntaje, dificultad))
     conn.commit(); conn.close()
 
@@ -311,10 +318,10 @@ def guardar_ranking(gid, puntaje, dificultad="Normal"):
 def obtener_ranking(dificultad=None, limite=10):
     conn = getconn(); c = conn.cursor()
     if dificultad:
-        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha, grupoid FROM ranking
+        c.execute("""SELECT nombregrupo,puntaje,dificultad,fecha,grupoid FROM ranking
                      WHERE dificultad=? ORDER BY puntaje DESC LIMIT ?""", (dificultad, limite))
     else:
-        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha, grupoid FROM ranking
+        c.execute("""SELECT nombregrupo,puntaje,dificultad,fecha,grupoid FROM ranking
                      ORDER BY puntaje DESC LIMIT ?""", (limite,))
     rows = c.fetchall(); conn.close()
     return [dict(r) for r in rows]
