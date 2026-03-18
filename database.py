@@ -4,12 +4,71 @@ import os
 import base64
 import streamlit as st
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+_DIR    = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(_DIR, "database.db")
 COOLDOWN = 3
-_DB_READY = False   # flag: tablas ya creadas en esta sesión de proceso
+
+_CREATE_SQL = """
+CREATE TABLE IF NOT EXISTS grupos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombregrupo TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS estudiantes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER NOT NULL,
+    nombreestudiante TEXT NOT NULL,
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS progresojuego (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER UNIQUE NOT NULL,
+    economia INTEGER DEFAULT 50,
+    medioambiente INTEGER DEFAULT 50,
+    energia INTEGER DEFAULT 50,
+    bienestarsocial INTEGER DEFAULT 50,
+    rondaactual INTEGER DEFAULT 1,
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS cooldowndecisiones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER NOT NULL,
+    decision TEXT NOT NULL,
+    rondasrestantes INTEGER NOT NULL,
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS logros_grupo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER NOT NULL,
+    logroid TEXT NOT NULL,
+    UNIQUE(grupoid, logroid),
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS misiones_canjeadas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER NOT NULL,
+    misionid TEXT NOT NULL,
+    UNIQUE(grupoid, misionid),
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS estrellas_grupo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER UNIQUE NOT NULL,
+    total INTEGER DEFAULT 0,
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+CREATE TABLE IF NOT EXISTS ranking (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grupoid INTEGER NOT NULL,
+    nombregrupo TEXT NOT NULL,
+    puntaje INTEGER NOT NULL,
+    dificultad TEXT DEFAULT 'Normal',
+    fecha TEXT DEFAULT (date('now')),
+    FOREIGN KEY(grupoid) REFERENCES grupos(id)
+);
+"""
 
 
-# ── GitHub persistencia ───────────────────────────────────────────────────────
 def _github_save():
     try:
         import requests
@@ -37,8 +96,6 @@ def _github_save():
 def _github_restore():
     try:
         import requests
-        if os.path.exists(DB_PATH):
-            return
         token  = st.secrets.get("GITHUB_TOKEN", "")
         repo   = st.secrets.get("GITHUB_REPO", "")
         branch = st.secrets.get("GITHUB_BRANCH", "main")
@@ -56,78 +113,37 @@ def _github_restore():
         pass
 
 
-_CREATE_SQL = """
-    CREATE TABLE IF NOT EXISTS grupos (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombregrupo TEXT UNIQUE NOT NULL,
-        password    TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS estudiantes (
-        id               INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid          INTEGER NOT NULL,
-        nombreestudiante TEXT NOT NULL,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS progresojuego (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid         INTEGER UNIQUE NOT NULL,
-        economia        INTEGER DEFAULT 50,
-        medioambiente   INTEGER DEFAULT 50,
-        energia         INTEGER DEFAULT 50,
-        bienestarsocial INTEGER DEFAULT 50,
-        rondaactual     INTEGER DEFAULT 1,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS cooldowndecisiones (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid         INTEGER NOT NULL,
-        decision        TEXT NOT NULL,
-        rondasrestantes INTEGER NOT NULL,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS logros_grupo (
-        id      INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        logroid TEXT NOT NULL,
-        UNIQUE(grupoid, logroid),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS misiones_canjeadas (
-        id       INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid  INTEGER NOT NULL,
-        misionid TEXT NOT NULL,
-        UNIQUE(grupoid, misionid),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS estrellas_grupo (
-        id      INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER UNIQUE NOT NULL,
-        total   INTEGER DEFAULT 0,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-    CREATE TABLE IF NOT EXISTS ranking (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid     INTEGER NOT NULL,
-        nombregrupo TEXT NOT NULL,
-        puntaje     INTEGER NOT NULL,
-        dificultad  TEXT DEFAULT 'Normal',
-        fecha       TEXT DEFAULT (date('now')),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id)
-    );
-"""
+def _tablas_ok(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='grupos'")
+        return cur.fetchone() is not None
+    except Exception:
+        return False
+
+
+def _crear_tablas(conn):
+    conn.executescript(_CREATE_SQL)
+    conn.commit()
 
 
 def getconn():
-    """Devuelve conexión garantizando que las tablas existen."""
-    global _DB_READY
-    _github_restore()
+    """
+    Abre conexión garantizando que las tablas existen.
+    Estrategia de 3 pasos:
+      1. Conectar al archivo local
+      2. Si no hay tablas → restaurar desde GitHub y reconectar
+      3. Si aún no hay tablas → crear desde cero
+    """
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    if not _DB_READY:
-        conn.executescript(_CREATE_SQL)
-        conn.commit()
-        _DB_READY = True
+    if not _tablas_ok(conn):
+        conn.close()
+        _github_restore()
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        if not _tablas_ok(conn):
+            _crear_tablas(conn)
     return conn
 
 
