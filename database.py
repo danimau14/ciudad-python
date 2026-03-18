@@ -4,9 +4,9 @@ import os
 import base64
 import streamlit as st
 
-# Ruta absoluta — evita problema de CWD en Streamlit Cloud
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
 COOLDOWN = 3
+_DB_READY = False   # flag: tablas ya creadas en esta sesión de proceso
 
 
 # ── GitHub persistencia ───────────────────────────────────────────────────────
@@ -56,89 +56,86 @@ def _github_restore():
         pass
 
 
+_CREATE_SQL = """
+    CREATE TABLE IF NOT EXISTS grupos (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombregrupo TEXT UNIQUE NOT NULL,
+        password    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS estudiantes (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid          INTEGER NOT NULL,
+        nombreestudiante TEXT NOT NULL,
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS progresojuego (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid         INTEGER UNIQUE NOT NULL,
+        economia        INTEGER DEFAULT 50,
+        medioambiente   INTEGER DEFAULT 50,
+        energia         INTEGER DEFAULT 50,
+        bienestarsocial INTEGER DEFAULT 50,
+        rondaactual     INTEGER DEFAULT 1,
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS cooldowndecisiones (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid         INTEGER NOT NULL,
+        decision        TEXT NOT NULL,
+        rondasrestantes INTEGER NOT NULL,
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS logros_grupo (
+        id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER NOT NULL,
+        logroid TEXT NOT NULL,
+        UNIQUE(grupoid, logroid),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS misiones_canjeadas (
+        id       INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid  INTEGER NOT NULL,
+        misionid TEXT NOT NULL,
+        UNIQUE(grupoid, misionid),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS estrellas_grupo (
+        id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER UNIQUE NOT NULL,
+        total   INTEGER DEFAULT 0,
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+    CREATE TABLE IF NOT EXISTS ranking (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid     INTEGER NOT NULL,
+        nombregrupo TEXT NOT NULL,
+        puntaje     INTEGER NOT NULL,
+        dificultad  TEXT DEFAULT 'Normal',
+        fecha       TEXT DEFAULT (date('now')),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id)
+    );
+"""
+
+
 def getconn():
+    """Devuelve conexión garantizando que las tablas existen."""
+    global _DB_READY
+    _github_restore()
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    if not _DB_READY:
+        conn.executescript(_CREATE_SQL)
+        conn.commit()
+        _DB_READY = True
     return conn
 
 
-# ── Tablas ────────────────────────────────────────────────────────────────────
 def inicializardb():
-    _github_restore()
     conn = getconn()
-    c = conn.cursor()
-    c.executescript("""
-        CREATE TABLE IF NOT EXISTS grupos (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombregrupo TEXT UNIQUE NOT NULL,
-            password    TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS estudiantes (
-            id               INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid          INTEGER NOT NULL,
-            nombreestudiante TEXT NOT NULL,
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS progresojuego (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid         INTEGER UNIQUE NOT NULL,
-            economia        INTEGER DEFAULT 50,
-            medioambiente   INTEGER DEFAULT 50,
-            energia         INTEGER DEFAULT 50,
-            bienestarsocial INTEGER DEFAULT 50,
-            rondaactual     INTEGER DEFAULT 1,
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS cooldowndecisiones (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid         INTEGER NOT NULL,
-            decision        TEXT NOT NULL,
-            rondasrestantes INTEGER NOT NULL,
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS logros_grupo (
-            id      INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid INTEGER NOT NULL,
-            logroid TEXT NOT NULL,
-            UNIQUE(grupoid, logroid),
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS misiones_canjeadas (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid  INTEGER NOT NULL,
-            misionid TEXT NOT NULL,
-            UNIQUE(grupoid, misionid),
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS estrellas_grupo (
-            id      INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid INTEGER UNIQUE NOT NULL,
-            total   INTEGER DEFAULT 0,
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-        CREATE TABLE IF NOT EXISTS ranking (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid     INTEGER NOT NULL,
-            nombregrupo TEXT NOT NULL,
-            puntaje     INTEGER NOT NULL,
-            dificultad  TEXT DEFAULT 'Normal',
-            fecha       TEXT DEFAULT (date('now')),
-            FOREIGN KEY(grupoid) REFERENCES grupos(id)
-        );
-    """)
-    conn.commit()
     conn.close()
 
 inicializar_db = inicializardb
-
-
-# ── Auto-init al importar el módulo ──────────────────────────────────────────
-# Garantiza tablas incluso si app.py importa database antes de llamar inicializar_db()
-try:
-    inicializardb()
-except Exception:
-    pass
 
 
 def hp(p):
