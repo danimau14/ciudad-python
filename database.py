@@ -5,7 +5,7 @@ import base64
 import streamlit as st
 
 DB_PATH = "database.db"
-COOLDOWN = 3  # importado inline para evitar dependencia circular
+COOLDOWN = 3
 
 
 # ── GitHub persistencia ───────────────────────────────────────────────────────
@@ -52,7 +52,6 @@ def _github_restore():
         pass
 
 
-# ── Conexión ──────────────────────────────────────────────────────────────────
 def getconn():
     _github_restore()
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -88,10 +87,34 @@ def inicializardb():
         decision TEXT NOT NULL,
         rondasrestantes INTEGER NOT NULL,
         FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
+    c.execute("""CREATE TABLE IF NOT EXISTS logros_grupo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER NOT NULL,
+        logroid TEXT NOT NULL,
+        UNIQUE(grupoid, logroid),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
+    c.execute("""CREATE TABLE IF NOT EXISTS misiones_canjeadas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER NOT NULL,
+        misionid TEXT NOT NULL,
+        UNIQUE(grupoid, misionid),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
+    c.execute("""CREATE TABLE IF NOT EXISTS estrellas_grupo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER UNIQUE NOT NULL,
+        total INTEGER DEFAULT 0,
+        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
+    c.execute("""CREATE TABLE IF NOT EXISTS ranking (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        grupoid INTEGER NOT NULL,
+        nombregrupo TEXT NOT NULL,
+        puntaje INTEGER NOT NULL,
+        dificultad TEXT DEFAULT 'Normal',
+        fecha TEXT DEFAULT (date('now')),
+        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
     conn.commit()
     conn.close()
 
-# Alias con guion bajo para compatibilidad con app.py
 inicializar_db = inicializardb
 
 
@@ -235,6 +258,98 @@ actualizar_cooldown = actualizarcooldown
 
 
 def decrementarcooldowns(gid):
-    pass  # cooldowns usan ronda absoluta
+    pass
 
 decrementar_cooldowns = decrementarcooldowns
+
+
+# ── Logros ────────────────────────────────────────────────────────────────────
+def obtener_logros_grupo(gid):
+    conn = getconn()
+    c = conn.cursor()
+    c.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
+    rows = c.fetchall()
+    conn.close()
+    return [r["logroid"] for r in rows]
+
+
+def guardar_logro(gid, logro_id):
+    conn = getconn()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    _github_save()
+
+
+# ── Misiones ──────────────────────────────────────────────────────────────────
+def obtener_misiones_canjeadas(gid):
+    conn = getconn()
+    c = conn.cursor()
+    c.execute("SELECT misionid FROM misiones_canjeadas WHERE grupoid=?", (gid,))
+    rows = c.fetchall()
+    conn.close()
+    return [r["misionid"] for r in rows]
+
+
+def guardar_mision(gid, mision_id):
+    conn = getconn()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    _github_save()
+
+
+# ── Estrellas ─────────────────────────────────────────────────────────────────
+def obtener_estrellas(gid):
+    conn = getconn()
+    c = conn.cursor()
+    c.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?", (gid,))
+    row = c.fetchone()
+    conn.close()
+    return row["total"] if row else 0
+
+
+def guardar_estrellas(gid, cantidad):
+    """Suma `cantidad` estrellas al grupo."""
+    conn = getconn()
+    c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
+    c.execute("UPDATE estrellas_grupo SET total=total+? WHERE grupoid=?", (cantidad, gid))
+    conn.commit()
+    conn.close()
+    _github_save()
+
+
+# ── Ranking ───────────────────────────────────────────────────────────────────
+def guardar_ranking(gid, puntaje, dificultad="Normal"):
+    nombre = nombregrupoporid(gid)
+    conn = getconn()
+    c = conn.cursor()
+    c.execute("INSERT INTO ranking(grupoid,nombregrupo,puntaje,dificultad) VALUES(?,?,?,?)",
+              (gid, nombre, puntaje, dificultad))
+    conn.commit()
+    conn.close()
+    _github_save()
+
+
+def obtener_ranking(dificultad=None, limite=10):
+    conn = getconn()
+    c = conn.cursor()
+    if dificultad:
+        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha
+                     FROM ranking WHERE dificultad=?
+                     ORDER BY puntaje DESC LIMIT ?""", (dificultad, limite))
+    else:
+        c.execute("""SELECT nombregrupo, puntaje, dificultad, fecha
+                     FROM ranking ORDER BY puntaje DESC LIMIT ?""", (limite,))
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
