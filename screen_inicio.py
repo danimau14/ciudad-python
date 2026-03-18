@@ -49,18 +49,18 @@ def pantalla_inicio():
     }
     @keyframes city-glow {
         0%   { opacity: 0.15;
-               filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.35)); }
+               filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.38)); }
         100% { opacity: 0.30;
-               filter: drop-shadow(0 -10px 70px rgba(123,47,255,0.75))
+               filter: drop-shadow(0 -10px 70px rgba(123,47,255,0.78))
                        drop-shadow(0 -2px 30px rgba(255,215,0,0.28)); }
     }
 
-    /* ── Animaciones ── */
+    /* ── Animaciones generales ── */
     @keyframes float {
         0%, 100% { transform: translateY(0px);   }
         50%       { transform: translateY(-12px); }
     }
-    @keyframes shimmer-border {
+    @keyframes panel-glow {
         0%, 100% { box-shadow: 0 0 22px #7b2fff44, 0 0 55px #7b2fff20; }
         50%       { box-shadow: 0 0 45px #7b2fff99, 0 0 95px #7b2fff55; }
     }
@@ -69,28 +69,41 @@ def pantalla_inicio():
         to   { opacity: 1; transform: translateY(0);    }
     }
     @keyframes energy-line {
-        0%   { left: -100%; width: 60%; }
-        100% { left: 110%;  width: 80%; }
+        0%   { left: -100%; width: 55%; }
+        100% { left: 110%;  width: 75%; }
     }
     @keyframes btn-shine {
         0%   { left: -80%; }
         100% { left: 130%; }
     }
 
-    /* ── Bounce por letra ── */
-    @keyframes bounce-letter {
-        0%, 100% { transform: translateY(0);     }
-        40%       { transform: translateY(-10px); }
-        60%       { transform: translateY(-5px);  }
+    /* ── Animación título: bounce por línea ── */
+    @keyframes title-bounce {
+        0%, 100% { transform: translateY(0);    }
+        40%       { transform: translateY(-8px); }
+        60%       { transform: translateY(-4px); }
     }
-    /* ── Glitch ocasional ── */
-    @keyframes glitch-fx {
-        0%,  87%, 100% { transform: skewX(0deg);   color: #ffffff; }
-        89%             { transform: skewX(-9deg);  color: #ff4d6d;
-                          text-shadow: -3px 0 #00ffff, 3px 0 #ff4d6d; }
-        91%             { transform: skewX(9deg);   color: #00ffff;
-                          text-shadow: 3px 0 #ff4d6d, -3px 0 #00ffff; }
-        93%             { transform: skewX(0deg);   color: #ffffff; }
+    /* ── Glitch ocasional sobre el título completo ── */
+    @keyframes title-glitch {
+        0%,  88%, 100% {
+            transform: translateX(0) skewX(0deg);
+            filter: none;
+        }
+        89% {
+            transform: translateX(-4px) skewX(-8deg);
+            filter: drop-shadow(-3px 0 #ff4d6d) drop-shadow(3px 0 #00ffff);
+            color: #ff4d6d;
+        }
+        91% {
+            transform: translateX(4px) skewX(8deg);
+            filter: drop-shadow(3px 0 #ff4d6d) drop-shadow(-3px 0 #00ffff);
+            color: #00ffff;
+        }
+        93% {
+            transform: translateX(0) skewX(0deg);
+            filter: none;
+            color: #ffffff;
+        }
     }
 
     /* ── Layout ── */
@@ -107,26 +120,25 @@ def pantalla_inicio():
         z-index: 1;
     }
 
-    /* ══════════════════════════════════════════
-       PANEL SUPERIOR  (ícono + título)
-       borde redondeado arriba, abierto abajo
-       ══════════════════════════════════════════ */
+    /* ════════════════════════════════════════════
+       PANEL SUPERIOR — ícono + badge + título
+       ════════════════════════════════════════════ */
     .inicio-panel {
         background: rgba(18, 4, 52, 0.93);
-        border: 1px solid rgba(123,47,255,0.52);
+        border: 1.5px solid rgba(123,47,255,0.52);
         border-bottom: none;
         border-radius: 24px 24px 0 0;
-        padding: 36px 28px 24px;
+        padding: 36px 28px 28px;
         text-align: center;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
         width: 100%;
-        animation: shimmer-border 4s ease-in-out infinite, fadeInUp 0.7s ease;
+        animation: panel-glow 4s ease-in-out infinite, fadeInUp 0.7s ease;
         position: relative;
         overflow: hidden;
         z-index: 2;
+        margin-bottom: 0;
     }
-    /* línea de energía superior */
     .inicio-panel::before {
         content: '';
         position: absolute;
@@ -136,15 +148,15 @@ def pantalla_inicio():
         animation: energy-line 2.8s linear infinite;
     }
 
-    /* ── Ícono flotante ── */
+    /* ── Ícono ── */
     .city-icon {
-        font-size: 3.6rem;
+        font-size: 3.5rem;
         display: block;
         margin-bottom: 12px;
         animation: float 4s ease-in-out infinite;
         filter: drop-shadow(0 0 22px #7b2fffcc)
                 drop-shadow(0 0 50px #7b2fff88)
-                drop-shadow(0 0 10px #FFD70066);
+                drop-shadow(0 0 8px #FFD70066);
     }
 
     /* ── Badge ── */
@@ -160,52 +172,50 @@ def pantalla_inicio():
         border: 1px solid rgba(123,47,255,0.40);
         border-radius: 20px;
         padding: 4px 14px;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
 
-    /* ── TÍTULO — dos líneas fijas, sin cortes ──
-       Trucos clave:
-       · font-size fijo en px para que no dependa del viewport
-       · white-space: nowrap en cada línea
-       · display: flex + column + center para alinear las 2 líneas
-    ── */
+    /* ════════════════════════════════════════════
+       TÍTULO — dos líneas fijas, sin cortes
+       Solución definitiva: texto completo por línea
+       NO letras individuales → nunca se rompe
+       ════════════════════════════════════════════ */
     .inicio-title {
         font-family: 'Press Start 2P', monospace;
-        font-size: 22px;          /* tamaño fijo: cabe en 400px de ancho */
+        font-size: 20px;
         color: #ffffff;
         margin: 0 0 8px;
-        line-height: 1.8;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0;
+        line-height: 1;
+        text-align: center;
     }
-    /* Cada línea en bloque, sin salto forzado */
-    .tl1, .tl2 {
+    /* Línea 1: CIUDAD EN */
+    .tl1 {
         display: block;
         white-space: nowrap;
-    }
-    /* Letras animadas */
-    .inicio-title span {
-        display: inline-block;
-        animation:
-            bounce-letter 2s   ease-in-out infinite,
-            glitch-fx     6.5s step-end    infinite;
-        animation-delay:
-            calc(var(--i) * 0.07s),
-            calc(var(--i) * 0.05s + 2s);
+        margin-bottom: 14px;
         text-shadow: 0 0 16px #7b2fff99, 0 0 30px #7b2fff55;
+        animation: title-bounce 2s ease-in-out infinite,
+                   title-glitch 7s step-end  infinite;
+    }
+    /* Línea 2: EQUILIBRIO */
+    .tl2 {
+        display: block;
+        white-space: nowrap;
+        text-shadow: 0 0 16px #7b2fff99, 0 0 30px #7b2fff55;
+        animation: title-bounce 2s ease-in-out infinite,
+                   title-glitch 7s step-end  infinite;
+        animation-delay: 0.15s, 0.4s;
     }
 
     /* ── Subtítulo ── */
     .inicio-sub {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.82rem;
+        font-size: 0.80rem;
         color: #ccccff;
         font-weight: 300;
         letter-spacing: 3px;
         text-transform: uppercase;
-        margin: 4px 0 16px;
+        margin: 18px 0 16px;
     }
 
     /* ── Separador ── */
@@ -214,24 +224,24 @@ def pantalla_inicio():
         background: linear-gradient(90deg,
             transparent 0%, #7b2fff 30%, #FFD700 50%, #7b2fff 70%, transparent 100%);
         border-radius: 2px;
-        margin: 0 auto 0;
-        width: 78%; opacity: 0.9;
+        margin: 0 auto;
+        width: 80%; opacity: 0.9;
     }
 
-    /* ══════════════════════════════════════════
-       ZONA BOTONES + FOOTER
-       continúa el panel, borde redondeado abajo
-       ══════════════════════════════════════════ */
+    /* ════════════════════════════════════════════
+       ZONA INFERIOR — helper + botones + footer
+       Continúa visualmente el panel de arriba
+       ════════════════════════════════════════════ */
     .btn-zone {
         background: rgba(18, 4, 52, 0.93);
-        border: 1px solid rgba(123,47,255,0.52);
+        border: 1.5px solid rgba(123,47,255,0.52);
         border-top: none;
         border-radius: 0 0 24px 24px;
-        padding: 18px 28px 28px;
+        padding: 20px 28px 28px;
         width: 100%;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
-        animation: shimmer-border 4s ease-in-out infinite;
+        animation: panel-glow 4s ease-in-out infinite;
         position: relative;
         z-index: 2;
     }
@@ -244,7 +254,7 @@ def pantalla_inicio():
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-align: center;
-        margin: 0 0 14px;
+        margin: 0 0 16px;
     }
 
     /* ── Botón primario dorado ── */
@@ -309,15 +319,15 @@ def pantalla_inicio():
         transform: translateY(-3px) !important;
     }
 
-    /* ── Footer ── */
+    /* ── Footer dentro del panel ── */
     .inicio-footer {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.65rem;
-        color: rgba(167,139,250,0.32);
+        font-size: 0.64rem;
+        color: rgba(167,139,250,0.30);
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-align: center;
-        margin-top: 18px;
+        margin-top: 20px;
         margin-bottom: 0;
     }
     </style>
@@ -413,12 +423,10 @@ def pantalla_inicio():
         L1370,75 L1370,95 L1390,95 L1390,65 L1410,65 L1410,85
         L1440,85 L1440,280 Z"/>
       <g fill="#FFD700" opacity="0.60">
-        <rect x="165" y="34" width="3" height="4"/>
         <rect x="237" y="24" width="3" height="4"/>
         <rect x="432" y="14" width="3" height="4"/>
         <rect x="657" y="9"  width="3" height="4"/>
         <rect x="1002" y="24" width="3" height="4"/>
-        <rect x="1262" y="24" width="3" height="4"/>
       </g>
     </svg>
     """, unsafe_allow_html=True)
@@ -430,30 +438,17 @@ def pantalla_inicio():
     <div class="inicio-panel">
         <span class="city-icon">🏙️</span>
         <div class="inicio-badge">🌐 Pensamiento Sistémico 🌐</div>
-
         <h1 class="inicio-title">
-            <span class="tl1">
-                <span style="--i:0">C</span><span style="--i:1">I</span><span
-                style="--i:2">U</span><span style="--i:3">D</span><span
-                style="--i:4">A</span><span style="--i:5">D</span>&thinsp;
-                <span style="--i:6">E</span><span style="--i:7">N</span>
-            </span>
-            <span class="tl2">
-                <span style="--i:8">E</span><span style="--i:9">Q</span><span
-                style="--i:10">U</span><span style="--i:11">I</span><span
-                style="--i:12">L</span><span style="--i:13">I</span><span
-                style="--i:14">B</span><span style="--i:15">R</span><span
-                style="--i:16">I</span><span style="--i:17">O</span>
-            </span>
+            <span class="tl1">CIUDAD EN</span>
+            <span class="tl2">EQUILIBRIO</span>
         </h1>
-
         <p class="inicio-sub">Gestiona tu ciudad · Salva el futuro</p>
         <div class="inicio-sep"></div>
     </div>
     """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # ZONA BOTONES + FOOTER — continúa visualmente el panel
+    # ZONA INFERIOR — helper + botones + footer (dentro del panel visual)
     # ══════════════════════════════════════════════════════════════════════════
     st.markdown('<div class="btn-zone">', unsafe_allow_html=True)
 
@@ -473,26 +468,9 @@ def pantalla_inicio():
         navegar("registro")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Footer con año dinámico
-    components.html("""
-    <style>
-        body { margin:0; background:transparent; }
-        #ft {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.65rem;
-            color: rgba(167,139,250,0.32);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            text-align: center;
-            margin-top: 18px;
-        }
-    </style>
-    <p id="ft"></p>
-    <script>
-        document.getElementById('ft').textContent =
-            '⚡ Ciudad en Equilibrio · v2.0 · ' + new Date().getFullYear() + ' ⚡';
-    </script>
-    """, height=40, scrolling=False)
+    st.markdown(
+        f"<p class='inicio-footer'>⚡ Ciudad en Equilibrio · v2.0 · 2026 ⚡</p>",
+        unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)  # cierra .btn-zone
 
