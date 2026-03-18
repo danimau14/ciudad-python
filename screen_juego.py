@@ -3,11 +3,8 @@ import random, time
 from session_manager import navegar
 from database import (obtenerprogreso, obtenerestudiantes, obtenercooldowns,
                       actualizarprogreso, actualizarcooldown, decrementarcooldowns)
-from config import (DECISIONES, EVENTOS, TOTALRONDAS, COOLDOWN, TIEMPOPREGUNTA,
-                    INDCOLOR, INDLABEL, PREGUNTAS)
+from config import DECISIONES, EVENTOS, TOTALRONDAS, COOLDOWN, TIEMPOPREGUNTA, INDCOLOR, INDLABEL, PREGUNTAS
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _aplicar_efectos(ind, ef):
     r = dict(ind)
@@ -19,7 +16,7 @@ def _aplicar_efectos(ind, ef):
 
 def _seleccionar_pregunta():
     usadas = st.session_state.get("preguntas_usadas", [])
-    disponibles = [i for i, p in enumerate(PREGUNTAS) if i not in usadas]
+    disponibles = [i for i in range(len(PREGUNTAS)) if i not in usadas]
     if not disponibles:
         st.session_state["preguntas_usadas"] = []
         disponibles = list(range(len(PREGUNTAS)))
@@ -31,25 +28,27 @@ def _seleccionar_pregunta():
 def _barra_indicador(nombre, valor, emoji):
     valor = max(0, min(100, valor))
     if valor >= 60:
-        color, badge, bg_card, borde = "#10b981","Estable","rgba(16,185,129,0.08)","rgba(16,185,129,0.3)"
+        color, badge = "#10b981", "Estable"
+        bg_card, borde = "rgba(16,185,129,0.08)", "rgba(16,185,129,0.3)"
     elif valor >= 30:
-        color, badge, bg_card, borde = "#f59e0b","Precaución","rgba(245,158,11,0.08)","rgba(245,158,11,0.3)"
+        color, badge = "#f59e0b", "Precaucion"
+        bg_card, borde = "rgba(245,158,11,0.08)", "rgba(245,158,11,0.3)"
     else:
-        color, badge, bg_card, borde = "#ef4444","Crítico","rgba(239,68,68,0.1)","rgba(239,68,68,0.35)"
+        color, badge = "#ef4444", "Critico"
+        bg_card, borde = "rgba(239,68,68,0.1)", "rgba(239,68,68,0.35)"
     st.markdown(
         "<div style='background:" + bg_card + ";border:1px solid " + borde + ";"
         "border-radius:14px;padding:14px 18px;margin-bottom:10px'>"
         "<div style='display:flex;justify-content:space-between;margin-bottom:8px'>"
-        "<span style='font-weight:700;color:#f1f5f9;font-size:.88rem'>" + emoji + " " + nombre + "</span>"
-        "<span style='font-size:.7rem;background:" + color + "22;color:" + color + ";"
-        "border:1px solid " + color + "44;border-radius:20px;padding:2px 9px;"
-        "font-family:Courier Prime,monospace'>" + badge + "</span>"
-        "</div>"
+        "<span style='font-weight:700;color:#f1f5f9'>" + emoji + " " + nombre + "</span>"
+        "<span style='font-size:.7rem;color:" + color + ";border:1px solid " + color + "44;"
+        "border-radius:20px;padding:2px 9px;font-family:Courier Prime,monospace'>"
+        + badge + "</span></div>"
         "<div style='background:rgba(255,255,255,0.08);border-radius:6px;height:8px'>"
         "<div style='width:" + str(valor) + "%;background:" + color + ";height:8px;"
-        "border-radius:6px;transition:width .4s ease'></div></div>"
-        "<div style='text-align:right;margin-top:5px;font-size:.82rem;font-weight:700;color:" + color + "'>"
-        + str(valor) + "/100</div></div>",
+        "border-radius:6px'></div></div>"
+        "<div style='text-align:right;margin-top:4px;font-size:.82rem;font-weight:700;color:"
+        + color + "'>" + str(valor) + "/100</div></div>",
         unsafe_allow_html=True
     )
 
@@ -60,7 +59,7 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno):
         st.markdown(
             "<h1 style='margin:0;background:linear-gradient(90deg,#a78bfa,#60a5fa);"
             "-webkit-background-clip:text;-webkit-text-fill-color:transparent;"
-            "background-clip:text;font-size:1.8rem'>" + nombre_grp + "</h1>",
+            "font-size:1.8rem'>" + nombre_grp + "</h1>",
             unsafe_allow_html=True
         )
         chips = " ".join(
@@ -74,17 +73,17 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno):
         st.markdown("<div style='margin-top:6px'>" + chips + "</div>", unsafe_allow_html=True)
 
     with top2:
-        if st.button("≡  MENÚ", use_container_width=True, key="btn_menu_toggle"):
+        if st.button("≡  MENU", use_container_width=True, key="btn_menu_toggle"):
             st.session_state["_menu_abierto"] = not st.session_state.get("_menu_abierto", False)
             st.rerun()
         if st.session_state.get("_menu_abierto", False):
-            if st.button("📖  INSTRUCCIONES", use_container_width=True, key="btn_instr"):
+            if st.button("INSTRUCCIONES", use_container_width=True, key="btn_instr"):
                 st.session_state["_ver_instrucciones"] = True
                 st.session_state["_menu_abierto"] = False
                 st.rerun()
-            if st.button("🏠  VOLVER AL INICIO", use_container_width=True, key="btn_inicio"):
+            if st.button("VOLVER AL INICIO", use_container_width=True, key="btn_inicio"):
                 navegar("inicio")
-            if st.button("🏙️  VOLVER AL LOBBY", use_container_width=True, key="btn_lobby"):
+            if st.button("VOLVER AL LOBBY", use_container_width=True, key="btn_lobby"):
                 navegar("lobby")
 
 
@@ -92,26 +91,25 @@ def _panel_instrucciones():
     st.markdown(
         "<div style='background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);"
         "border-radius:16px;padding:20px 24px;margin-bottom:16px'>"
-        "<h3 style='color:#a78bfa;margin-top:0'>📖 Instrucciones</h3>"
-        "<ul style='color:rgba(255,255,255,.6);font-size:.88rem;line-height:1.9;"
+        "<h3 style='color:#a78bfa;margin-top:0'>Instrucciones</h3>"
+        "<ul style='color:rgba(255,255,255,.6);font-size:.9rem;line-height:1.9;"
         "font-family:Inter,sans-serif;padding-left:18px'>"
-        "<li>Elige una <b style='color:#e2e8f0'>decisión estratégica</b> para la ciudad.</li>"
-        "<li>El estudiante en turno responde una <b style='color:#e2e8f0'>pregunta de opción múltiple</b>.</li>"
-        "<li>Si <b style='color:#4ade80'>acierta</b>, se aplican los efectos de la decisión.</li>"
+        "<li>Elige una <b style='color:#e2e8f0'>decision estrategica</b> para la ciudad.</li>"
+        "<li>El estudiante en turno responde una <b style='color:#e2e8f0'>pregunta de opcion multiple</b>.</li>"
+        "<li>Si <b style='color:#4ade80'>acierta</b>, se aplican los efectos de la decision.</li>"
         "<li>Si <b style='color:#f87171'>falla</b>, todos los indicadores pierden puntos.</li>"
         "<li>Al final de cada ronda ocurre un <b style='color:#fbbf24'>evento aleatorio</b>.</li>"
         "<li>El juego termina al completar las <b style='color:#60a5fa'>10 rondas</b>.</li>"
         "</ul></div>",
         unsafe_allow_html=True
     )
-    if st.button("▶  REGRESAR AL JUEGO", use_container_width=True, key="btn_regresar_juego"):
+    if st.button("REGRESAR AL JUEGO", use_container_width=True, key="btn_regresar"):
         st.session_state["_ver_instrucciones"] = False
         st.rerun()
 
 
-# ── Pantalla principal ────────────────────────────────────────────────────────
-
-def pantallajuego():
+# Nombre con guion bajo para que coincida con router.py
+def pantalla_juego():
     gid = st.session_state.get("grupo_id")
     if not gid:
         navegar("inicio")
@@ -121,18 +119,18 @@ def pantallajuego():
     estudiantes = obtenerestudiantes(gid)
     cooldowns   = obtenercooldowns(gid)
     ronda       = progreso["ronda_actual"]
-    nombre_grp  = st.session_state["grupo_nombre"]
+    nombre_grp  = st.session_state.get("grupo_nombre", "")
     idx_turno   = (ronda - 1) % len(estudiantes)
     est_turno   = estudiantes[idx_turno]
 
     ind = {
-        "economia":        progreso["economia"],
-        "medioambiente":   progreso["medioambiente"],
-        "energia":         progreso["energia"],
-        "bienestarsocial": progreso["bienestarsocial"],
+        "economia":       progreso["economia"],
+        "medioambiente":  progreso["medioambiente"],
+        "energia":        progreso["energia"],
+        "bienestarsocial":progreso["bienestarsocial"],
     }
 
-    # ── Fin de juego: SOLO al completar 10 rondas ─────────────────────────────
+    # Fin solo por 10 rondas completadas
     if ronda > TOTALRONDAS:
         puntaje = int(sum(ind.values()) / 4)
         colapso = puntaje < 50 or any(v < 20 for v in ind.values())
@@ -149,8 +147,12 @@ def pantallajuego():
 
     pct = int((ronda - 1) / TOTALRONDAS * 100)
     fase_label = st.session_state.get("fase_ronda", "decision")
-    fase_txt = {"decision": "Elegir Dec…", "pregunta": "Responder…",
-                "evento": "Evento", "resultado_pregunta": "Resultado"}
+    fase_txt = {
+        "decision":          "Elegir Dec...",
+        "pregunta":          "Responder...",
+        "evento":            "Evento",
+        "resultado_pregunta":"Resultado",
+    }
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("Ronda",    str(ronda) + "/" + str(TOTALRONDAS))
     with m2: st.metric("Turno",    est_turno)
@@ -169,42 +171,42 @@ def pantallajuego():
         return
 
     ci1, ci2, ci3, ci4 = st.columns(4)
-    with ci1: _barra_indicador("Economía",       ind["economia"],        "💰")
-    with ci2: _barra_indicador("Medio Ambiente",  ind["medioambiente"],   "🌿")
-    with ci3: _barra_indicador("Energía",         ind["energia"],         "⚡")
-    with ci4: _barra_indicador("Bienestar Social",ind["bienestarsocial"], "❤️")
+    with ci1: _barra_indicador("Economia",      ind["economia"],        "💰")
+    with ci2: _barra_indicador("Medio Ambiente", ind["medioambiente"],   "🌿")
+    with ci3: _barra_indicador("Energia",        ind["energia"],         "⚡")
+    with ci4: _barra_indicador("Bienestar",      ind["bienestarsocial"], "❤️")
 
     st.markdown("---")
     fase = st.session_state.get("fase_ronda", "decision")
 
-    # ══════════════ FASE: DECISIÓN ═══════════════════════════════════════════
+    # ══════ DECISION ══════════════════════════════════════════════════════════
     if fase == "decision":
         st.markdown(
-            "<h3 style='color:#f1f5f9;margin-bottom:4px'>Paso 1 — Elige una Decisión Estratégica</h3>"
+            "<h3 style='color:#f1f5f9;margin-bottom:4px'>Paso 1 - Elige una Decision Estrategica</h3>"
             "<p style='color:rgba(255,255,255,.4);font-size:.85rem;margin-top:-6px;"
             "font-family:Courier Prime,monospace'>"
-            "Si aciertas la pregunta, los efectos de esta decisión se aplicarán a la ciudad.</p>",
+            "Si aciertas la pregunta, los efectos se aplicaran a la ciudad.</p>",
             unsafe_allow_html=True
         )
         cols = st.columns(4)
         for i, (nom_dec, ef) in enumerate(DECISIONES.items()):
             col = cols[i % 4]
             disponible_en = cooldowns.get(nom_dec, 0)
-            disp = disponible_en == 0 or ronda >= disponible_en
+            disp = (disponible_en == 0 or ronda >= disponible_en)
             rondas_falta = max(0, disponible_en - ronda) if disponible_en > 0 else 0
 
             filas_ef = ""
             for k, v in ef.items():
                 if k == "emoji":
                     continue
-                ind_info = INDCOLOR.get(k, ("#94a3b8", ""))
-                col_ind = ind_info[0] if isinstance(ind_info, tuple) else "#94a3b8"
-                em_ind  = ind_info[1] if isinstance(ind_info, tuple) else ""
+                ind_data = INDCOLOR.get(k, ("#94a3b8", ""))
+                col_ind = ind_data[0] if isinstance(ind_data, tuple) else "#94a3b8"
+                em_ind  = ind_data[1] if isinstance(ind_data, tuple) else ""
                 signo   = "+" if v > 0 else ""
                 col_val = "#4ade80" if v > 0 else "#f87171"
                 filas_ef += (
-                    "<div style='display:flex;justify-content:space-between;align-items:center;"
-                    "padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05)'>"
+                    "<div style='display:flex;justify-content:space-between;padding:3px 0;"
+                    "border-bottom:1px solid rgba(255,255,255,0.05)'>"
                     "<span style='color:" + col_ind + ";font-size:.74rem'>" + em_ind + " " + INDLABEL.get(k,"") + "</span>"
                     "<span style='color:" + col_val + ";font-size:.82rem;font-weight:700'>" + signo + str(v) + "</span>"
                     "</div>"
@@ -219,21 +221,20 @@ def pantallajuego():
                     "<div style='position:absolute;inset:0;border-radius:14px;"
                     "background:rgba(0,0,0,0.45);display:flex;flex-direction:column;"
                     "align-items:center;justify-content:center;gap:6px'>"
-                    "<span style='font-size:1.5rem'>⏳</span>"
-                    "<span style='color:#fbbf24;font-weight:800;font-size:.9rem'>"
+                    "<span style='font-size:1.4rem'>⏳</span>"
+                    "<span style='color:#fbbf24;font-weight:800;font-size:.88rem'>"
                     + str(rondas_falta) + " ronda" + ("s" if rondas_falta != 1 else "") + "</span>"
-                    "<span style='color:rgba(255,255,255,.4);font-size:.66rem'>Disponible en ronda "
-                    + str(disponible_en) + "</span></div>"
+                    "<span style='color:rgba(255,255,255,.4);font-size:.65rem'>En ronda " + str(disponible_en) + "</span>"
+                    "</div>"
                 )
             with col:
                 st.markdown(
                     "<div style='position:relative;background:" + bg_c + ";border:1px solid " + borde + ";"
                     "border-radius:14px;padding:14px 12px;margin-bottom:4px;opacity:" + opac + ";"
-                    "min-height:185px;transition:all .2s'>" + overlay +
+                    "min-height:185px'>" + overlay +
                     "<div style='font-size:1.5rem;margin-bottom:4px'>" + ef.get("emoji","") + "</div>"
-                    "<div style='font-weight:700;color:#f1f5f9;font-size:.86rem;"
-                    "margin-bottom:8px;line-height:1.25'>" + nom_dec + "</div>"
-                    + filas_ef + "</div>",
+                    "<div style='font-weight:700;color:#f1f5f9;font-size:.86rem;margin-bottom:8px;line-height:1.25'>"
+                    + nom_dec + "</div>" + filas_ef + "</div>",
                     unsafe_allow_html=True
                 )
                 if st.button("ELEGIR", disabled=not disp, key="dec_" + nom_dec, use_container_width=True):
@@ -245,7 +246,7 @@ def pantallajuego():
                     st.session_state["fase_ronda"]       = "pregunta"
                     st.rerun()
 
-    # ══════════════ FASE: PREGUNTA ════════════════════════════════════════════
+    # ══════ PREGUNTA ══════════════════════════════════════════════════════════
     elif fase == "pregunta":
         pregunta = st.session_state["pregunta_actual"]
         nom_dec  = st.session_state["decision_elegida"]
@@ -261,62 +262,55 @@ def pantallajuego():
         seg = int(tiempo_restante)
 
         if tiempo_restante == 0:
-            st.session_state["tiempo_agotado"]    = True
+            st.session_state["tiempo_agotado"]     = True
             st.session_state["respuesta_correcta"] = False
             st.session_state["fase_ronda"]         = "resultado_pregunta"
             st.rerun()
 
-        # Banner decisión elegida
-        ef_resumen = " · ".join(
+        ef_resumen = " ".join(
             ("+" if v > 0 else "") + str(v) + " " + INDLABEL.get(k,"")
             for k, v in ef_dec.items() if k in INDLABEL
         )
         st.markdown(
             "<div style='background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);"
             "border-radius:12px;padding:10px 18px;margin-bottom:14px;display:flex;"
-            "flex-wrap:wrap;gap:6px;align-items:center'>"
-            "<span style='color:#a78bfa;font-size:.82rem;font-family:Courier Prime,monospace'>"
-            "Decisión elegida:</span>"
+            "flex-wrap:wrap;gap:8px;align-items:center'>"
+            "<span style='color:#a78bfa;font-size:.82rem'>Decision:</span>"
             "<span style='color:#f1f5f9;font-weight:700'>"
             + DECISIONES.get(nom_dec, {}).get("emoji","") + " " + nom_dec + "</span>"
             "<span style='color:rgba(255,255,255,.35);font-size:.76rem'>" + ef_resumen + "</span></div>",
             unsafe_allow_html=True
         )
 
-        # Temporizador
         st.markdown(
             "<div style='background:rgba(0,0,0,0.25);border:1px solid " + col_timer + "44;"
-            "border-radius:16px;padding:12px 20px;margin-bottom:14px'>"
-            "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'>"
-            "<span style='color:rgba(255,255,255,.5);font-size:.82rem'>⏱ Tiempo restante</span>"
-            "<span style='color:" + col_timer + ";font-weight:900;font-size:1.6rem'>" + str(seg) + "s</span>"
+            "border-radius:14px;padding:12px 18px;margin-bottom:14px'>"
+            "<div style='display:flex;justify-content:space-between;margin-bottom:6px'>"
+            "<span style='color:rgba(255,255,255,.5);font-size:.82rem'>Tiempo restante</span>"
+            "<span style='color:" + col_timer + ";font-weight:900;font-size:1.5rem'>" + str(seg) + "s</span>"
             "</div>"
             "<div style='background:rgba(255,255,255,.08);border-radius:6px;height:10px;overflow:hidden'>"
-            "<div style='width:" + str(int(pct_timer * 100)) + "%;height:10px;border-radius:6px;"
-            "background:" + col_timer + ";transition:width .95s linear'></div></div>"
-            + ("<div style='color:#ef4444;font-size:.74rem;font-weight:700;margin-top:5px;"
-               "text-align:center'>¡Responde ya!</div>" if seg <= 8 else "")
+            "<div style='width:" + str(int(pct_timer*100)) + "%;height:10px;background:" + col_timer + ";"
+            "border-radius:6px;transition:width .95s linear'></div></div>"
+            + ("<div style='color:#ef4444;font-size:.74rem;font-weight:700;margin-top:4px;text-align:center'>Responde ya!</div>" if seg <= 8 else "")
             + "</div>",
             unsafe_allow_html=True
         )
 
-        # Tarjeta pregunta — tipografía NORMAL (Inter, no pixel art)
         cat_color = {
-            "Python":"#6366f1","PSeInt":"#8b5cf6","Cálculo":"#06b6d4",
-            "Derivadas":"#10b981","Física MRU":"#f59e0b","Física MRUA":"#ef4444",
-            "Matrices":"#ec4899",
+            "Python":"#6366f1","PSeInt":"#8b5cf6","Calculo":"#06b6d4",
+            "Derivadas":"#10b981","Fisica MRU":"#f59e0b","Fisica MRUA":"#ef4444","Matrices":"#ec4899",
         }.get(pregunta.get("cat",""), "#94a3b8")
 
         st.markdown(
             "<div style='background:rgba(15,15,25,.85);border:1px solid " + cat_color + "44;"
             "border-radius:16px;padding:18px 22px;margin-bottom:16px'>"
-            "<div style='margin-bottom:12px'>"
             "<span style='background:" + cat_color + "22;color:" + cat_color + ";"
             "border:1px solid " + cat_color + "55;border-radius:20px;padding:2px 12px;"
             "font-size:.72rem;font-weight:600;font-family:Courier Prime,monospace'>"
-            + pregunta.get("cat","") + "</span></div>"
+            + pregunta.get("cat","") + "</span>"
             "<p style='color:#f1f5f9;font-size:1rem;font-weight:600;line-height:1.6;"
-            "font-family:Inter,sans-serif;margin:0'>" + pregunta.get("q","") + "</p>"
+            "font-family:Inter,sans-serif;margin:12px 0 0'>" + pregunta.get("q","") + "</p>"
             "</div>",
             unsafe_allow_html=True
         )
@@ -324,13 +318,13 @@ def pantallajuego():
         opciones = [chr(65+i) + ". " + op for i, op in enumerate(pregunta["ops"])]
         respuesta = st.radio("Selecciona tu respuesta:", opciones, key="radio_resp")
 
-        if st.button("✅  Confirmar Respuesta", use_container_width=True, type="primary"):
+        if st.button("Confirmar Respuesta", use_container_width=True, type="primary"):
             st.session_state["respuesta_correcta"] = (opciones.index(respuesta) == pregunta["ok"])
             st.session_state["tiempo_agotado"]     = False
             st.session_state["fase_ronda"]         = "resultado_pregunta"
             st.rerun()
 
-    # ══════════════ FASE: RESULTADO PREGUNTA ══════════════════════════════════
+    # ══════ RESULTADO PREGUNTA ════════════════════════════════════════════════
     elif fase == "resultado_pregunta":
         pregunta = st.session_state["pregunta_actual"]
         correcta = st.session_state["respuesta_correcta"]
@@ -347,9 +341,8 @@ def pantallajuego():
             actualizarcooldown(gid, nom_dec, ronda)
             cambios_html = " ".join(
                 "<span style='background:rgba(255,255,255,.07);border-radius:8px;"
-                "padding:4px 10px;margin:3px;display:inline-block;color:#f1f5f9;font-size:.84rem'>"
-                + INDLABEL.get(k,"") + " "
-                "<b style='color:" + ("#4ade80" if v > 0 else "#f87171") + "'>"
+                "padding:4px 10px;margin:3px;display:inline-block;color:#f1f5f9'>"
+                + INDLABEL.get(k,"") + " <b style='color:" + ("#4ade80" if v > 0 else "#f87171") + "'>"
                 + ("+" if v > 0 else "") + str(v) + "</b></span>"
                 for k, v in ef_dec.items() if k in INDLABEL
             )
@@ -357,7 +350,7 @@ def pantallajuego():
                 "<div style='background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);"
                 "border-radius:16px;padding:22px;text-align:center;margin-bottom:14px'>"
                 "<div style='font-size:2.5rem'>✅</div>"
-                "<h3 style='color:#34d399;margin:8px 0 4px'>¡Respuesta Correcta!</h3>"
+                "<h3 style='color:#34d399;margin:8px 0 4px'>Respuesta Correcta!</h3>"
                 "<p style='color:#6ee7b7;margin-bottom:10px'>Los efectos de <b>" + nom_dec + "</b> se aplicaron</p>"
                 "<div>" + cambios_html + "</div></div>",
                 unsafe_allow_html=True
@@ -365,70 +358,67 @@ def pantallajuego():
         else:
             texto_ok = pregunta["ops"][pregunta["ok"]]
             causa    = "Tiempo agotado" if agotado else "Respuesta Incorrecta"
-            aviso_par = " — Ronda par: penalización DOBLE." if es_par else ""
             nueva_ind = {k: max(0, v - penalizacion) for k, v in ind.items()}
             actualizarprogreso(gid, nueva_ind["economia"], nueva_ind["medioambiente"],
                                nueva_ind["energia"], nueva_ind["bienestarsocial"], ronda)
+            aviso_par = " (ronda par: DOBLE)" if es_par else ""
             st.markdown(
                 "<div style='background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);"
                 "border-radius:16px;padding:22px;text-align:center;margin-bottom:14px'>"
                 "<div style='font-size:2.5rem'>❌</div>"
                 "<h3 style='color:#f87171;margin:8px 0 4px'>" + causa + "</h3>"
                 "<p style='color:#fca5a5'>La correcta era: <b>" + texto_ok + "</b></p>"
-                "<p style='color:#fca5a5;font-size:.84rem'>Todos los indicadores pierden "
-                "<b>" + str(penalizacion) + " puntos</b>" + aviso_par + "</p></div>",
+                "<p style='color:#fca5a5;font-size:.84rem'>Todos pierden <b>"
+                + str(penalizacion) + " puntos</b>" + aviso_par + "</p></div>",
                 unsafe_allow_html=True
             )
 
-        if st.button("Continuar ▶", use_container_width=True):
+        if st.button("Continuar", use_container_width=True):
             st.session_state["fase_ronda"] = "evento"
             st.rerun()
 
-    # ══════════════ FASE: EVENTO ══════════════════════════════════════════════
+    # ══════ EVENTO ════════════════════════════════════════════════════════════
     elif fase == "evento":
         if st.session_state.get("evento_ronda") is None:
             st.session_state["evento_ronda"] = random.choice(EVENTOS)
 
         evento   = st.session_state["evento_ronda"]
-        nom_ind  = evento["indicador"].replace("_"," ").title()
-        ind_info = INDCOLOR.get(evento["indicador"], ("#94a3b8","🔹"))
-        col_ind  = ind_info[0] if isinstance(ind_info, tuple) else "#94a3b8"
-        em_ind   = ind_info[1] if isinstance(ind_info, tuple) else ""
+        nom_ind  = evento["indicador"]
+        ind_data = INDCOLOR.get(nom_ind, ("#94a3b8",""))
+        col_ind  = ind_data[0] if isinstance(ind_data, tuple) else "#94a3b8"
+        em_ind   = ind_data[1] if isinstance(ind_data, tuple) else ""
         positivo = evento["valor"] > 0
         col_ev   = "#10b981" if positivo else "#ef4444"
         bg_ev    = "rgba(16,185,129,0.1)" if positivo else "rgba(239,68,68,0.1)"
-        icono_ev = "🌟" if positivo else "⚠️"
 
-        progreso_ev = obtenerprogreso(gid)
-        ind_ev = {
-            "economia":        progreso_ev["economia"],
-            "medioambiente":   progreso_ev["medioambiente"],
-            "energia":         progreso_ev["energia"],
-            "bienestarsocial": progreso_ev["bienestarsocial"],
+        prog_ev = obtenerprogreso(gid)
+        ind_ev  = {
+            "economia":       prog_ev["economia"],
+            "medioambiente":  prog_ev["medioambiente"],
+            "energia":        prog_ev["energia"],
+            "bienestarsocial":prog_ev["bienestarsocial"],
         }
-        nueva_ind    = _aplicar_efectos(ind_ev, {evento["indicador"]: evento["valor"]})
-        valor_antes  = ind_ev[evento["indicador"]]
-        valor_despues= nueva_ind[evento["indicador"]]
+        nueva_ind    = _aplicar_efectos(ind_ev, {nom_ind: evento["valor"]})
+        valor_antes  = ind_ev[nom_ind]
+        valor_despues= nueva_ind[nom_ind]
         signo        = "+" if evento["valor"] > 0 else ""
 
         st.markdown(
             "<div style='background:" + bg_ev + ";border:1px solid " + col_ev + "44;"
             "border-radius:16px;padding:26px;text-align:center;margin-bottom:14px'>"
-            "<div style='font-size:2.2rem'>" + icono_ev + "</div>"
+            "<div style='font-size:2.2rem'>" + ("🌟" if positivo else "⚠️") + "</div>"
             "<div style='font-size:.76rem;color:rgba(255,255,255,.4);text-transform:uppercase;"
             "letter-spacing:2px;margin:6px 0 2px;font-family:Courier Prime,monospace'>"
-            "Evento Aleatorio · Ronda " + str(ronda) + "</div>"
+            "Evento Aleatorio - Ronda " + str(ronda) + "</div>"
             "<h2 style='color:#f1f5f9;margin:0 0 10px;font-size:1.4rem'>" + evento["nombre"] + "</h2>"
-            "<div style='display:inline-block;background:rgba(255,255,255,.07);"
-            "border-radius:12px;padding:8px 20px'>"
-            "<span style='color:" + col_ind + ";font-size:1rem'>" + em_ind + " "
-            + INDLABEL.get(evento["indicador"], nom_ind) + "</span>"
-            "<span style='color:rgba(255,255,255,.35);margin:0 8px'>|</span>"
-            "<span style='color:rgba(255,255,255,.45)'>" + str(valor_antes) + "</span>"
+            "<div style='display:inline-block;background:rgba(255,255,255,.07);border-radius:12px;padding:8px 20px'>"
+            "<span style='color:" + col_ind + "'>" + em_ind + " " + INDLABEL.get(nom_ind, nom_ind) + "</span>"
+            "<span style='color:rgba(255,255,255,.3);margin:0 8px'>|</span>"
+            "<span style='color:rgba(255,255,255,.5)'>" + str(valor_antes) + "</span>"
             "<span style='color:rgba(255,255,255,.3);margin:0 6px'>→</span>"
             "<span style='color:" + col_ev + ";font-weight:700'>" + str(valor_despues) + "</span>"
-            "<span style='color:" + col_ev + ";margin-left:8px'>"
-            + signo + str(evento["valor"]) + "</span></div></div>",
+            "<span style='color:" + col_ev + ";margin-left:8px'>" + signo + str(evento["valor"]) + "</span>"
+            "</div></div>",
             unsafe_allow_html=True
         )
 
