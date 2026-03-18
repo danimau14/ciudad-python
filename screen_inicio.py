@@ -22,7 +22,7 @@ def pantalla_inicio():
         overflow-x: hidden;
     }
 
-    /* ── Nebulosa profunda ── */
+    /* ── Nebulosa ── */
     [data-testid="stAppViewContainer"]::after {
         content: '';
         position: fixed;
@@ -48,9 +48,6 @@ def pantalla_inicio():
         width: 100%; height: 280px;
         z-index: 0;
         pointer-events: none;
-        opacity: 0.22;
-        filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.5))
-                drop-shadow(0 -2px 15px rgba(255,215,0,0.15));
         animation: city-glow 4s ease-in-out infinite alternate;
     }
     @keyframes city-glow {
@@ -65,7 +62,7 @@ def pantalla_inicio():
     /* ── Animaciones ── */
     @keyframes float {
         0%, 100% { transform: translateY(0px) scale(1);      }
-        50%       { transform: translateY(-15px) scale(1.07); }
+        50%       { transform: translateY(-12px) scale(1.06); }
     }
     @keyframes shimmer-border {
         0%, 100% { box-shadow: 0 0 22px #7b2fff44, 0 0 55px #7b2fff20,
@@ -88,59 +85,49 @@ def pantalla_inicio():
 
     /* ── Bounce + Glitch por letra ── */
     @keyframes bounce-letter {
-        0%, 100% { transform: translateY(0) scaleY(1);         }
-        35%       { transform: translateY(-13px) scaleY(1.15);  }
-        55%       { transform: translateY(-5px)  scaleY(1.04);  }
-        70%       { transform: translateY(-9px)  scaleY(1.09);  }
+        0%, 100% { transform: translateY(0) scaleY(1);        }
+        35%       { transform: translateY(-10px) scaleY(1.12); }
+        55%       { transform: translateY(-4px)  scaleY(1.03); }
+        70%       { transform: translateY(-7px)  scaleY(1.07); }
     }
     @keyframes glitch-fx {
         0%,  87%, 100% {
             transform: translateX(0) skewX(0deg);
             color: #ffffff;
-            text-shadow: 0 0 18px #7b2fff99, 0 0 36px #7b2fff55;
+            text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55;
         }
-        89% {
-            transform: translateX(-4px) skewX(-10deg);
-            color: #ff4d6d;
-            text-shadow: -3px 0 #00ffff, 3px 0 #ff4d6d;
-        }
-        91% {
-            transform: translateX(4px) skewX(10deg);
-            color: #00ffff;
-            text-shadow: 3px 0 #ff4d6d, -3px 0 #00ffff;
-        }
-        93% {
-            transform: translateX(-2px) skewX(-5deg);
-            color: #ffffff;
-            text-shadow: 2px 0 #7b2fff, -2px 0 #FFD700;
-        }
-        95% {
-            transform: translateX(0) skewX(0deg);
-            color: #ffffff;
-            text-shadow: 0 0 18px #7b2fff99, 0 0 36px #7b2fff55;
-        }
+        89% { transform: translateX(-4px) skewX(-9deg);  color: #ff4d6d;
+              text-shadow: -3px 0 #00ffff, 3px 0 #ff4d6d; }
+        91% { transform: translateX(4px)  skewX(9deg);   color: #00ffff;
+              text-shadow: 3px 0 #ff4d6d, -3px 0 #00ffff; }
+        93% { transform: translateX(-2px) skewX(-4deg);  color: #ffffff;
+              text-shadow: 2px 0 #7b2fff, -2px 0 #FFD700; }
+        95% { transform: translateX(0)    skewX(0deg);   color: #ffffff;
+              text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55; }
     }
 
-    /* ── Layout centrado ── */
+    /* ── Layout: centra el panel en pantalla ── */
     .block-container {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         min-height: 100vh !important;
-        padding: 1rem !important;
+        padding: 1.5rem 1rem !important;
         max-width: 520px !important;
         margin: 0 auto !important;
         position: relative;
         z-index: 1;
     }
 
-    /* ── Panel superior ── */
+    /* ══════════════════════════════════════════════
+       PANEL ÚNICO — contiene TODO: título + botones
+       ══════════════════════════════════════════════ */
     .inicio-panel {
         background: rgba(18, 4, 52, 0.92);
         border: 1px solid rgba(123, 47, 255, 0.52);
-        border-radius: 24px 24px 0 0;
-        padding: 44px 36px 28px;
+        border-radius: 24px;           /* redondo en los 4 bordes */
+        padding: 40px 32px 32px;
         text-align: center;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
@@ -150,48 +137,33 @@ def pantalla_inicio():
         overflow: hidden;
         z-index: 2;
     }
+    /* Línea de energía en borde superior */
     .inicio-panel::before {
         content: '';
         position: absolute;
-        top: 0;
-        height: 2px;
+        top: 0; height: 2px;
         background: linear-gradient(90deg,
             transparent, #7b2fff, #FFD700, #00ffff, transparent);
         border-radius: 2px;
         animation: energy-line 2.8s linear infinite;
     }
 
-    /* ── Zona de botones ── */
-    .btn-zone {
-        background: rgba(18, 4, 52, 0.92);
-        border: 1px solid rgba(123, 47, 255, 0.52);
-        border-top: none;
-        border-radius: 0 0 24px 24px;
-        padding: 8px 36px 36px;
-        width: 100%;
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        animation: shimmer-border 4s ease-in-out infinite;
-        position: relative;
-        z-index: 2;
-    }
-
     /* ── Ícono ciudad ── */
     .city-icon {
-        font-size: 4.2rem;
+        font-size: 3.8rem;
         display: block;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
         animation: float 4s ease-in-out infinite;
-        filter: drop-shadow(0 0 26px #7b2fffcc)
-                drop-shadow(0 0 58px #7b2fff88)
-                drop-shadow(0 0 12px #FFD70066);
+        filter: drop-shadow(0 0 24px #7b2fffcc)
+                drop-shadow(0 0 52px #7b2fff88)
+                drop-shadow(0 0 10px #FFD70066);
     }
 
     /* ── Badge ── */
     .inicio-badge {
         display: inline-block;
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         font-weight: 600;
         letter-spacing: 2px;
         text-transform: uppercase;
@@ -206,13 +178,21 @@ def pantalla_inicio():
     /* ── Título pixel animado ── */
     .inicio-title {
         font-family: 'Press Start 2P', monospace;
-        font-size: clamp(0.55rem, 2.1vw, 0.82rem);
+        /* Tamaño que cabe en el panel sin romperse */
+        font-size: clamp(0.7rem, 3.5vw, 1.05rem);
         font-weight: 400;
         color: #ffffff;
-        margin: 0 0 10px;
-        line-height: 2.1;
-        word-spacing: 4px;
-        letter-spacing: 1px;
+        margin: 0 0 6px;
+        line-height: 1.9;
+        /* Cada palabra en su línea, sin cortes arbitrarios */
+        white-space: pre-line;
+        word-break: keep-all;
+        overflow-wrap: normal;
+    }
+    /* Línea 1: CIUDAD EN  — línea 2: EQUILIBRIO */
+    .titulo-l1, .titulo-l2 {
+        display: block;
+        white-space: nowrap;
     }
     .inicio-title span {
         display: inline-block;
@@ -222,18 +202,18 @@ def pantalla_inicio():
         animation-delay:
             calc(var(--i) * 0.07s),
             calc(var(--i) * 0.05s + 1.8s);
-        text-shadow: 0 0 18px #7b2fff99, 0 0 35px #7b2fff55;
+        text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55;
     }
 
     /* ── Subtítulo ── */
     .inicio-sub {
         font-family: 'Rajdhani', sans-serif;
-        font-size: clamp(0.78rem, 2.2vw, 0.94rem);
+        font-size: clamp(0.74rem, 2vw, 0.90rem);
         color: #ccccff;
         font-weight: 300;
         letter-spacing: 3px;
         text-transform: uppercase;
-        margin-bottom: 22px;
+        margin: 6px 0 18px;
     }
 
     /* ── Separador ── */
@@ -242,7 +222,7 @@ def pantalla_inicio():
         background: linear-gradient(90deg,
             transparent 0%, #7b2fff 30%, #FFD700 50%, #7b2fff 70%, transparent 100%);
         border-radius: 2px;
-        margin: 0 auto 6px;
+        margin: 0 auto 16px;
         width: 80%;
         opacity: 0.9;
     }
@@ -250,12 +230,12 @@ def pantalla_inicio():
     /* ── Helper text ── */
     .inicio-helper {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         color: rgba(167,139,250,0.42);
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-align: center;
-        margin: 10px 0 6px;
+        margin-bottom: 14px;
     }
 
     /* ── Botón primario (dorado + shimmer) ── */
@@ -266,7 +246,7 @@ def pantalla_inicio():
         letter-spacing: 2px !important;
         text-transform: uppercase !important;
         border-radius: 12px !important;
-        padding: 0.75rem 2rem !important;
+        padding: 0.72rem 2rem !important;
         width: 100% !important;
         background: linear-gradient(135deg, #FFD700, #FFA500) !important;
         color: #12003e !important;
@@ -301,7 +281,7 @@ def pantalla_inicio():
         letter-spacing: 2px !important;
         text-transform: uppercase !important;
         border-radius: 12px !important;
-        padding: 0.75rem 2rem !important;
+        padding: 0.72rem 2rem !important;
         width: 100% !important;
         background: transparent !important;
         color: #c4b5fd !important;
@@ -319,71 +299,65 @@ def pantalla_inicio():
                     0 0 68px rgba(123,47,255,0.32) !important;
         transform: translateY(-3px) !important;
     }
+
+    /* ── Footer dentro del panel ── */
+    .inicio-footer {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.66rem;
+        color: rgba(167,139,250,0.34);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-align: center;
+        margin-top: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Canvas: estrellas animadas (fondo fijo, z-index -1) ───────────────────
+    # ── Canvas: estrellas animadas ────────────────────────────────────────────
     components.html("""
     <style>
         body { margin:0; padding:0; background:transparent; }
         #starfield {
-            position: fixed;
-            top:0; left:0;
+            position: fixed; top:0; left:0;
             width:100vw; height:100vh;
-            z-index: -1;
-            pointer-events: none;
+            z-index: -1; pointer-events: none;
         }
     </style>
     <canvas id="starfield"></canvas>
     <script>
     (function(){
-        const c   = document.getElementById('starfield');
+        const c = document.getElementById('starfield');
         const ctx = c.getContext('2d');
-        c.width  = window.innerWidth;
-        c.height = window.innerHeight;
+        c.width = window.innerWidth; c.height = window.innerHeight;
         const COLORS = ['#ffffff','#c4b5fd','#a78bfa','#818cf8','#e0d7ff','#FFD70033'];
-        const stars  = Array.from({length: 210}, () => ({
-            x:     Math.random() * c.width,
-            y:     Math.random() * c.height,
-            r:     Math.random() * 1.8 + 0.22,
-            alpha: Math.random() * 0.65 + 0.2,
-            da:    (Math.random() * 0.014 + 0.004) * (Math.random() < 0.5 ? 1 : -1),
-            dx:    (Math.random() - 0.5) * 0.22,
-            dy:    (Math.random() - 0.5) * 0.15,
-            color: COLORS[Math.floor(Math.random() * COLORS.length)]
+        const stars = Array.from({length:210}, () => ({
+            x: Math.random()*c.width, y: Math.random()*c.height,
+            r: Math.random()*1.8+0.22, alpha: Math.random()*0.65+0.2,
+            da: (Math.random()*0.014+0.004)*(Math.random()<0.5?1:-1),
+            dx: (Math.random()-0.5)*0.22, dy: (Math.random()-0.5)*0.15,
+            color: COLORS[Math.floor(Math.random()*COLORS.length)]
         }));
         function frame(){
-            ctx.clearRect(0, 0, c.width, c.height);
-            stars.forEach(s => {
-                s.x += s.dx; s.y += s.dy;
-                s.alpha += s.da;
-                if (s.alpha > 0.95 || s.alpha < 0.1) s.da *= -1;
-                if (s.x < 0) s.x = c.width;
-                if (s.x > c.width)  s.x = 0;
-                if (s.y < 0) s.y = c.height;
-                if (s.y > c.height) s.y = 0;
-                ctx.save();
-                ctx.globalAlpha = s.alpha;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                ctx.fillStyle   = s.color;
-                ctx.shadowColor = s.color;
-                ctx.shadowBlur  = s.r * 5;
-                ctx.fill();
-                ctx.restore();
+            ctx.clearRect(0,0,c.width,c.height);
+            stars.forEach(s=>{
+                s.x+=s.dx; s.y+=s.dy; s.alpha+=s.da;
+                if(s.alpha>0.95||s.alpha<0.1) s.da*=-1;
+                if(s.x<0) s.x=c.width; if(s.x>c.width) s.x=0;
+                if(s.y<0) s.y=c.height; if(s.y>c.height) s.y=0;
+                ctx.save(); ctx.globalAlpha=s.alpha;
+                ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+                ctx.fillStyle=s.color; ctx.shadowColor=s.color;
+                ctx.shadowBlur=s.r*5; ctx.fill(); ctx.restore();
             });
             requestAnimationFrame(frame);
         }
         frame();
-        window.addEventListener('resize', () => {
-            c.width  = window.innerWidth;
-            c.height = window.innerHeight;
-        });
+        window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;});
     })();
     </script>
     """, height=0, scrolling=False)
 
-    # ── Silueta SVG skyline futurista ─────────────────────────────────────────
+    # ── Silueta SVG skyline ───────────────────────────────────────────────────
     st.markdown("""
     <svg class="city-skyline-bg" viewBox="0 0 1440 280"
          xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
@@ -395,7 +369,7 @@ def pantalla_inicio():
       </defs>
       <path fill="url(#cg)" d="
         M0,280 L0,200 L30,200 L30,160 L50,160 L50,140 L70,140 L70,100
-        L80,100 L80,80  L90,80  L90,60  L95,60  L95,80  L100,80 L100,100
+        L80,100 L80,80 L90,80 L90,60 L95,60 L95,80 L100,80 L100,100
         L110,100 L110,130 L130,130 L130,110 L145,110 L145,90 L155,90
         L155,70 L160,70 L160,50 L165,50 L165,30 L170,30 L170,50
         L175,50 L175,70 L180,70 L180,90 L195,90 L195,110 L210,110
@@ -410,7 +384,7 @@ def pantalla_inicio():
         L530,35 L535,35 L535,55 L545,55 L545,75 L560,75 L560,100
         L580,100 L580,70 L590,70 L590,50 L600,50 L600,70 L610,70
         L610,90 L630,90 L630,60 L640,60 L640,40 L650,40 L650,20
-        L655,20 L655,5  L660,5  L660,20 L665,20 L665,40 L675,40
+        L655,20 L655,5 L660,5 L660,20 L665,20 L665,40 L675,40
         L675,60 L690,60 L690,85 L710,85 L710,105 L730,105 L730,75
         L740,75 L740,55 L750,55 L750,75 L760,75 L760,95 L780,95
         L780,65 L790,65 L790,45 L800,45 L800,65 L815,65 L815,85
@@ -430,47 +404,73 @@ def pantalla_inicio():
         L1370,75 L1370,95 L1390,95 L1390,65 L1410,65 L1410,85
         L1440,85 L1440,280 Z"/>
       <g fill="#FFD700" opacity="0.65">
-        <rect x="165" y="34"  width="3" height="4"/>
-        <rect x="172" y="34"  width="3" height="4"/>
-        <rect x="237" y="24"  width="3" height="4"/>
-        <rect x="432" y="14"  width="3" height="4"/>
-        <rect x="439" y="14"  width="3" height="4"/>
-        <rect x="657" y="9"   width="3" height="4"/>
+        <rect x="165" y="34" width="3" height="4"/>
+        <rect x="237" y="24" width="3" height="4"/>
+        <rect x="432" y="14" width="3" height="4"/>
+        <rect x="657" y="9"  width="3" height="4"/>
         <rect x="1002" y="24" width="3" height="4"/>
         <rect x="1262" y="24" width="3" height="4"/>
-        <rect x="350"  y="44" width="2" height="3"/>
-        <rect x="525"  y="39" width="2" height="3"/>
-        <rect x="745"  y="59" width="2" height="3"/>
-        <rect x="848"  y="39" width="2" height="3"/>
-        <rect x="988"  y="39" width="2" height="3"/>
-        <rect x="1125" y="44" width="2" height="3"/>
-        <rect x="1268" y="44" width="2" height="3"/>
       </g>
     </svg>
     """, unsafe_allow_html=True)
 
-    # ── Panel decorativo superior ─────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════════
+    # PANEL ÚNICO: título + separador + helper + botones + footer
+    # ══════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div class="inicio-panel">
+
+        <!-- Ícono -->
         <span class="city-icon">🏙️</span>
+
+        <!-- Badge -->
         <div class="inicio-badge">🌐 Pensamiento Sistémico 🌐</div>
+
+        <!-- Título animado: CIUDAD EN / EQUILIBRIO en dos líneas limpias -->
         <h1 class="inicio-title">
-          <span style="--i:0">C</span><span style="--i:1">I</span><span style="--i:2">U</span><span style="--i:3">D</span><span style="--i:4">A</span><span style="--i:5">D</span>&nbsp;
-          <span style="--i:6">E</span><span style="--i:7">N</span>
-          <br>
-          <span style="--i:8">E</span><span style="--i:9">Q</span><span style="--i:10">U</span><span style="--i:11">I</span><span style="--i:12">L</span><span style="--i:13">I</span><span style="--i:14">B</span><span style="--i:15">R</span><span style="--i:16">I</span><span style="--i:17">O</span>
+            <span class="titulo-l1">
+                <span style="--i:0">C</span><span style="--i:1">I</span><span style="--i:2">U</span><span style="--i:3">D</span><span style="--i:4">A</span><span style="--i:5">D</span>&nbsp;<span style="--i:6">E</span><span style="--i:7">N</span>
+            </span>
+            <span class="titulo-l2">
+                <span style="--i:8">E</span><span style="--i:9">Q</span><span style="--i:10">U</span><span style="--i:11">I</span><span style="--i:12">L</span><span style="--i:13">I</span><span style="--i:14">B</span><span style="--i:15">R</span><span style="--i:16">I</span><span style="--i:17">O</span>
+            </span>
         </h1>
+
+        <!-- Subtítulo -->
         <p class="inicio-sub">Gestiona tu ciudad · Salva el futuro</p>
+
+        <!-- Separador -->
         <div class="inicio-sep"></div>
+
+        <!-- Helper -->
+        <p class="inicio-helper">⬇ Selecciona una opción para continuar ⬇</p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Zona de botones ───────────────────────────────────────────────────────
-    st.markdown('<div class="btn-zone">', unsafe_allow_html=True)
+    # ── Botones dentro del panel (Streamlit los renderiza fuera del HTML,
+    #    pero los envolvemos en divs que continúan visualmente el panel) ───────
+    st.markdown("""
+    <style>
+    /* Zona botones: continúa el panel sin borde superior */
+    .btn-zone {
+        background: rgba(18, 4, 52, 0.92);
+        border: 1px solid rgba(123,47,255,0.52);
+        border-top: none;
+        border-radius: 0 0 24px 24px;
+        padding: 6px 32px 28px;
+        width: 100%;
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        position: relative;
+        z-index: 2;
+    }
+    </style>
+    <div class="btn-zone" id="btn-zone-start"></div>
+    """, unsafe_allow_html=True)
 
-    st.markdown(
-        '<p class="inicio-helper">⬇ Selecciona una opción para continuar ⬇</p>',
-        unsafe_allow_html=True)
+    # Contenedor visual del panel inferior
+    st.markdown('<div class="btn-zone">', unsafe_allow_html=True)
 
     st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
     if st.button("🔐  INICIAR SESIÓN", key="btn_login", use_container_width=True):
@@ -484,80 +484,66 @@ def pantalla_inicio():
         navegar("registro")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # Footer dentro del panel
+    st.markdown(
+        "<p class='inicio-footer' id='footer-año'>⚡ Ciudad en Equilibrio · v2.0 ⚡</p>",
+        unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)  # cierra .btn-zone
 
-    # ── Pie con año dinámico ──────────────────────────────────────────────────
+    # Año dinámico vía JS
     components.html("""
-    <style>
-        body { margin:0; background:transparent; }
-        .footer-txt {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.68rem;
-            color: rgba(167,139,250,0.36);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            text-align: center;
-            margin-top: 16px;
-        }
-    </style>
-    <p class="footer-txt" id="fy"></p>
     <script>
-        document.getElementById('fy').textContent =
-            '⚡ Ciudad en Equilibrio · v2.0 · ' + new Date().getFullYear() + ' ⚡';
+    (function(){
+        // Espera a que el DOM de Streamlit esté listo e inyecta el año
+        function setYear(){
+            const el = window.parent.document.getElementById('footer-año');
+            if(el){
+                el.textContent = '⚡ Ciudad en Equilibrio · v2.0 · '
+                                 + new Date().getFullYear() + ' ⚡';
+            }
+        }
+        setTimeout(setYear, 600);
+    })();
     </script>
-    """, height=44, scrolling=False)
+    """, height=0, scrolling=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PANTALLA DE INSTRUCCIONES
-#  Requerida por router.py:
-#      from screen_inicio import pantalla_inicio, pantalla_instrucciones
-#  No aparece en la pantalla de inicio — se accede desde el Lobby.
+#  Requerida por router.py — se accede desde el Lobby, NO desde el inicio.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_instrucciones():
-    from session_manager import navegar as _nav
-
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@300;400;600;700&display=swap');
     #MainMenu, footer, header { visibility: hidden; }
-    html, body, [data-testid="stAppViewContainer"] {
-        background: #0d0025 !important;
-    }
+    html, body, [data-testid="stAppViewContainer"] { background: #0d0025 !important; }
     .inst-title {
         font-family: 'Press Start 2P', monospace;
         font-size: clamp(0.65rem, 2vw, 0.9rem);
         color: #ffffff;
         text-shadow: 0 0 20px #7b2fff99;
         text-align: center;
-        margin-bottom: 28px;
-        line-height: 1.9;
+        margin-bottom: 28px; line-height: 1.9;
     }
     .inst-card {
         background: rgba(18,4,52,0.88);
         border: 1px solid rgba(123,47,255,0.38);
-        border-radius: 16px;
-        padding: 18px 22px;
-        margin-bottom: 12px;
-        backdrop-filter: blur(16px);
+        border-radius: 16px; padding: 18px 22px;
+        margin-bottom: 12px; backdrop-filter: blur(16px);
     }
     .inst-card-title {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #FFD700;
-        margin: 0 0 10px;
+        font-size: 0.95rem; font-weight: 700;
+        letter-spacing: 2px; text-transform: uppercase;
+        color: #FFD700; margin: 0 0 10px;
     }
     .inst-item {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.86rem;
-        color: #c4b5fd;
-        line-height: 1.75;
-        margin: 3px 0;
-        padding-left: 8px;
+        font-size: 0.86rem; color: #c4b5fd;
+        line-height: 1.75; margin: 3px 0; padding-left: 8px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -609,4 +595,4 @@ def pantalla_instrucciones():
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("⬅  VOLVER AL LOBBY", use_container_width=True):
-            _nav("lobby")
+            navegar("lobby")
