@@ -70,11 +70,41 @@ _TABLAS = [
 ]
 
 
+def _migrar(conn):
+    """Agrega columnas faltantes a tablas existentes sin borrar datos."""
+    cur = conn.cursor()
+    migraciones = [
+        # progresojuego: columna dificultad
+        ("progresojuego", "dificultad", "ALTER TABLE progresojuego ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
+        # cooldowndecisiones: columna dificultad
+        ("cooldowndecisiones", "dificultad", "ALTER TABLE cooldowndecisiones ADD COLUMN dificultad TEXT NOT NULL DEFAULT 'Normal'"),
+        # ranking: columna dificultad
+        ("ranking", "dificultad", "ALTER TABLE ranking ADD COLUMN dificultad TEXT DEFAULT 'Normal'"),
+        # ranking: columna fecha
+        ("ranking", "fecha", "ALTER TABLE ranking ADD COLUMN fecha TEXT DEFAULT (date('now'))"),
+    ]
+    for tabla, columna, sql in migraciones:
+        try:
+            cur.execute(f"SELECT {columna} FROM {tabla} LIMIT 1")
+        except sqlite3.OperationalError:
+            # La columna no existe → la agregamos
+            try:
+                cur.execute(sql)
+                print(f"[migración] {tabla}.{columna} agregada")
+            except Exception as e:
+                print(f"[migración] Error en {tabla}.{columna}: {e}")
+
+    # UNIQUE(grupoid, dificultad) en progresojuego — SQLite no permite ADD CONSTRAINT
+    # Se maneja con INSERT OR IGNORE en obtenerprogreso, no requiere migración de índice.
+    conn.commit()
+
+
 def _crear_tablas():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     for sql in _TABLAS:
         conn.execute(sql)
     conn.commit()
+    _migrar(conn)
     conn.close()
 
 
@@ -88,6 +118,9 @@ def getconn():
         _crear_tablas()
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
+    else:
+        # BD ya existe → correr migraciones igual
+        _migrar(conn)
     return conn
 
 
@@ -156,7 +189,7 @@ def obtenerprogreso(gid, dificultad="Normal"):
     c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
     row = c.fetchone()
     if not row:
-        c.execute("""INSERT INTO progresojuego
+        c.execute("""INSERT OR IGNORE INTO progresojuego
             (grupoid,dificultad,economia,medioambiente,energia,bienestarsocial,rondaactual)
             VALUES(?,?,50,50,50,50,1)""", (gid, dificultad))
         conn.commit()
