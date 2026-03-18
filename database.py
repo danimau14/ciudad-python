@@ -4,7 +4,8 @@ import os
 import base64
 import streamlit as st
 
-DB_PATH = "database.db"
+# Ruta absoluta — evita problema de CWD en Streamlit Cloud
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
 COOLDOWN = 3
 
 
@@ -17,7 +18,7 @@ def _github_save():
         branch = st.secrets.get("GITHUB_BRANCH", "main")
         if not token or not repo:
             return
-        url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
+        url = f"https://api.github.com/repos/{repo}/contents/database.db"
         headers = {"Authorization": f"token {token}",
                    "Accept": "application/vnd.github.v3+json"}
         with open(DB_PATH, "rb") as f:
@@ -43,7 +44,7 @@ def _github_restore():
         branch = st.secrets.get("GITHUB_BRANCH", "main")
         if not token or not repo:
             return
-        url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
+        url = f"https://api.github.com/repos/{repo}/contents/database.db"
         headers = {"Authorization": f"token {token}",
                    "Accept": "application/vnd.github.v3+json"}
         r = requests.get(url, headers=headers, params={"ref": branch})
@@ -58,16 +59,13 @@ def _github_restore():
 def getconn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    # Asegurar WAL mode para mayor estabilidad
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
 # ── Tablas ────────────────────────────────────────────────────────────────────
 def inicializardb():
-    # 1. Intentar restaurar desde GitHub primero
     _github_restore()
-    # 2. Crear tablas si no existen (CREATE IF NOT EXISTS es idempotente)
     conn = getconn()
     c = conn.cursor()
     c.executescript("""
@@ -93,9 +91,9 @@ def inicializardb():
             FOREIGN KEY(grupoid) REFERENCES grupos(id)
         );
         CREATE TABLE IF NOT EXISTS cooldowndecisiones (
-            id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            grupoid        INTEGER NOT NULL,
-            decision       TEXT NOT NULL,
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid         INTEGER NOT NULL,
+            decision        TEXT NOT NULL,
             rondasrestantes INTEGER NOT NULL,
             FOREIGN KEY(grupoid) REFERENCES grupos(id)
         );
@@ -133,6 +131,14 @@ def inicializardb():
     conn.close()
 
 inicializar_db = inicializardb
+
+
+# ── Auto-init al importar el módulo ──────────────────────────────────────────
+# Garantiza tablas incluso si app.py importa database antes de llamar inicializar_db()
+try:
+    inicializardb()
+except Exception:
+    pass
 
 
 def hp(p):
@@ -299,12 +305,9 @@ def obtener_logros_grupo(gid):
 def guardar_logro(gid, logro_id):
     conn = getconn()
     c = conn.cursor()
-    try:
-        c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)",
-                  (gid, logro_id))
-        conn.commit()
-    except Exception:
-        pass
+    c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)",
+              (gid, logro_id))
+    conn.commit()
     conn.close()
     _github_save()
 
@@ -322,12 +325,9 @@ def obtener_misiones_canjeadas(gid):
 def guardar_mision(gid, mision_id):
     conn = getconn()
     c = conn.cursor()
-    try:
-        c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)",
-                  (gid, mision_id))
-        conn.commit()
-    except Exception:
-        pass
+    c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)",
+              (gid, mision_id))
+    conn.commit()
     conn.close()
     _github_save()
 
