@@ -18,12 +18,14 @@ def _github_save():
         if not token or not repo:
             return
         url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {"Authorization": f"token {token}",
+                   "Accept": "application/vnd.github.v3+json"}
         with open(DB_PATH, "rb") as f:
             content = base64.b64encode(f.read()).decode()
         r = requests.get(url, headers=headers)
         sha = r.json().get("sha", "") if r.status_code == 200 else ""
-        payload = {"message": "chore: auto-save database.db", "content": content, "branch": branch}
+        payload = {"message": "chore: auto-save database.db",
+                   "content": content, "branch": branch}
         if sha:
             payload["sha"] = sha
         requests.put(url, json=payload, headers=headers)
@@ -42,7 +44,8 @@ def _github_restore():
         if not token or not repo:
             return
         url = f"https://api.github.com/repos/{repo}/contents/{DB_PATH}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {"Authorization": f"token {token}",
+                   "Accept": "application/vnd.github.v3+json"}
         r = requests.get(url, headers=headers, params={"ref": branch})
         if r.status_code == 200:
             data = base64.b64decode(r.json()["content"])
@@ -53,65 +56,79 @@ def _github_restore():
 
 
 def getconn():
-    _github_restore()
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # Asegurar WAL mode para mayor estabilidad
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
 # ── Tablas ────────────────────────────────────────────────────────────────────
 def inicializardb():
+    # 1. Intentar restaurar desde GitHub primero
+    _github_restore()
+    # 2. Crear tablas si no existen (CREATE IF NOT EXISTS es idempotente)
     conn = getconn()
     c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS grupos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombregrupo TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL)""")
-    c.execute("""CREATE TABLE IF NOT EXISTS estudiantes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        nombreestudiante TEXT NOT NULL,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS progresojuego (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER UNIQUE NOT NULL,
-        economia INTEGER DEFAULT 50,
-        medioambiente INTEGER DEFAULT 50,
-        energia INTEGER DEFAULT 50,
-        bienestarsocial INTEGER DEFAULT 50,
-        rondaactual INTEGER DEFAULT 1,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS cooldowndecisiones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        decision TEXT NOT NULL,
-        rondasrestantes INTEGER NOT NULL,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS logros_grupo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        logroid TEXT NOT NULL,
-        UNIQUE(grupoid, logroid),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS misiones_canjeadas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        misionid TEXT NOT NULL,
-        UNIQUE(grupoid, misionid),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS estrellas_grupo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER UNIQUE NOT NULL,
-        total INTEGER DEFAULT 0,
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
-    c.execute("""CREATE TABLE IF NOT EXISTS ranking (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        grupoid INTEGER NOT NULL,
-        nombregrupo TEXT NOT NULL,
-        puntaje INTEGER NOT NULL,
-        dificultad TEXT DEFAULT 'Normal',
-        fecha TEXT DEFAULT (date('now')),
-        FOREIGN KEY(grupoid) REFERENCES grupos(id))""")
+    c.executescript("""
+        CREATE TABLE IF NOT EXISTS grupos (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombregrupo TEXT UNIQUE NOT NULL,
+            password    TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS estudiantes (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid          INTEGER NOT NULL,
+            nombreestudiante TEXT NOT NULL,
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS progresojuego (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid         INTEGER UNIQUE NOT NULL,
+            economia        INTEGER DEFAULT 50,
+            medioambiente   INTEGER DEFAULT 50,
+            energia         INTEGER DEFAULT 50,
+            bienestarsocial INTEGER DEFAULT 50,
+            rondaactual     INTEGER DEFAULT 1,
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS cooldowndecisiones (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid        INTEGER NOT NULL,
+            decision       TEXT NOT NULL,
+            rondasrestantes INTEGER NOT NULL,
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS logros_grupo (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid INTEGER NOT NULL,
+            logroid TEXT NOT NULL,
+            UNIQUE(grupoid, logroid),
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS misiones_canjeadas (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid  INTEGER NOT NULL,
+            misionid TEXT NOT NULL,
+            UNIQUE(grupoid, misionid),
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS estrellas_grupo (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid INTEGER UNIQUE NOT NULL,
+            total   INTEGER DEFAULT 0,
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS ranking (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            grupoid     INTEGER NOT NULL,
+            nombregrupo TEXT NOT NULL,
+            puntaje     INTEGER NOT NULL,
+            dificultad  TEXT DEFAULT 'Normal',
+            fecha       TEXT DEFAULT (date('now')),
+            FOREIGN KEY(grupoid) REFERENCES grupos(id)
+        );
+    """)
     conn.commit()
     conn.close()
 
@@ -127,7 +144,8 @@ def registrargrupo(nombre, pw):
     conn = getconn()
     c = conn.cursor()
     try:
-        c.execute("INSERT INTO grupos(nombregrupo,password) VALUES(?,?)", (nombre.strip(), hp(pw)))
+        c.execute("INSERT INTO grupos(nombregrupo,password) VALUES(?,?)",
+                  (nombre.strip(), hp(pw)))
         conn.commit()
         gid = c.lastrowid
         conn.close()
@@ -143,7 +161,8 @@ registrar_grupo = registrargrupo
 def logingrupo(nombre, pw):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT id FROM grupos WHERE nombregrupo=? AND password=?", (nombre.strip(), hp(pw)))
+    c.execute("SELECT id FROM grupos WHERE nombregrupo=? AND password=?",
+              (nombre.strip(), hp(pw)))
     row = c.fetchone()
     conn.close()
     return row["id"] if row else None
@@ -166,7 +185,8 @@ nombre_grupo_por_id = nombregrupoporid
 def guardarestudiante(gid, nombre):
     conn = getconn()
     c = conn.cursor()
-    c.execute("INSERT INTO estudiantes(grupoid,nombreestudiante) VALUES(?,?)", (gid, nombre.strip()))
+    c.execute("INSERT INTO estudiantes(grupoid,nombreestudiante) VALUES(?,?)",
+              (gid, nombre.strip()))
     conn.commit()
     conn.close()
     _github_save()
@@ -177,7 +197,8 @@ guardar_estudiante = guardarestudiante
 def obtenerestudiantes(gid):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,))
+    c.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id",
+              (gid,))
     rows = c.fetchall()
     conn.close()
     return [r["nombreestudiante"] for r in rows]
@@ -235,7 +256,8 @@ reiniciar_progreso = reiniciarprogreso
 def obtenercooldowns(gid):
     conn = getconn()
     c = conn.cursor()
-    c.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=?", (gid,))
+    c.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=?",
+              (gid,))
     rows = c.fetchall()
     conn.close()
     return {r["decision"]: r["rondasrestantes"] for r in rows}
@@ -247,7 +269,8 @@ def actualizarcooldown(gid, decision, rondausada):
     conn = getconn()
     c = conn.cursor()
     disponibleen = rondausada + COOLDOWN
-    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=?", (gid, decision))
+    c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=?",
+              (gid, decision))
     c.execute("INSERT INTO cooldowndecisiones(grupoid,decision,rondasrestantes) VALUES(?,?,?)",
               (gid, decision, disponibleen))
     conn.commit()
@@ -277,7 +300,8 @@ def guardar_logro(gid, logro_id):
     conn = getconn()
     c = conn.cursor()
     try:
-        c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
+        c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)",
+                  (gid, logro_id))
         conn.commit()
     except Exception:
         pass
@@ -299,7 +323,8 @@ def guardar_mision(gid, mision_id):
     conn = getconn()
     c = conn.cursor()
     try:
-        c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
+        c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)",
+                  (gid, mision_id))
         conn.commit()
     except Exception:
         pass
@@ -318,7 +343,6 @@ def obtener_estrellas(gid):
 
 
 def guardar_estrellas(gid, cantidad):
-    """Suma `cantidad` estrellas al grupo."""
     conn = getconn()
     c = conn.cursor()
     c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
