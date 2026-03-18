@@ -7,7 +7,6 @@ def pantalla_inicio():
     st.markdown('<div class="game-sub">Ingeniería Edition · Pensamiento Sistémico</div>',
                 unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
-
     c1, c2, c3, c4 = st.columns(4)
     for col, em, v, d in zip([c1,c2,c3,c4],
         ["🏙️","📚","⏱️","🔥"],
@@ -19,7 +18,6 @@ def pantalla_inicio():
                 <div style="font-size:1rem;font-weight:700;color:#f1f5f9">{v}</div>
                 <div style="font-size:0.78rem;color:rgba(255,255,255,0.4)">{d}</div>
             </div>''', unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
     b1, b2 = st.columns(2)
     with b1:
@@ -29,9 +27,8 @@ def pantalla_inicio():
 
 
 def pantalla_instrucciones():
-    gid       = st.session_state.get("grupo_id")
+    gid        = st.session_state.get("grupo_id")
     from_juego = st.session_state.get("_from_juego", False)
-
     st.markdown('<div class="game-title" style="font-size:1.8rem">📖 Instrucciones</div>',
                 unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -61,9 +58,7 @@ def pantalla_instrucciones():
             <h3 style="color:#f87171;margin-top:0">⚠️ Dificultad</h3>
             <p>Afecta la penalización por error y la intensidad de los eventos negativos.</p>
         </div>''', unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
-
     if from_juego:
         if st.button("⬅️  Volver al Juego", use_container_width=True, type="primary"):
             st.session_state["_from_juego"] = False

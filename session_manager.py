@@ -33,6 +33,7 @@ def init_session():
         "logros_partida":            [],
         "logros_obtenidos":          [],
         "_ranking_guardado":         False,
+        "_from_juego":               False,
         "decisiones_usadas_partida": set(),
         "mejor_racha":               0,
         "racha_actual":              0,

@@ -72,9 +72,8 @@ _TABLAS = [
 
 def _crear_tablas():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    cur  = conn.cursor()
     for sql in _TABLAS:
-        cur.execute(sql)
+        conn.execute(sql)
     conn.commit()
     conn.close()
 
@@ -93,8 +92,7 @@ def getconn():
 
 
 def inicializardb():
-    conn = getconn()
-    conn.close()
+    conn = getconn(); conn.close()
 
 inicializar_db = inicializardb
 
@@ -105,40 +103,30 @@ def hp(p):
 
 # ── Grupos ────────────────────────────────────────────────────────────────────
 def registrargrupo(nombre, pw):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     try:
-        c.execute("INSERT INTO grupos(nombregrupo,password) VALUES(?,?)",
-                  (nombre.strip(), hp(pw)))
-        conn.commit()
-        gid = c.lastrowid
-        conn.close()
+        c.execute("INSERT INTO grupos(nombregrupo,password) VALUES(?,?)", (nombre.strip(), hp(pw)))
+        conn.commit(); gid = c.lastrowid; conn.close()
         return True, gid
     except sqlite3.IntegrityError:
-        conn.close()
-        return False, None
+        conn.close(); return False, None
 
 registrar_grupo = registrargrupo
 
 
 def logingrupo(nombre, pw):
-    conn = getconn()
-    c = conn.cursor()
-    c.execute("SELECT id FROM grupos WHERE nombregrupo=? AND password=?",
-              (nombre.strip(), hp(pw)))
-    row = c.fetchone()
-    conn.close()
+    conn = getconn(); c = conn.cursor()
+    c.execute("SELECT id FROM grupos WHERE nombregrupo=? AND password=?", (nombre.strip(), hp(pw)))
+    row = c.fetchone(); conn.close()
     return row["id"] if row else None
 
 login_grupo = logingrupo
 
 
 def nombregrupoporid(gid):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT nombregrupo FROM grupos WHERE id=?", (gid,))
-    row = c.fetchone()
-    conn.close()
+    row = c.fetchone(); conn.close()
     return row["nombregrupo"] if row else "Desconocido"
 
 nombre_grupo_por_id = nombregrupoporid
@@ -146,22 +134,17 @@ nombre_grupo_por_id = nombregrupoporid
 
 # ── Estudiantes ───────────────────────────────────────────────────────────────
 def guardarestudiante(gid, nombre):
-    conn = getconn()
-    c = conn.cursor()
-    c.execute("INSERT INTO estudiantes(grupoid,nombreestudiante) VALUES(?,?)",
-              (gid, nombre.strip()))
-    conn.commit()
-    conn.close()
+    conn = getconn(); c = conn.cursor()
+    c.execute("INSERT INTO estudiantes(grupoid,nombreestudiante) VALUES(?,?)", (gid, nombre.strip()))
+    conn.commit(); conn.close()
 
 guardar_estudiante = guardarestudiante
 
 
 def obtenerestudiantes(gid):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,))
-    rows = c.fetchall()
-    conn.close()
+    rows = c.fetchall(); conn.close()
     return [r["nombreestudiante"] for r in rows]
 
 obtener_estudiantes = obtenerestudiantes
@@ -169,8 +152,7 @@ obtener_estudiantes = obtenerestudiantes
 
 # ── Progreso por dificultad ───────────────────────────────────────────────────
 def obtenerprogreso(gid, dificultad="Normal"):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
     row = c.fetchone()
     if not row:
@@ -180,146 +162,116 @@ def obtenerprogreso(gid, dificultad="Normal"):
         conn.commit()
         c.execute("SELECT * FROM progresojuego WHERE grupoid=? AND dificultad=?", (gid, dificultad))
         row = c.fetchone()
-    conn.close()
-    return dict(row)
+    conn.close(); return dict(row)
 
 obtener_progreso = obtenerprogreso
 
 
 def actualizarprogreso(gid, eco, amb, ene, bie, ronda, dificultad="Normal"):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("""UPDATE progresojuego
         SET economia=?,medioambiente=?,energia=?,bienestarsocial=?,rondaactual=?
         WHERE grupoid=? AND dificultad=?""", (eco, amb, ene, bie, ronda, gid, dificultad))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
 
 actualizar_progreso = actualizarprogreso
 
 
 def reiniciarprogreso(gid, dificultad="Normal"):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("""UPDATE progresojuego
         SET economia=50,medioambiente=50,energia=50,bienestarsocial=50,rondaactual=1
         WHERE grupoid=? AND dificultad=?""", (gid, dificultad))
     c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?", (gid, dificultad))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
 
 reiniciar_progreso = reiniciarprogreso
 
 
-# ── Cooldowns por dificultad ──────────────────────────────────────────────────
+# ── Cooldowns ─────────────────────────────────────────────────────────────────
 def obtenercooldowns(gid, dificultad="Normal"):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?",
               (gid, dificultad))
-    rows = c.fetchall()
-    conn.close()
+    rows = c.fetchall(); conn.close()
     return {r["decision"]: r["rondasrestantes"] for r in rows}
 
 obtener_cooldowns = obtenercooldowns
 
 
 def actualizarcooldown(gid, decision, rondausada, dificultad="Normal"):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     disponibleen = rondausada + COOLDOWN
     c.execute("DELETE FROM cooldowndecisiones WHERE grupoid=? AND decision=? AND dificultad=?",
               (gid, decision, dificultad))
     c.execute("INSERT INTO cooldowndecisiones(grupoid,dificultad,decision,rondasrestantes) VALUES(?,?,?,?)",
               (gid, dificultad, decision, disponibleen))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
 
 actualizar_cooldown = actualizarcooldown
-
-
-def decrementarcooldowns(gid, dificultad="Normal"):
-    pass
-
-decrementar_cooldowns = decrementarcooldowns
+decrementar_cooldowns = lambda gid, dif="Normal": None
+decrementarcooldowns  = decrementar_cooldowns
 
 
 # ── Logros ────────────────────────────────────────────────────────────────────
 def obtener_logros_grupo(gid):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
-    rows = c.fetchall()
-    conn.close()
+    rows = c.fetchall(); conn.close()
     return [r["logroid"] for r in rows]
 
 
 def guardar_logro(gid, logro_id):
     conn = getconn()
-    c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
-    conn.commit()
-    conn.close()
+    conn.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, logro_id))
+    conn.commit(); conn.close()
 
 
 # ── Misiones ──────────────────────────────────────────────────────────────────
 def obtener_misiones_canjeadas(gid):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT misionid FROM misiones_canjeadas WHERE grupoid=?", (gid,))
-    rows = c.fetchall()
-    conn.close()
+    rows = c.fetchall(); conn.close()
     return [r["misionid"] for r in rows]
 
 
 def guardar_mision(gid, mision_id):
     conn = getconn()
-    c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
-    conn.commit()
-    conn.close()
+    conn.execute("INSERT OR IGNORE INTO misiones_canjeadas(grupoid,misionid) VALUES(?,?)", (gid, mision_id))
+    conn.commit(); conn.close()
 
 
 # ── Estrellas ─────────────────────────────────────────────────────────────────
 def obtener_estrellas(gid):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     c.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?", (gid,))
-    row = c.fetchone()
-    conn.close()
+    row = c.fetchone(); conn.close()
     return row["total"] if row else 0
 
 
 def guardar_estrellas(gid, cantidad):
     conn = getconn()
-    c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
-    c.execute("UPDATE estrellas_grupo SET total=total+? WHERE grupoid=?", (cantidad, gid))
-    conn.commit()
-    conn.close()
+    conn.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
+    conn.execute("UPDATE estrellas_grupo SET total=total+? WHERE grupoid=?", (cantidad, gid))
+    conn.commit(); conn.close()
 
 
 # ── Ranking ───────────────────────────────────────────────────────────────────
 def guardar_ranking(gid, puntaje, dificultad="Normal"):
     nombre = nombregrupoporid(gid)
     conn = getconn()
-    c = conn.cursor()
-    c.execute("INSERT INTO ranking(grupoid,nombregrupo,puntaje,dificultad) VALUES(?,?,?,?)",
-              (gid, nombre, puntaje, dificultad))
-    conn.commit()
-    conn.close()
+    conn.execute("INSERT INTO ranking(grupoid,nombregrupo,puntaje,dificultad) VALUES(?,?,?,?)",
+                 (gid, nombre, puntaje, dificultad))
+    conn.commit(); conn.close()
 
 
 def obtener_ranking(dificultad=None, limite=10):
-    conn = getconn()
-    c = conn.cursor()
+    conn = getconn(); c = conn.cursor()
     if dificultad:
-        c.execute("""SELECT r.nombregrupo, r.puntaje, r.dificultad, r.fecha, r.grupoid
-                     FROM ranking r WHERE r.dificultad=?
-                     ORDER BY r.puntaje DESC LIMIT ?""", (dificultad, limite))
+        c.execute("""SELECT nombregrupo,puntaje,dificultad,fecha,grupoid FROM ranking
+                     WHERE dificultad=? ORDER BY puntaje DESC LIMIT ?""", (dificultad, limite))
     else:
-        c.execute("""SELECT r.nombregrupo, r.puntaje, r.dificultad, r.fecha, r.grupoid
-                     FROM ranking r ORDER BY r.puntaje DESC LIMIT ?""", (limite,))
-    rows = c.fetchall()
-    conn.close()
+        c.execute("""SELECT nombregrupo,puntaje,dificultad,fecha,grupoid FROM ranking
+                     ORDER BY puntaje DESC LIMIT ?""", (limite,))
+    rows = c.fetchall(); conn.close()
     return [dict(r) for r in rows]

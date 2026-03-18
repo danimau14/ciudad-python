@@ -11,14 +11,12 @@ def pantalla_login():
     st.markdown('<div class="game-title" style="font-size:1.6rem">🔐 Iniciar Sesión</div>',
                 unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
-
     with st.form("form_login"):
         nombre = st.text_input("Nombre del grupo")
         pw     = st.text_input("Contraseña", type="password")
         sub    = st.form_submit_button("Entrar", use_container_width=True)
-
     if sub:
-        from database import login_grupo, obtener_progreso
+        from database import login_grupo
         gid = login_grupo(nombre, pw)
         if gid:
             st.session_state["grupo_id"]     = gid
@@ -26,7 +24,6 @@ def pantalla_login():
             navegar("lobby")
         else:
             st.error("Nombre o contraseña incorrectos.")
-
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("⬅  Volver al Inicio", use_container_width=True):
         navegar("inicio")
@@ -36,21 +33,13 @@ def pantalla_registro():
     st.markdown('<div class="game-title" style="font-size:1.6rem">📝 Registrar Grupo</div>',
                 unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
-
-    if "grupo_id_registro" not in st.session_state:
-        st.session_state["grupo_id_registro"] = None
-    if "estudiantes_temp" not in st.session_state:
-        st.session_state["estudiantes_temp"] = []
-
     gid_reg = st.session_state.get("grupo_id_registro")
-
     if not gid_reg:
         with st.form("form_registro"):
             nombre = st.text_input("Nombre del grupo")
             pw     = st.text_input("Contraseña", type="password")
             pw2    = st.text_input("Confirmar contraseña", type="password")
             sub    = st.form_submit_button("Crear Grupo", use_container_width=True)
-
         if sub:
             from database import registrar_grupo
             if not nombre.strip():
@@ -69,12 +58,10 @@ def pantalla_registro():
                 else:
                     st.error("Ese nombre de grupo ya existe.")
     else:
-        from database import guardar_estudiante, obtener_estudiantes
+        from database import guardar_estudiante
         nombre_grp  = st.session_state.get("grupo_nombre", "")
         estudiantes = st.session_state.get("estudiantes_temp", [])
-
-        st.success(f"Grupo **{nombre_grp}** creado. Ahora agrega de {MIN_EST} a {MAX_EST} estudiantes.")
-
+        st.success(f"Grupo **{nombre_grp}** creado. Agrega de {MIN_EST} a {MAX_EST} estudiantes.")
         if len(estudiantes) < MAX_EST:
             with st.form("form_est"):
                 est_nombre = st.text_input(f"Estudiante #{len(estudiantes)+1}")
@@ -88,21 +75,18 @@ def pantalla_registro():
                     guardar_estudiante(gid_reg, est_nombre.strip())
                     st.session_state["estudiantes_temp"].append(est_nombre.strip())
                     st.rerun()
-
         if estudiantes:
             st.markdown("**Estudiantes agregados:**")
             for e in estudiantes:
                 st.markdown(f"- {e}")
-
         if len(estudiantes) >= MIN_EST:
             if st.button("✅  Ir al Lobby", use_container_width=True, type="primary"):
-                st.session_state["grupo_id"]            = gid_reg
-                st.session_state["grupo_id_registro"]   = None
-                st.session_state["estudiantes_temp"]    = []
+                st.session_state["grupo_id"]          = gid_reg
+                st.session_state["grupo_id_registro"] = None
+                st.session_state["estudiantes_temp"]  = []
                 navegar("lobby")
         else:
             st.info(f"Agrega al menos {MIN_EST - len(estudiantes)} estudiante(s) más.")
-
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("⬅  Volver al Inicio", use_container_width=True):
         navegar("inicio")
