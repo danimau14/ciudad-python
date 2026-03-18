@@ -9,7 +9,6 @@ from session_manager import navegar
 
 def pantalla_inicio():
 
-    # ── CSS global ────────────────────────────────────────────────────────────
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@300;400;600;700&display=swap');
@@ -30,8 +29,7 @@ def pantalla_inicio():
         background:
             radial-gradient(ellipse 75% 55% at 12% 22%, rgba(123,47,255,0.32) 0%, transparent 62%),
             radial-gradient(ellipse 60% 70% at 88% 78%, rgba(99,102,241,0.26) 0%, transparent 62%),
-            radial-gradient(ellipse 50% 38% at 50% 98%, rgba(167,139,250,0.20) 0%, transparent 62%),
-            radial-gradient(ellipse 85% 32% at 50% 115%, rgba(123,47,255,0.38) 0%, transparent 58%);
+            radial-gradient(ellipse 50% 38% at 50% 98%, rgba(167,139,250,0.20) 0%, transparent 62%);
         pointer-events: none;
         z-index: 0;
         animation: nebula-shift 14s ease-in-out infinite alternate;
@@ -46,32 +44,28 @@ def pantalla_inicio():
         position: fixed;
         bottom: 0; left: 0;
         width: 100%; height: 280px;
-        z-index: 0;
-        pointer-events: none;
+        z-index: 0; pointer-events: none;
         animation: city-glow 4s ease-in-out infinite alternate;
     }
     @keyframes city-glow {
-        0%   { opacity: 0.16;
-               filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.38))
-                       drop-shadow(0 -2px 15px rgba(255,215,0,0.08)); }
-        100% { opacity: 0.32;
-               filter: drop-shadow(0 -10px 70px rgba(123,47,255,0.78))
-                       drop-shadow(0 -2px 30px rgba(255,215,0,0.30)); }
+        0%   { opacity: 0.15;
+               filter: drop-shadow(0 -8px 40px rgba(123,47,255,0.35)); }
+        100% { opacity: 0.30;
+               filter: drop-shadow(0 -10px 70px rgba(123,47,255,0.75))
+                       drop-shadow(0 -2px 30px rgba(255,215,0,0.28)); }
     }
 
     /* ── Animaciones ── */
     @keyframes float {
-        0%, 100% { transform: translateY(0px) scale(1);      }
-        50%       { transform: translateY(-12px) scale(1.06); }
+        0%, 100% { transform: translateY(0px);   }
+        50%       { transform: translateY(-12px); }
     }
     @keyframes shimmer-border {
-        0%, 100% { box-shadow: 0 0 22px #7b2fff44, 0 0 55px #7b2fff20,
-                               inset 0 0 22px rgba(123,47,255,0.04); }
-        50%       { box-shadow: 0 0 45px #7b2fff99, 0 0 95px #7b2fff55,
-                               inset 0 0 40px rgba(123,47,255,0.10); }
+        0%, 100% { box-shadow: 0 0 22px #7b2fff44, 0 0 55px #7b2fff20; }
+        50%       { box-shadow: 0 0 45px #7b2fff99, 0 0 95px #7b2fff55; }
     }
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(34px); }
+        from { opacity: 0; transform: translateY(30px); }
         to   { opacity: 1; transform: translateY(0);    }
     }
     @keyframes energy-line {
@@ -83,30 +77,23 @@ def pantalla_inicio():
         100% { left: 130%; }
     }
 
-    /* ── Bounce + Glitch por letra ── */
+    /* ── Bounce por letra ── */
     @keyframes bounce-letter {
-        0%, 100% { transform: translateY(0) scaleY(1);        }
-        35%       { transform: translateY(-10px) scaleY(1.12); }
-        55%       { transform: translateY(-4px)  scaleY(1.03); }
-        70%       { transform: translateY(-7px)  scaleY(1.07); }
+        0%, 100% { transform: translateY(0);     }
+        40%       { transform: translateY(-10px); }
+        60%       { transform: translateY(-5px);  }
     }
+    /* ── Glitch ocasional ── */
     @keyframes glitch-fx {
-        0%,  87%, 100% {
-            transform: translateX(0) skewX(0deg);
-            color: #ffffff;
-            text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55;
-        }
-        89% { transform: translateX(-4px) skewX(-9deg);  color: #ff4d6d;
-              text-shadow: -3px 0 #00ffff, 3px 0 #ff4d6d; }
-        91% { transform: translateX(4px)  skewX(9deg);   color: #00ffff;
-              text-shadow: 3px 0 #ff4d6d, -3px 0 #00ffff; }
-        93% { transform: translateX(-2px) skewX(-4deg);  color: #ffffff;
-              text-shadow: 2px 0 #7b2fff, -2px 0 #FFD700; }
-        95% { transform: translateX(0)    skewX(0deg);   color: #ffffff;
-              text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55; }
+        0%,  87%, 100% { transform: skewX(0deg);   color: #ffffff; }
+        89%             { transform: skewX(-9deg);  color: #ff4d6d;
+                          text-shadow: -3px 0 #00ffff, 3px 0 #ff4d6d; }
+        91%             { transform: skewX(9deg);   color: #00ffff;
+                          text-shadow: 3px 0 #ff4d6d, -3px 0 #00ffff; }
+        93%             { transform: skewX(0deg);   color: #ffffff; }
     }
 
-    /* ── Layout: centra el panel en pantalla ── */
+    /* ── Layout ── */
     .block-container {
         display: flex !important;
         flex-direction: column !important;
@@ -114,20 +101,22 @@ def pantalla_inicio():
         justify-content: center !important;
         min-height: 100vh !important;
         padding: 1.5rem 1rem !important;
-        max-width: 520px !important;
+        max-width: 460px !important;
         margin: 0 auto !important;
         position: relative;
         z-index: 1;
     }
 
-    /* ══════════════════════════════════════════════
-       PANEL ÚNICO — contiene TODO: título + botones
-       ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════
+       PANEL SUPERIOR  (ícono + título)
+       borde redondeado arriba, abierto abajo
+       ══════════════════════════════════════════ */
     .inicio-panel {
-        background: rgba(18, 4, 52, 0.92);
-        border: 1px solid rgba(123, 47, 255, 0.52);
-        border-radius: 24px;           /* redondo en los 4 bordes */
-        padding: 40px 32px 32px;
+        background: rgba(18, 4, 52, 0.93);
+        border: 1px solid rgba(123,47,255,0.52);
+        border-bottom: none;
+        border-radius: 24px 24px 0 0;
+        padding: 36px 28px 24px;
         text-align: center;
         backdrop-filter: blur(28px);
         -webkit-backdrop-filter: blur(28px);
@@ -137,25 +126,24 @@ def pantalla_inicio():
         overflow: hidden;
         z-index: 2;
     }
-    /* Línea de energía en borde superior */
+    /* línea de energía superior */
     .inicio-panel::before {
         content: '';
         position: absolute;
         top: 0; height: 2px;
         background: linear-gradient(90deg,
             transparent, #7b2fff, #FFD700, #00ffff, transparent);
-        border-radius: 2px;
         animation: energy-line 2.8s linear infinite;
     }
 
-    /* ── Ícono ciudad ── */
+    /* ── Ícono flotante ── */
     .city-icon {
-        font-size: 3.8rem;
+        font-size: 3.6rem;
         display: block;
         margin-bottom: 12px;
         animation: float 4s ease-in-out infinite;
-        filter: drop-shadow(0 0 24px #7b2fffcc)
-                drop-shadow(0 0 52px #7b2fff88)
+        filter: drop-shadow(0 0 22px #7b2fffcc)
+                drop-shadow(0 0 50px #7b2fff88)
                 drop-shadow(0 0 10px #FFD70066);
     }
 
@@ -163,57 +151,61 @@ def pantalla_inicio():
     .inicio-badge {
         display: inline-block;
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.70rem;
+        font-size: 0.68rem;
         font-weight: 600;
         letter-spacing: 2px;
         text-transform: uppercase;
         color: #a78bfa;
         background: rgba(123,47,255,0.15);
-        border: 1px solid rgba(123,47,255,0.42);
+        border: 1px solid rgba(123,47,255,0.40);
         border-radius: 20px;
-        padding: 5px 16px;
-        margin-bottom: 18px;
+        padding: 4px 14px;
+        margin-bottom: 16px;
     }
 
-    /* ── Título pixel animado ── */
+    /* ── TÍTULO — dos líneas fijas, sin cortes ──
+       Trucos clave:
+       · font-size fijo en px para que no dependa del viewport
+       · white-space: nowrap en cada línea
+       · display: flex + column + center para alinear las 2 líneas
+    ── */
     .inicio-title {
         font-family: 'Press Start 2P', monospace;
-        /* Tamaño que cabe en el panel sin romperse */
-        font-size: clamp(0.7rem, 3.5vw, 1.05rem);
-        font-weight: 400;
+        font-size: 22px;          /* tamaño fijo: cabe en 400px de ancho */
         color: #ffffff;
-        margin: 0 0 6px;
-        line-height: 1.9;
-        /* Cada palabra en su línea, sin cortes arbitrarios */
-        white-space: pre-line;
-        word-break: keep-all;
-        overflow-wrap: normal;
+        margin: 0 0 8px;
+        line-height: 1.8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
     }
-    /* Línea 1: CIUDAD EN  — línea 2: EQUILIBRIO */
-    .titulo-l1, .titulo-l2 {
+    /* Cada línea en bloque, sin salto forzado */
+    .tl1, .tl2 {
         display: block;
         white-space: nowrap;
     }
+    /* Letras animadas */
     .inicio-title span {
         display: inline-block;
         animation:
-            bounce-letter 2s    ease-in-out infinite,
-            glitch-fx     6.5s  step-end    infinite;
+            bounce-letter 2s   ease-in-out infinite,
+            glitch-fx     6.5s step-end    infinite;
         animation-delay:
             calc(var(--i) * 0.07s),
-            calc(var(--i) * 0.05s + 1.8s);
-        text-shadow: 0 0 16px #7b2fff99, 0 0 32px #7b2fff55;
+            calc(var(--i) * 0.05s + 2s);
+        text-shadow: 0 0 16px #7b2fff99, 0 0 30px #7b2fff55;
     }
 
     /* ── Subtítulo ── */
     .inicio-sub {
         font-family: 'Rajdhani', sans-serif;
-        font-size: clamp(0.74rem, 2vw, 0.90rem);
+        font-size: 0.82rem;
         color: #ccccff;
         font-weight: 300;
         letter-spacing: 3px;
         text-transform: uppercase;
-        margin: 6px 0 18px;
+        margin: 4px 0 16px;
     }
 
     /* ── Separador ── */
@@ -222,23 +214,40 @@ def pantalla_inicio():
         background: linear-gradient(90deg,
             transparent 0%, #7b2fff 30%, #FFD700 50%, #7b2fff 70%, transparent 100%);
         border-radius: 2px;
-        margin: 0 auto 16px;
-        width: 80%;
-        opacity: 0.9;
+        margin: 0 auto 0;
+        width: 78%; opacity: 0.9;
     }
 
-    /* ── Helper text ── */
+    /* ══════════════════════════════════════════
+       ZONA BOTONES + FOOTER
+       continúa el panel, borde redondeado abajo
+       ══════════════════════════════════════════ */
+    .btn-zone {
+        background: rgba(18, 4, 52, 0.93);
+        border: 1px solid rgba(123,47,255,0.52);
+        border-top: none;
+        border-radius: 0 0 24px 24px;
+        padding: 18px 28px 28px;
+        width: 100%;
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        animation: shimmer-border 4s ease-in-out infinite;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ── Helper ── */
     .inicio-helper {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.72rem;
-        color: rgba(167,139,250,0.42);
+        font-size: 0.70rem;
+        color: rgba(167,139,250,0.40);
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-align: center;
-        margin-bottom: 14px;
+        margin: 0 0 14px;
     }
 
-    /* ── Botón primario (dorado + shimmer) ── */
+    /* ── Botón primario dorado ── */
     .btn-primary .stButton button {
         font-family: 'Rajdhani', sans-serif !important;
         font-size: 1rem !important;
@@ -273,7 +282,7 @@ def pantalla_inicio():
         transform: translateY(-3px) !important;
     }
 
-    /* ── Botón secundario (púrpura) ── */
+    /* ── Botón secundario púrpura ── */
     .btn-secondary .stButton button {
         font-family: 'Rajdhani', sans-serif !important;
         font-size: 1rem !important;
@@ -300,59 +309,59 @@ def pantalla_inicio():
         transform: translateY(-3px) !important;
     }
 
-    /* ── Footer dentro del panel ── */
+    /* ── Footer ── */
     .inicio-footer {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 0.66rem;
-        color: rgba(167,139,250,0.34);
+        font-size: 0.65rem;
+        color: rgba(167,139,250,0.32);
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-align: center;
-        margin-top: 20px;
+        margin-top: 18px;
+        margin-bottom: 0;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Canvas: estrellas animadas ────────────────────────────────────────────
+    # ── Canvas estrellas ──────────────────────────────────────────────────────
     components.html("""
     <style>
         body { margin:0; padding:0; background:transparent; }
-        #starfield {
-            position: fixed; top:0; left:0;
-            width:100vw; height:100vh;
-            z-index: -1; pointer-events: none;
-        }
+        #sf { position:fixed; top:0; left:0;
+              width:100vw; height:100vh;
+              z-index:-1; pointer-events:none; }
     </style>
-    <canvas id="starfield"></canvas>
+    <canvas id="sf"></canvas>
     <script>
     (function(){
-        const c = document.getElementById('starfield');
-        const ctx = c.getContext('2d');
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        const COLORS = ['#ffffff','#c4b5fd','#a78bfa','#818cf8','#e0d7ff','#FFD70033'];
-        const stars = Array.from({length:210}, () => ({
-            x: Math.random()*c.width, y: Math.random()*c.height,
-            r: Math.random()*1.8+0.22, alpha: Math.random()*0.65+0.2,
-            da: (Math.random()*0.014+0.004)*(Math.random()<0.5?1:-1),
-            dx: (Math.random()-0.5)*0.22, dy: (Math.random()-0.5)*0.15,
-            color: COLORS[Math.floor(Math.random()*COLORS.length)]
+        const c=document.getElementById('sf'), ctx=c.getContext('2d');
+        c.width=window.innerWidth; c.height=window.innerHeight;
+        const COL=['#ffffff','#c4b5fd','#a78bfa','#818cf8','#e0d7ff'];
+        const S=Array.from({length:200},()=>({
+            x:Math.random()*c.width, y:Math.random()*c.height,
+            r:Math.random()*1.7+0.2, a:Math.random()*0.6+0.2,
+            da:(Math.random()*0.013+0.004)*(Math.random()<.5?1:-1),
+            dx:(Math.random()-.5)*.2, dy:(Math.random()-.5)*.14,
+            col:COL[Math.floor(Math.random()*COL.length)]
         }));
-        function frame(){
+        function draw(){
             ctx.clearRect(0,0,c.width,c.height);
-            stars.forEach(s=>{
-                s.x+=s.dx; s.y+=s.dy; s.alpha+=s.da;
-                if(s.alpha>0.95||s.alpha<0.1) s.da*=-1;
-                if(s.x<0) s.x=c.width; if(s.x>c.width) s.x=0;
-                if(s.y<0) s.y=c.height; if(s.y>c.height) s.y=0;
-                ctx.save(); ctx.globalAlpha=s.alpha;
+            S.forEach(s=>{
+                s.x+=s.dx; s.y+=s.dy; s.a+=s.da;
+                if(s.a>.95||s.a<.1) s.da*=-1;
+                if(s.x<0)s.x=c.width; if(s.x>c.width)s.x=0;
+                if(s.y<0)s.y=c.height; if(s.y>c.height)s.y=0;
+                ctx.save(); ctx.globalAlpha=s.a;
                 ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-                ctx.fillStyle=s.color; ctx.shadowColor=s.color;
+                ctx.fillStyle=s.col; ctx.shadowColor=s.col;
                 ctx.shadowBlur=s.r*5; ctx.fill(); ctx.restore();
             });
-            requestAnimationFrame(frame);
+            requestAnimationFrame(draw);
         }
-        frame();
-        window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;});
+        draw();
+        window.addEventListener('resize',()=>{
+            c.width=window.innerWidth; c.height=window.innerHeight;
+        });
     })();
     </script>
     """, height=0, scrolling=False)
@@ -403,7 +412,7 @@ def pantalla_inicio():
         L1330,105 L1330,75 L1340,75 L1340,55 L1355,55 L1355,75
         L1370,75 L1370,95 L1390,95 L1390,65 L1410,65 L1410,85
         L1440,85 L1440,280 Z"/>
-      <g fill="#FFD700" opacity="0.65">
+      <g fill="#FFD700" opacity="0.60">
         <rect x="165" y="34" width="3" height="4"/>
         <rect x="237" y="24" width="3" height="4"/>
         <rect x="432" y="14" width="3" height="4"/>
@@ -415,62 +424,42 @@ def pantalla_inicio():
     """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # PANEL ÚNICO: título + separador + helper + botones + footer
+    # PANEL SUPERIOR — ícono + badge + título + subtítulo + separador
     # ══════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div class="inicio-panel">
-
-        <!-- Ícono -->
         <span class="city-icon">🏙️</span>
-
-        <!-- Badge -->
         <div class="inicio-badge">🌐 Pensamiento Sistémico 🌐</div>
 
-        <!-- Título animado: CIUDAD EN / EQUILIBRIO en dos líneas limpias -->
         <h1 class="inicio-title">
-            <span class="titulo-l1">
-                <span style="--i:0">C</span><span style="--i:1">I</span><span style="--i:2">U</span><span style="--i:3">D</span><span style="--i:4">A</span><span style="--i:5">D</span>&nbsp;<span style="--i:6">E</span><span style="--i:7">N</span>
+            <span class="tl1">
+                <span style="--i:0">C</span><span style="--i:1">I</span><span
+                style="--i:2">U</span><span style="--i:3">D</span><span
+                style="--i:4">A</span><span style="--i:5">D</span>&thinsp;
+                <span style="--i:6">E</span><span style="--i:7">N</span>
             </span>
-            <span class="titulo-l2">
-                <span style="--i:8">E</span><span style="--i:9">Q</span><span style="--i:10">U</span><span style="--i:11">I</span><span style="--i:12">L</span><span style="--i:13">I</span><span style="--i:14">B</span><span style="--i:15">R</span><span style="--i:16">I</span><span style="--i:17">O</span>
+            <span class="tl2">
+                <span style="--i:8">E</span><span style="--i:9">Q</span><span
+                style="--i:10">U</span><span style="--i:11">I</span><span
+                style="--i:12">L</span><span style="--i:13">I</span><span
+                style="--i:14">B</span><span style="--i:15">R</span><span
+                style="--i:16">I</span><span style="--i:17">O</span>
             </span>
         </h1>
 
-        <!-- Subtítulo -->
         <p class="inicio-sub">Gestiona tu ciudad · Salva el futuro</p>
-
-        <!-- Separador -->
         <div class="inicio-sep"></div>
-
-        <!-- Helper -->
-        <p class="inicio-helper">⬇ Selecciona una opción para continuar ⬇</p>
-
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Botones dentro del panel (Streamlit los renderiza fuera del HTML,
-    #    pero los envolvemos en divs que continúan visualmente el panel) ───────
-    st.markdown("""
-    <style>
-    /* Zona botones: continúa el panel sin borde superior */
-    .btn-zone {
-        background: rgba(18, 4, 52, 0.92);
-        border: 1px solid rgba(123,47,255,0.52);
-        border-top: none;
-        border-radius: 0 0 24px 24px;
-        padding: 6px 32px 28px;
-        width: 100%;
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        position: relative;
-        z-index: 2;
-    }
-    </style>
-    <div class="btn-zone" id="btn-zone-start"></div>
-    """, unsafe_allow_html=True)
-
-    # Contenedor visual del panel inferior
+    # ══════════════════════════════════════════════════════════════════════════
+    # ZONA BOTONES + FOOTER — continúa visualmente el panel
+    # ══════════════════════════════════════════════════════════════════════════
     st.markdown('<div class="btn-zone">', unsafe_allow_html=True)
+
+    st.markdown(
+        '<p class="inicio-helper">⬇ Selecciona una opción para continuar ⬇</p>',
+        unsafe_allow_html=True)
 
     st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
     if st.button("🔐  INICIAR SESIÓN", key="btn_login", use_container_width=True):
@@ -484,34 +473,33 @@ def pantalla_inicio():
         navegar("registro")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Footer dentro del panel
-    st.markdown(
-        "<p class='inicio-footer' id='footer-año'>⚡ Ciudad en Equilibrio · v2.0 ⚡</p>",
-        unsafe_allow_html=True)
+    # Footer con año dinámico
+    components.html("""
+    <style>
+        body { margin:0; background:transparent; }
+        #ft {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.65rem;
+            color: rgba(167,139,250,0.32);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 18px;
+        }
+    </style>
+    <p id="ft"></p>
+    <script>
+        document.getElementById('ft').textContent =
+            '⚡ Ciudad en Equilibrio · v2.0 · ' + new Date().getFullYear() + ' ⚡';
+    </script>
+    """, height=40, scrolling=False)
 
     st.markdown('</div>', unsafe_allow_html=True)  # cierra .btn-zone
-
-    # Año dinámico vía JS
-    components.html("""
-    <script>
-    (function(){
-        // Espera a que el DOM de Streamlit esté listo e inyecta el año
-        function setYear(){
-            const el = window.parent.document.getElementById('footer-año');
-            if(el){
-                el.textContent = '⚡ Ciudad en Equilibrio · v2.0 · '
-                                 + new Date().getFullYear() + ' ⚡';
-            }
-        }
-        setTimeout(setYear, 600);
-    })();
-    </script>
-    """, height=0, scrolling=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PANTALLA DE INSTRUCCIONES
-#  Requerida por router.py — se accede desde el Lobby, NO desde el inicio.
+#  Requerida por router.py — se accede desde el Lobby, NO desde inicio.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_instrucciones():
