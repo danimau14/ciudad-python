@@ -6,6 +6,9 @@ def inyectar_css():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Courier+Prime:wght@400;700&display=swap');
 
+    /* ══════════════════════════════════════════════
+       BASE
+       ══════════════════════════════════════════════ */
     html, body, [class*="css"] {
         font-family: 'Courier Prime', 'Courier New', Courier, monospace !important;
         background-color: #0a0a0f !important;
@@ -19,14 +22,26 @@ def inyectar_css():
         background-size: 32px 32px;
     }
     #MainMenu, footer, header { visibility: hidden; }
-    .block-container { padding: 1.5rem 2rem 3rem !important; max-width: 1100px !important; }
 
+    /* ── Layout principal responsivo ── */
+    .block-container {
+        padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 3vw, 2rem) 3rem !important;
+        max-width: min(1100px, 100%) !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+    }
+
+    /* ══════════════════════════════════════════════
+       TIPOGRAFÍA
+       ══════════════════════════════════════════════ */
     h1, h2, h3, h4 {
         font-family: 'Press Start 2P', 'Courier New', monospace !important;
         letter-spacing: 1px;
     }
 
-    /* ── ELIMINAR arrow_right de expanders ── */
+    /* ══════════════════════════════════════════════
+       EXPANDERS
+       ══════════════════════════════════════════════ */
     .streamlit-expanderHeader svg { display: none !important; }
     .streamlit-expanderHeader::before {
         content: '+ ';
@@ -39,7 +54,7 @@ def inyectar_css():
 
     .streamlit-expanderHeader {
         font-family: 'Courier Prime', 'Courier New', monospace !important;
-        font-size: 0.82rem !important;
+        font-size: clamp(0.72rem, 2vw, 0.82rem) !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
@@ -47,7 +62,7 @@ def inyectar_css():
         background: rgba(15,15,25,0.7) !important;
         border: 1px solid rgba(167,139,250,0.15) !important;
         border-radius: 10px !important;
-        padding: 10px 16px !important;
+        padding: clamp(8px,2vw,10px) clamp(10px,2vw,16px) !important;
     }
     .streamlit-expanderHeader:hover {
         color: #c4b5fd !important;
@@ -58,15 +73,17 @@ def inyectar_css():
         border: 1px solid rgba(167,139,250,0.1) !important;
         border-top: none !important;
         border-radius: 0 0 10px 10px !important;
-        padding: 16px !important;
+        padding: clamp(10px,2vw,16px) !important;
     }
 
-    /* ── CARDS ── */
+    /* ══════════════════════════════════════════════
+       CARDS
+       ══════════════════════════════════════════════ */
     .card {
         background: rgba(15,15,25,0.85);
         border: 1px solid rgba(167,139,250,0.18);
         border-radius: 16px;
-        padding: 20px 22px;
+        padding: clamp(14px,3vw,20px) clamp(14px,3vw,22px);
         margin-bottom: 12px;
         transition: border-color .25s, box-shadow .25s;
         position: relative;
@@ -80,24 +97,27 @@ def inyectar_css():
         background: rgba(15,15,25,0.9);
         border: 1px solid rgba(96,165,250,0.25);
         border-radius: 18px;
-        padding: 22px 24px;
+        padding: clamp(14px,3vw,22px) clamp(14px,3vw,24px);
         margin-bottom: 14px;
         box-shadow: 0 0 30px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
     }
 
-    /* ── BOTONES ── */
+    /* ══════════════════════════════════════════════
+       BOTONES
+       ══════════════════════════════════════════════ */
     .stButton > button {
         font-family: 'Courier Prime', 'Courier New', monospace !important;
         font-weight: 700 !important;
-        font-size: 0.82rem !important;
+        font-size: clamp(0.72rem, 2vw, 0.82rem) !important;
         letter-spacing: 0.5px !important;
         background: rgba(30,30,50,0.9) !important;
         color: #c4b5fd !important;
         border: 1px solid rgba(167,139,250,0.35) !important;
         border-radius: 10px !important;
-        padding: 10px 20px !important;
+        padding: clamp(8px,2vw,10px) clamp(12px,3vw,20px) !important;
         transition: all .2s ease !important;
         text-transform: uppercase !important;
+        width: 100% !important;
     }
     .stButton > button:hover {
         background: rgba(124,58,237,0.25) !important;
@@ -108,22 +128,32 @@ def inyectar_css():
     }
     .stButton > button:disabled { opacity: 0.35 !important; transform: none !important; }
 
-    /* ── RADIO ── */
+    /* ══════════════════════════════════════════════
+       RADIO
+       ══════════════════════════════════════════════ */
     .stRadio > div {
         background: rgba(15,15,25,0.6) !important;
         border: 1px solid rgba(167,139,250,0.15) !important;
         border-radius: 14px !important;
-        padding: 14px 18px !important;
+        padding: clamp(10px,2vw,14px) clamp(12px,3vw,18px) !important;
     }
-    .stRadio label { font-family: 'Courier Prime', monospace !important; color: #cbd5e1 !important; }
+    .stRadio label {
+        font-family: 'Courier Prime', monospace !important;
+        color: #cbd5e1 !important;
+        font-size: clamp(0.72rem, 2vw, 0.85rem) !important;
+    }
 
-    /* ── INPUTS ── */
+    /* ══════════════════════════════════════════════
+       INPUTS
+       ══════════════════════════════════════════════ */
     .stTextInput > div > div > input {
         font-family: 'Courier Prime', 'Courier New', monospace !important;
         background: rgba(15,15,30,0.8) !important;
         border: 1px solid rgba(167,139,250,0.25) !important;
         border-radius: 10px !important;
         color: #e2e8f0 !important;
+        font-size: clamp(0.78rem, 2vw, 0.9rem) !important;
+        padding: clamp(8px,2vw,12px) !important;
     }
     .stTextInput > div > div > input:focus {
         border-color: rgba(167,139,250,0.6) !important;
@@ -132,26 +162,30 @@ def inyectar_css():
     .stTextInput label {
         font-family: 'Courier Prime', monospace !important;
         color: #94a3b8 !important;
-        font-size: 0.82rem !important;
+        font-size: clamp(0.68rem, 1.8vw, 0.82rem) !important;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
 
-    /* ── TABS ── */
+    /* ══════════════════════════════════════════════
+       TABS
+       ══════════════════════════════════════════════ */
     .stTabs [data-baseweb="tab-list"] {
         background: rgba(15,15,25,0.7) !important;
         border-radius: 12px !important;
         padding: 4px !important;
         border: 1px solid rgba(167,139,250,0.12) !important;
+        flex-wrap: wrap !important;
+        gap: 2px !important;
     }
     .stTabs [data-baseweb="tab"] {
         font-family: 'Courier Prime', monospace !important;
-        font-size: 0.78rem !important;
+        font-size: clamp(0.62rem, 1.8vw, 0.78rem) !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         color: #64748b !important;
         border-radius: 8px !important;
-        padding: 8px 16px !important;
+        padding: clamp(6px,1.5vw,8px) clamp(8px,2vw,16px) !important;
         border: none !important;
         background: transparent !important;
     }
@@ -160,32 +194,44 @@ def inyectar_css():
         background: rgba(124,58,237,0.2) !important;
     }
 
-    /* ── MÉTRICAS ── */
+    /* ══════════════════════════════════════════════
+       MÉTRICAS
+       ══════════════════════════════════════════════ */
     [data-testid="metric-container"] {
         background: rgba(15,15,25,0.7) !important;
         border: 1px solid rgba(167,139,250,0.15) !important;
         border-radius: 12px !important;
-        padding: 12px 16px !important;
+        padding: clamp(8px,2vw,12px) clamp(10px,2vw,16px) !important;
     }
     [data-testid="metric-container"] label {
         font-family: 'Courier Prime', monospace !important;
-        font-size: 0.7rem !important;
+        font-size: clamp(0.58rem, 1.6vw, 0.7rem) !important;
         text-transform: uppercase !important;
         letter-spacing: 1.5px !important;
         color: #64748b !important;
     }
     [data-testid="metric-container"] [data-testid="stMetricValue"] {
         font-family: 'Press Start 2P', monospace !important;
-        font-size: 0.9rem !important;
+        font-size: clamp(0.65rem, 2vw, 0.9rem) !important;
         color: #c4b5fd !important;
     }
 
-    hr { border: none !important; border-top: 1px solid rgba(167,139,250,0.1) !important; margin: 18px 0 !important; }
+    /* ══════════════════════════════════════════════
+       MISC
+       ══════════════════════════════════════════════ */
+    hr {
+        border: none !important;
+        border-top: 1px solid rgba(167,139,250,0.1) !important;
+        margin: 18px 0 !important;
+    }
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15,15,25,0.5); }
     ::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.3); border-radius: 4px; }
 
+    /* ══════════════════════════════════════════════
+       ANIMACIONES GLOBALES
+       ══════════════════════════════════════════════ */
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes pulse  { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
     @keyframes float  { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
@@ -196,9 +242,12 @@ def inyectar_css():
     .anim-pulse { animation: pulse 2s infinite; }
     .anim-float { animation: float 3s ease-in-out infinite; }
 
+    /* ══════════════════════════════════════════════
+       GAME TITLE
+       ══════════════════════════════════════════════ */
     .game-title {
         font-family: 'Press Start 2P', monospace !important;
-        font-size: clamp(1.2rem, 3.5vw, 2rem);
+        font-size: clamp(0.9rem, 3.5vw, 2rem);
         background: linear-gradient(90deg, #a78bfa, #60a5fa, #34d399);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -209,6 +258,7 @@ def inyectar_css():
         margin-bottom: 6px;
     }
 
+    /* Efecto scanlines sutil */
     .stApp::after {
         content: '';
         position: fixed;
@@ -219,9 +269,69 @@ def inyectar_css():
         z-index: 9999;
     }
 
-    @media (max-width: 768px) {
-        .block-container { padding: 1rem !important; }
-        .game-title { font-size: 1rem !important; }
+    /* ══════════════════════════════════════════════
+       RESPONSIVE — MÓVIL (≤ 480px)
+       ══════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+        .block-container {
+            padding: 0.5rem 0.5rem 2rem !important;
+        }
+        .game-title {
+            font-size: 0.75rem !important;
+            line-height: 1.7 !important;
+        }
+        /* Columnas apiladas en móvil */
+        [data-testid="column"] {
+            min-width: 100% !important;
+        }
+        /* Métricas más compactas */
+        [data-testid="metric-container"] {
+            padding: 8px 10px !important;
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 0.65rem !important;
+        }
+        /* Tabs más compactos */
+        .stTabs [data-baseweb="tab"] {
+            padding: 5px 8px !important;
+            font-size: 0.60rem !important;
+        }
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE — TABLET (481px – 768px)
+       ══════════════════════════════════════════════ */
+    @media (min-width: 481px) and (max-width: 768px) {
+        .block-container {
+            padding: 0.75rem 1rem 2.5rem !important;
+        }
+        .game-title {
+            font-size: 1rem !important;
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 0.72rem !important;
+        }
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE — LAPTOP (769px – 1024px)
+       ══════════════════════════════════════════════ */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .block-container {
+            padding: 1rem 1.5rem 3rem !important;
+        }
+        .game-title {
+            font-size: 1.3rem !important;
+        }
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE — DESKTOP GRANDE (> 1400px)
+       ══════════════════════════════════════════════ */
+    @media (min-width: 1400px) {
+        .block-container {
+            max-width: 1200px !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -229,13 +339,14 @@ def inyectar_css():
 
 def pixel_header(titulo, subtitulo="", emoji=""):
     sub_html = (
-        f'<div style="font-family:Courier Prime,monospace;font-size:.75rem;'
+        f'<div style="font-family:Courier Prime,monospace;'
+        f'font-size:clamp(.65rem,2vw,.75rem);'
         f'color:rgba(255,255,255,.3);margin-top:8px;letter-spacing:2px;'
         f'text-transform:uppercase">{subtitulo}</div>'
     ) if subtitulo else ""
     st.markdown(
         f'''<div class="anim-fade" style="text-align:center;padding:10px 0 20px">
-            <div style="font-size:2rem;margin-bottom:8px;
+            <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:8px;
                 animation:float 3s ease-in-out infinite">{emoji}</div>
             <div class="game-title">{titulo}</div>
             {sub_html}
