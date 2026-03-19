@@ -22,7 +22,7 @@ def _nombre_grupo(gid):
 def _estudiantes(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,))
-    r = c.fetchall(); c.close()
+    r = cur.fetchall(); c.close()
     return [x["nombreestudiante"] for x in r]
 
 def _progreso(gid, dif):
@@ -51,7 +51,7 @@ def _estrellas(gid):
 def _logros(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
-    r = c.fetchall(); c.close()
+    r = cur.fetchall(); c.close()
     return [x["logroid"] for x in r]
 
 def _reiniciar(gid, dif):
