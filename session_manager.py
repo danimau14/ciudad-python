@@ -37,6 +37,8 @@ def init_session():
         "decisiones_usadas_partida": set(),
         "mejor_racha":               0,
         "racha_actual":              0,
+        "atributos_activos":         set(),
+        "estrellas_usadas_partida":  0,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
