@@ -61,7 +61,7 @@ def _actualizar_progreso(gid, eco, amb, ene, bie, ronda, dif):
 def _cooldowns(gid, dif):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT decision,rondasrestantes FROM cooldowndecisiones WHERE grupoid=? AND dificultad=?", (gid, dif))
-    r = c.fetchall(); c.close()
+    r = cur.fetchall(); c.close()
     return {x["decision"]: x["rondasrestantes"] for x in r}
 
 def _actualizar_cooldown(gid, decision, ronda, dif):
@@ -74,7 +74,7 @@ def _actualizar_cooldown(gid, decision, ronda, dif):
 def _estudiantes(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,))
-    r = c.fetchall(); c.close()
+    r = cur.fetchall(); c.close()
     return [x["nombreestudiante"] for x in r]
 
 def _estrellas(gid):

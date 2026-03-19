@@ -26,12 +26,12 @@ def _guardar_estrellas(gid, cantidad):
 def _misiones_canjeadas(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT misionid FROM misiones_canjeadas WHERE grupoid=?", (gid,))
-    r = c.fetchall(); c.close(); return [x["misionid"] for x in r]
+    r = cur.fetchall(); c.close(); return [x["misionid"] for x in r]
 
 def _misiones_pendientes(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT misionid,recompensa FROM misiones_pendientes WHERE grupoid=? ORDER BY id", (gid,))
-    r = c.fetchall(); c.close(); return [{"id":x["misionid"],"recompensa":x["recompensa"]} for x in r]
+    r = cur.fetchall(); c.close(); return [{"id":x["misionid"],"recompensa":x["recompensa"]} for x in r]
 
 def _guardar_mision_pendiente(gid, mid, rec):
     c = _cx()
@@ -48,7 +48,7 @@ def _canjear_mision(gid, mid, rec):
 def _logros(gid):
     c = _cx(); cur = c.cursor()
     cur.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
-    r = c.fetchall(); c.close(); return [x["logroid"] for x in r]
+    r = cur.fetchall(); c.close(); return [x["logroid"] for x in r]
 
 def _guardar_logro(gid, lid):
     c = _cx()

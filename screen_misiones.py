@@ -22,20 +22,20 @@ def _guardar_estrellas(gid, cantidad):
 
 def _logros_grupo(gid):
     c=_cx(); cur=c.cursor(); cur.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?",(gid,))
-    r=c.fetchall(); c.close(); return [x["logroid"] for x in r]
+    r=cur.fetchall(); c.close(); return [x["logroid"] for x in r]
 
 def _est_grupo(gid):
     c=_cx(); cur=c.cursor(); cur.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id",(gid,))
-    r=c.fetchall(); c.close(); return [x["nombreestudiante"] for x in r]
+    r=cur.fetchall(); c.close(); return [x["nombreestudiante"] for x in r]
 
 def _canjeadas(gid):
     c=_cx(); cur=c.cursor(); cur.execute("SELECT misionid FROM misiones_canjeadas WHERE grupoid=?",(gid,))
-    r=c.fetchall(); c.close(); return [x["misionid"] for x in r]
+    r=cur.fetchall(); c.close(); return [x["misionid"] for x in r]
 
 def _pendientes(gid):
     c=_cx(); cur=c.cursor()
     cur.execute("SELECT misionid,recompensa FROM misiones_pendientes WHERE grupoid=? ORDER BY id",(gid,))
-    r=c.fetchall(); c.close(); return [{"id":x["misionid"],"recompensa":x["recompensa"]} for x in r]
+    r=cur.fetchall(); c.close(); return [{"id":x["misionid"],"recompensa":x["recompensa"]} for x in r]
 
 def _canjear(gid, mid, rec):
     c=_cx()
