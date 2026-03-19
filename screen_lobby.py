@@ -87,6 +87,48 @@ def pantalla_lobby():
     col_izq, col_der = st.columns([3, 2], gap="large")
 
     with col_izq:
+        # ── Botonera secundaria ANTES de la dificultad ───────────────────────
+        b1, b2, b3 = st.columns(3)
+        with b1:
+            if st.button("🏆  RANKING", use_container_width=True):
+                navegar("ranking")
+        with b2:
+            if st.button("📋  MISIONES", use_container_width=True):
+                navegar("misiones")
+        with b3:
+            if st.button("🏅  VER LOGROS", use_container_width=True):
+                navegar("logros")
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("📖  INSTRUCCIONES", use_container_width=True):
+                navegar("instrucciones")
+        with c2:
+            if st.button("🔄  REINICIAR PARTIDA", use_container_width=True):
+                reiniciar_progreso(gid, dif)
+                st.session_state.update(
+                    fase_ronda="decision", pregunta_actual=None,
+                    respuesta_correcta=False, decision_elegida=None,
+                    decision_efectos=None, evento_ronda=None,
+                    preguntas_usadas=[], timer_inicio=None,
+                    tiempo_agotado=False, correctas=0, incorrectas=0,
+                    _ranking_guardado=False,
+                    decisiones_usadas_partida=set(),
+                    mejor_racha=0, racha_actual=0,
+                    atributos_activos=set(),
+                )
+                st.success(f"✅ Partida reiniciada para {dif}")
+                st.rerun()
+        with c3:
+            if st.button("🚪  CERRAR SESIÓN", use_container_width=True):
+                st.session_state.clear()
+                navegar("inicio")
+
+        st.markdown(
+            f"<hr style='border:none;border-top:1px solid {dcfg['color']}22;"
+            f"margin:14px 0 12px'>",
+            unsafe_allow_html=True)
+
         # ── Selector de dificultad ────────────────────────────────────────────
         st.markdown(
             "<div style='font-family:Courier Prime,monospace;font-size:.65rem;"
@@ -199,48 +241,4 @@ def pantalla_lobby():
             f"{chips}</div>",
             unsafe_allow_html=True)
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # BOTONERA INFERIOR — todos los botones debajo del encabezado principal
-    # ══════════════════════════════════════════════════════════════════════════
-    st.markdown(
-        f"<hr style='border:none;border-top:1px solid {dcfg['color']}33;"
-        f"margin:20px 0 16px'>",
-        unsafe_allow_html=True)
 
-    # Fila 1: acciones secundarias
-    b1, b2, b3 = st.columns(3)
-    with b1:
-        if st.button("🏆  RANKING", use_container_width=True):
-            navegar("ranking")
-    with b2:
-        if st.button("📋  MISIONES", use_container_width=True):
-            navegar("misiones")
-    with b3:
-        if st.button("🏅  VER LOGROS", use_container_width=True):
-            navegar("logros")
-
-    # Fila 2: instrucciones + reiniciar + cerrar sesión
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("📖  INSTRUCCIONES", use_container_width=True):
-            navegar("instrucciones")
-    with c2:
-        if st.button("🔄  REINICIAR PARTIDA", use_container_width=True):
-            reiniciar_progreso(gid, dif)
-            st.session_state.update(
-                fase_ronda="decision", pregunta_actual=None,
-                respuesta_correcta=False, decision_elegida=None,
-                decision_efectos=None, evento_ronda=None,
-                preguntas_usadas=[], timer_inicio=None,
-                tiempo_agotado=False, correctas=0, incorrectas=0,
-                _ranking_guardado=False,
-                decisiones_usadas_partida=set(),
-                mejor_racha=0, racha_actual=0,
-                atributos_activos=set(),
-            )
-            st.success(f"✅ Partida reiniciada para {dif}")
-            st.rerun()
-    with c3:
-        if st.button("🚪  CERRAR SESIÓN", use_container_width=True):
-            st.session_state.clear()
-            navegar("inicio")
