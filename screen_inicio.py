@@ -5,6 +5,8 @@ from session_manager import navegar
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PANTALLA DE INICIO
+#  Flujo: Inicio → Login → Lobby
+#         Inicio → Registro → Lobby
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_inicio():
@@ -20,13 +22,12 @@ def pantalla_inicio():
         navegar("registro")    # screen_auth.pantalla_registro → navega a "lobby"
         return
 
-    # ── Ocultar UI nativa + fondo oscuro ─────────────────────────────────────
+    # ── CSS base: ocultar Streamlit y fondo oscuro ───────────────────────────
     st.markdown("""
     <style>
     #MainMenu, footer, header,
     [data-testid="stToolbar"],
     .stDeployButton { display: none !important; }
-
     html, body,
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewBlockContainer"],
@@ -41,11 +42,8 @@ def pantalla_inicio():
     """, unsafe_allow_html=True)
 
     # ── Panel completo en HTML ────────────────────────────────────────────────
-    # Todo el visual (fondo, estrellas, skyline, panel, botones, footer)
-    # vive dentro de components.html para que los botones estén DENTRO del panel.
-    # La navegación funciona así:
-    #   1. Clic en botón → ir('login') → cambia URL a ?action=login
-    #   2. Streamlit recarga → esta función lee st.query_params → navegar("login")
+    # Todo el visual vive aquí. Botones HTML nativos = siempre dentro del panel.
+    # Navegación: clic → ?action=login/registro → Streamlit recarga → navegar()
     # ─────────────────────────────────────────────────────────────────────────
     components.html("""<!DOCTYPE html>
 <html lang="es">
@@ -68,14 +66,14 @@ body {
     padding: 20px 12px;
 }
 
-/* ── Estrellas ── */
+/* Estrellas */
 #sf {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none; z-index: 0;
 }
 
-/* ── Nebulosa ── */
+/* Nebulosa */
 .neb {
     position: fixed; inset: 0;
     z-index: 0; pointer-events: none;
@@ -90,7 +88,7 @@ body {
     100% { opacity: 1.0; transform: scale(1.05); }
 }
 
-/* ── Skyline ── */
+/* Skyline */
 .sky {
     position: fixed; bottom: 0; left: 0;
     width: 100%; height: 200px;
@@ -104,13 +102,11 @@ body {
 }
 
 /* ══════════════════════════════════════════════
-   PANEL — un solo recuadro para TODO el contenido
-   Responsivo: se adapta al ancho de la pantalla
+   PANEL ÚNICO — responsivo con clamp()
    ══════════════════════════════════════════════ */
 .panel {
     position: relative; z-index: 1;
     width: 100%;
-    /* Responsivo: máximo 420px en desktop, 95% en móvil */
     max-width: min(420px, 95vw);
     background: rgba(18, 4, 52, .93);
     border: 1.5px solid rgba(123, 47, 255, .52);
@@ -127,7 +123,7 @@ body {
     to   { opacity: 1; transform: translateY(0);    }
 }
 
-/* Línea de energía superior */
+/* Línea de energía */
 .eline {
     position: absolute; top: 0; left: -100%;
     height: 2px; width: 55%; z-index: 3;
@@ -140,36 +136,33 @@ body {
     100% { left:  110%; width: 75%; }
 }
 
-/* ── Sección superior ── */
+/* Secciones */
 .ptop {
-    padding: clamp(20px, 5vw, 32px) clamp(16px, 5vw, 28px) clamp(14px, 3vw, 20px);
+    padding: clamp(20px, 5vw, 32px) clamp(18px, 5vw, 28px) clamp(14px, 3vw, 20px);
     text-align: center;
     border-bottom: 1px solid rgba(123, 47, 255, .22);
 }
-
-/* ── Sección inferior ── */
 .pbot {
-    padding: clamp(14px, 4vw, 20px) clamp(16px, 5vw, 28px) clamp(18px, 5vw, 26px);
+    padding: clamp(14px, 4vw, 20px) clamp(18px, 5vw, 28px) clamp(18px, 5vw, 26px);
     text-align: center;
 }
 
-/* ── Ícono flotante ── */
+/* Ícono */
 .icon {
     font-size: clamp(2.2rem, 8vw, 3rem);
     display: block;
     margin-bottom: clamp(8px, 2vw, 12px);
     animation: float 4s ease-in-out infinite;
-    filter:
-        drop-shadow(0 0 18px #7b2fffcc)
-        drop-shadow(0 0 40px #7b2fff88)
-        drop-shadow(0 0  8px #FFD70055);
+    filter: drop-shadow(0 0 18px #7b2fffcc)
+            drop-shadow(0 0 40px #7b2fff88)
+            drop-shadow(0 0  8px #FFD70055);
 }
 @keyframes float {
     0%,100% { transform: translateY(0);     }
     50%     { transform: translateY(-10px); }
 }
 
-/* ── Badge ── */
+/* Badge */
 .badge {
     display: inline-block;
     font-family: 'Rajdhani', sans-serif;
@@ -183,18 +176,9 @@ body {
     margin-bottom: clamp(10px, 3vw, 16px);
 }
 
-/* ══════════════════════════════════════════════════════════
-   TÍTULO — Press Start 2P
-   Tamaño calculado con clamp() para adaptarse a la pantalla.
-   "EQUILIBRIO" (10 chars) a 13px ≈ 130px → cabe en 90% de 420px = 378px ✓
-   En pantallas pequeñas (300px): 90% = 270px → 10px por char → 100px ✓
-   ══════════════════════════════════════════════════════════ */
+/* Título */
 .title {
     font-family: 'Press Start 2P', monospace;
-    /* clamp(mín, preferido, máx)
-       mín = 9px  para pantallas muy pequeñas (≤ 280px)
-       preferido = 3.1vw (escala con viewport)
-       máx = 14px para desktop */
     font-size: clamp(9px, 3.1vw, 14px);
     color: #fff;
     text-align: center;
@@ -216,20 +200,15 @@ body {
                tglitch 7s   step-end    infinite;
     animation-delay: 0.18s, 0.6s;
 }
-
-/* Bounce */
 @keyframes tbounce {
     0%,100% { transform: translateY(0)     scaleY(1);    }
     35%     { transform: translateY(-10px) scaleY(1.10); }
     55%     { transform: translateY(-4px)  scaleY(1.03); }
     70%     { transform: translateY(-7px)  scaleY(1.06); }
 }
-
-/* Glitch */
 @keyframes tglitch {
     0%,85%,100% {
-        transform: skewX(0) translateX(0);
-        color: #fff;
+        transform: skewX(0) translateX(0); color: #fff;
         text-shadow: 0 0 14px #7b2fff99, 0 0 28px #7b2fff55;
     }
     86% { transform: translateX(-5px) skewX(-9deg); color: #ff4d6d;
@@ -242,7 +221,7 @@ body {
           text-shadow: 0 0 14px #7b2fff99, 0 0 28px #7b2fff55; }
 }
 
-/* ── Subtítulo ── */
+/* Subtítulo */
 .sub {
     font-family: 'Rajdhani', sans-serif;
     font-size: clamp(.68rem, 2.5vw, .78rem);
@@ -252,7 +231,7 @@ body {
     margin-top: clamp(10px, 3vw, 16px);
 }
 
-/* ── Separador ── */
+/* Separador */
 .sep {
     height: 2px;
     background: linear-gradient(90deg,
@@ -260,7 +239,7 @@ body {
     opacity: .9;
 }
 
-/* ── Helper ── */
+/* Helper */
 .helper {
     font-family: 'Rajdhani', sans-serif;
     font-size: clamp(.58rem, 2vw, .67rem);
@@ -269,7 +248,7 @@ body {
     margin-bottom: clamp(10px, 3vw, 14px);
 }
 
-/* ── Botón dorado ── */
+/* Botón dorado */
 .btn-g {
     display: block; width: 100%;
     font-family: 'Rajdhani', sans-serif;
@@ -299,7 +278,7 @@ body {
     transform: translateY(-3px);
 }
 
-/* ── Botón púrpura ── */
+/* Botón púrpura */
 .btn-p {
     display: block; width: 100%;
     font-family: 'Rajdhani', sans-serif;
@@ -321,7 +300,7 @@ body {
     transform: translateY(-3px);
 }
 
-/* ── Footer ── */
+/* Footer */
 .footer {
     font-family: 'Rajdhani', sans-serif;
     font-size: clamp(.52rem, 1.8vw, .60rem);
@@ -336,10 +315,7 @@ body {
 <canvas id="sf"></canvas>
 <div class="neb"></div>
 
-<!-- Skyline SVG -->
-<svg class="sky" viewBox="0 0 1440 200"
-     xmlns="http://www.w3.org/2000/svg"
-     preserveAspectRatio="xMidYMax slice">
+<svg class="sky" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
   <defs>
     <linearGradient id="cg" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%"   stop-color="#7b2fff" stop-opacity="1"/>
@@ -384,7 +360,6 @@ body {
     L1430,44 L1430,70 L1440,70 L1440,200 Z"/>
   <g fill="#FFD700" opacity="0.45">
     <rect x="92"   y="14" width="3" height="3"/>
-    <rect x="170"  y="28" width="3" height="3"/>
     <rect x="338"  y="12" width="3" height="3"/>
     <rect x="464"  y="6"  width="3" height="3"/>
     <rect x="638"  y="12" width="3" height="3"/>
@@ -394,12 +369,8 @@ body {
   </g>
 </svg>
 
-<!-- ════════════════════════════
-     PANEL ÚNICO — TODO adentro
-     ════════════════════════════ -->
 <div class="panel">
   <div class="eline"></div>
-
   <div class="ptop">
     <span class="icon">&#127961;&#65039;</span>
     <div class="badge">&#127760; Pensamiento Sistémico &#127760;</div>
@@ -409,26 +380,20 @@ body {
     </p>
     <p class="sub">Gestiona tu ciudad · Salva el futuro</p>
   </div>
-
   <div class="sep"></div>
-
   <div class="pbot">
     <p class="helper">&#11015; Selecciona una opción para continuar &#11015;</p>
-
     <button class="btn-g" onclick="ir('login')">
       &#128272;&nbsp; INICIAR SESIÓN
     </button>
-
     <button class="btn-p" onclick="ir('registro')">
       &#128196;&nbsp; REGISTRAR GRUPO
     </button>
-
     <p class="footer" id="yr">&#9889; Ciudad en Equilibrio · v2.0 · 2026 &#9889;</p>
   </div>
 </div>
 
 <script>
-/* ── Estrellas animadas ── */
 (function () {
     var c = document.getElementById('sf');
     var cx = c.getContext('2d');
@@ -464,12 +429,10 @@ body {
     window.addEventListener('resize', rs);
 })();
 
-/* ── Año dinámico ── */
 document.getElementById('yr').textContent =
     '\u26A1 Ciudad en Equilibrio \u00B7 v2.0 \u00B7 ' +
     new Date().getFullYear() + ' \u26A1';
 
-/* ── Navegación → Streamlit detecta ?action= y llama navegar() ── */
 function ir(dest) {
     try {
         var base = window.parent.location.href.split('?')[0];
@@ -488,10 +451,16 @@ function ir(dest) {
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PANTALLA DE INSTRUCCIONES
-#  Requerida por router.py → se accede desde el Lobby, NO desde inicio.
+#  Requerida por router.py.
+#  Se accede desde DOS lugares:
+#    1. Lobby  → botón INSTRUCCIONES → volver al Lobby
+#    2. Juego  → ⚙️ Configuración → Instrucciones → volver al Juego
+#  El session_state["_from_juego"] = True indica que viene del juego.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_instrucciones():
+    from_juego = st.session_state.get("_from_juego", False)
+
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@300;400;600;700&display=swap');
@@ -517,7 +486,7 @@ def pantalla_instrucciones():
     }
     .inst-item {
         font-family: 'Rajdhani', sans-serif;
-        font-size: clamp(.78rem, 2vw, .84rem); color: #c4b5fd;
+        font-size: clamp(.76rem, 2vw, .84rem); color: #c4b5fd;
         line-height: 1.72; margin: 3px 0; padding-left: 8px;
     }
     </style>
@@ -527,6 +496,7 @@ def pantalla_instrucciones():
     with col:
         st.markdown('<h1 class="inst-title">📖 INSTRUCCIONES</h1>',
                     unsafe_allow_html=True)
+
         secciones = [
             ("🏙️ Objetivo", [
                 "Administra la ciudad durante <b>10 rondas</b> manteniendo los 4 indicadores en equilibrio.",
@@ -534,29 +504,35 @@ def pantalla_instrucciones():
                 "Gana completando las 10 rondas sin colapso.",
             ]),
             ("📊 Los 4 Indicadores", [
-                "💰 <b>Economía</b> — Finanzas y desarrollo",
-                "🌿 <b>Medio Ambiente</b> — Salud ecológica",
-                "⚡ <b>Energía</b> — Suministro energético",
-                "❤️ <b>Bienestar Social</b> — Calidad de vida",
+                "💰 <b>Economía</b> — Finanzas y desarrollo económico",
+                "🌿 <b>Medio Ambiente</b> — Salud ecológica de la ciudad",
+                "⚡ <b>Energía</b> — Suministro y sostenibilidad energética",
+                "❤️ <b>Bienestar Social</b> — Calidad de vida de los ciudadanos",
             ]),
             ("🔄 Flujo de cada Ronda", [
-                "1️⃣ Elige una <b>decisión de ciudad</b>",
-                "2️⃣ Responde una <b>pregunta académica</b> en 30 s",
-                "✅ Acierto → efectos de la decisión aplicados",
-                "❌ Fallo → penalización según dificultad",
-                "3️⃣ Ocurre un <b>evento aleatorio</b>",
+                "1️⃣ El estudiante en turno elige una <b>decisión de ciudad</b>",
+                "2️⃣ Responde una <b>pregunta académica</b> en 30 segundos",
+                "✅ Acierto → se aplican los efectos positivos de la decisión",
+                "❌ Fallo → penalización en todos los indicadores según dificultad",
+                "3️⃣ Ocurre un <b>evento aleatorio</b> que afecta los indicadores",
             ]),
             ("⚙️ Dificultades", [
-                "🟢 <b>Fácil</b> — Penalización baja",
-                "🟡 <b>Normal</b> — Balance equilibrado",
-                "🔴 <b>Difícil</b> — Penalización alta",
+                "🟢 <b>Fácil</b> — Penalización baja · eventos más favorables",
+                "🟡 <b>Normal</b> — Balance equilibrado de retos",
+                "🔴 <b>Difícil</b> — Penalización alta · más eventos negativos",
+            ]),
+            ("⭐ Estrellas y Logros", [
+                "Gana estrellas al completar partidas y misiones.",
+                "Úsalas para activar atributos especiales durante el juego.",
+                "Desbloquea logros cumpliendo objetivos específicos.",
             ]),
             ("💡 Consejos", [
                 "Mantén todos los indicadores &gt; 30 para evitar colapso.",
                 "Verde (&gt; 60) = estable · Amarillo (30–60) = vigilar.",
-                "Coordina las decisiones del grupo.",
+                "Coordina las decisiones del grupo para equilibrar todos los indicadores.",
             ]),
         ]
+
         for titulo, items in secciones:
             items_html = "".join(
                 f"<div class='inst-item'>• {i}</div>" for i in items)
@@ -565,6 +541,22 @@ def pantalla_instrucciones():
                 f"<div class='inst-card-title'>{titulo}</div>"
                 f"{items_html}</div>",
                 unsafe_allow_html=True)
+
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("⬅  VOLVER AL LOBBY", use_container_width=True):
-            navegar("lobby")
+
+        # ── Botones de navegación según origen ───────────────────────────────
+        if from_juego:
+            # Viene del juego → mostrar ambos botones
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("⬅️  VOLVER AL JUEGO", use_container_width=True, type="primary"):
+                    st.session_state["_from_juego"] = False
+                    navegar("juego")
+            with c2:
+                if st.button("🏠  VOLVER AL LOBBY", use_container_width=True):
+                    st.session_state["_from_juego"] = False
+                    navegar("lobby")
+        else:
+            # Viene del lobby → solo volver al lobby
+            if st.button("⬅  VOLVER AL LOBBY", use_container_width=True):
+                navegar("lobby")
