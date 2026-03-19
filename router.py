@@ -2,7 +2,7 @@ import streamlit as st
 from session_manager import init_session
 from ui_styles import inyectar_css
 from screen_inicio import pantalla_inicio, pantalla_instrucciones
-from screen_auth import pantalla_login, pantalla_registro   # ambas en screen_auth.py
+from screen_auth import pantalla_login, pantalla_registro
 from screen_lobby import pantalla_lobby
 from screen_juego import pantalla_juego
 from screen_fin import pantalla_fin
@@ -16,8 +16,8 @@ def router():
     inyectar_css()
     pantallas = {
         "inicio":        pantalla_inicio,
-        "login":         pantalla_login,       # screen_auth → pantalla_login()   → lobby
-        "registro":      pantalla_registro,    # screen_auth → pantalla_registro() → lobby
+        "login":         pantalla_login,
+        "registro":      pantalla_registro,
         "lobby":         pantalla_lobby,
         "juego":         pantalla_juego,
         "fin":           pantalla_fin,
