@@ -10,8 +10,8 @@ UMBRAL_ROJO     = 30
 
 # ── Mix de preguntas por dificultad ──────────────────────────────────────────
 MEZCLA_PREGUNTAS = {
-    "Fácil":   {"facil": 0.60, "normal": 0.35, "dificil": 0.05},
-    "Normal":  {"facil": 0.20, "normal": 0.55, "dificil": 0.25},
+    "Fácil":   {"facil": 0.90, "normal": 0.09, "dificil": 0.01},
+    "Normal":  {"facil": 0.20, "normal": 0.60, "dificil": 0.20},
     "Difícil": {"facil": 0.05, "normal": 0.35, "dificil": 0.60},
 }
 
@@ -20,11 +20,11 @@ MEZCLA_PREGUNTAS = {
 # -10 pts por respuesta incorrecta (ronda par = doble)
 DIFICULTADES = {
     "Fácil":   {"penalizacion": 5, "mult_par": 2, "estrellas": 1,
-                "eventos_peso": {"positivos": 0.55, "negativos": 0.45}},
+                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
     "Normal":  {"penalizacion": 5, "mult_par": 2, "estrellas": 2,
-                "eventos_peso": {"positivos": 0.40, "negativos": 0.60}},
+                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
     "Difícil": {"penalizacion": 5, "mult_par": 2, "estrellas": 3,
-                "eventos_peso": {"positivos": 0.25, "negativos": 0.75}},
+                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
 }
 
 # ── Colores e iconos de indicadores ──────────────────────────────────────────
@@ -61,29 +61,55 @@ DECISIONES = {
     "Planta de carbón":        {"emoji":"⚫","economia":22, "medio_ambiente":-25,"energia":28, "bienestar_social":-10},
 }
 
-# ── Eventos ───────────────────────────────────────────────────────────────────
-EVENTOS_NEGATIVOS = [
-    {"nombre":"Tormenta devastadora",    "indicador":"medio_ambiente",  "valor":-14},
-    {"nombre":"Pandemia regional",       "indicador":"bienestar_social","valor":-16},
-    {"nombre":"Apagón masivo",           "indicador":"energia",         "valor":-14},
-    {"nombre":"Recesión económica",      "indicador":"economia",        "valor":-14},
-    {"nombre":"Incendio forestal",       "indicador":"medio_ambiente",  "valor":-18},
-    {"nombre":"Sequía prolongada",       "indicador":"medio_ambiente",  "valor":-12},
-    {"nombre":"Crisis industrial",       "indicador":"economia",        "valor":-12},
-    {"nombre":"Inundación urbana",       "indicador":"bienestar_social","valor":-13},
-    {"nombre":"Fallo de infraestructura","indicador":"energia",         "valor":-16},
-    {"nombre":"Brote de enfermedad",     "indicador":"bienestar_social","valor":-12},
-]
-EVENTOS_POSITIVOS = [
-    {"nombre":"Boom económico",         "indicador":"economia",        "valor":10},
-    {"nombre":"Ahorro energético",      "indicador":"energia",         "valor": 9},
-    {"nombre":"Gran cosecha",           "indicador":"medio_ambiente",  "valor": 8},
-    {"nombre":"Festival cultural",      "indicador":"bienestar_social","valor":10},
-    {"nombre":"Inversión extranjera",   "indicador":"economia",        "valor":12},
-    {"nombre":"Beca educativa masiva",  "indicador":"bienestar_social","valor": 9},
-    {"nombre":"Energía renovable bonus","indicador":"energia",         "valor": 8},
-]
-EVENTOS = EVENTOS_NEGATIVOS + EVENTOS_POSITIVOS
+# ── Eventos por dificultad ────────────────────────────────────────────────────
+EVENTOS_POR_DIFICULTAD = {
+    "Fácil": {
+        "negativos": [
+            {"nombre":"Lluvia intensa local",    "indicador":"medio_ambiente",  "valor":-6},
+            {"nombre":"Corte eléctrico parcial", "indicador":"energia",         "valor":-7},
+            {"nombre":"Baja de recaudo",         "indicador":"economia",        "valor":-6},
+            {"nombre":"Congestión urbana",       "indicador":"bienestar_social","valor":-6},
+        ],
+        "positivos": [
+            {"nombre":"Feria barrial",           "indicador":"bienestar_social","valor":6},
+            {"nombre":"Ahorro municipal",        "indicador":"economia",        "valor":6},
+            {"nombre":"Mantenimiento energético","indicador":"energia",         "valor":6},
+            {"nombre":"Jornada ecológica",       "indicador":"medio_ambiente",  "valor":6},
+        ],
+    },
+    "Normal": {
+        "negativos": [
+            {"nombre":"Tormenta devastadora",    "indicador":"medio_ambiente",  "valor":-14},
+            {"nombre":"Pandemia regional",       "indicador":"bienestar_social","valor":-16},
+            {"nombre":"Apagón masivo",           "indicador":"energia",         "valor":-14},
+            {"nombre":"Recesión económica",      "indicador":"economia",        "valor":-14},
+            {"nombre":"Inundación urbana",       "indicador":"bienestar_social","valor":-13},
+        ],
+        "positivos": [
+            {"nombre":"Boom económico",          "indicador":"economia",        "valor":10},
+            {"nombre":"Ahorro energético",       "indicador":"energia",         "valor":9},
+            {"nombre":"Gran cosecha",            "indicador":"medio_ambiente",  "valor":8},
+            {"nombre":"Festival cultural",       "indicador":"bienestar_social","valor":10},
+            {"nombre":"Inversión extranjera",    "indicador":"economia",        "valor":12},
+        ],
+    },
+    "Difícil": {
+        "negativos": [
+            {"nombre":"Megasequía prolongada",   "indicador":"medio_ambiente",  "valor":-20},
+            {"nombre":"Colapso de red eléctrica","indicador":"energia",         "valor":-22},
+            {"nombre":"Crisis fiscal severa",    "indicador":"economia",        "valor":-21},
+            {"nombre":"Emergencia sanitaria",    "indicador":"bienestar_social","valor":-22},
+            {"nombre":"Incendio forestal masivo","indicador":"medio_ambiente",  "valor":-24},
+        ],
+        "positivos": [
+            {"nombre":"Plan de rescate nacional","indicador":"economia",        "valor":14},
+            {"nombre":"Innovación energética",   "indicador":"energia",         "valor":14},
+            {"nombre":"Reforestación récord",    "indicador":"medio_ambiente",  "valor":13},
+            {"nombre":"Pacto social ciudadano",  "indicador":"bienestar_social","valor":14},
+            {"nombre":"Inversión tecnológica",   "indicador":"economia",        "valor":15},
+        ],
+    },
+}
 
 # ── Atributos comprables con estrellas ────────────────────────────────────────
 ATRIBUTOS = {
@@ -164,5 +190,5 @@ LOGROS = [
 ]
 LOGROS_LOBBY = ["l04","l06","l11","l12","l13","l20","l25","l28"]
 
-# ── Preguntas — importadas desde questions.py ─────────────────────────────────
-from questions import PREGUNTAS
+# ── Preguntas — banco principal ────────────────────────────────────────────────
+from questions_bank import PREGUNTAS

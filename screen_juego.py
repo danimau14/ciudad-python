@@ -3,7 +3,7 @@ import random
 import time
 from session_manager import navegar
 from config import (TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN,
-                    DECISIONES, EVENTOS_NEGATIVOS, EVENTOS_POSITIVOS,
+                    DECISIONES, EVENTOS_POR_DIFICULTAD,
                     IND_COLOR, IND_LABEL, PREGUNTAS, DIFICULTADES,
                     MEZCLA_PREGUNTAS, ATRIBUTOS)
 from db import get_connection
@@ -542,6 +542,7 @@ def pantalla_juego():
 
             _actualizar_progreso(gid, nuevo["economia"], nuevo["medio_ambiente"],
                                  nuevo["energia"], nuevo["bienestar_social"], ronda, dif)
+            _actualizar_cooldown(gid, nom_dec, ronda, dif)
             st.session_state["incorrectas"]  = st.session_state.get("incorrectas",0) + 1
             st.session_state["racha_actual"] = 0
 
@@ -583,7 +584,8 @@ def pantalla_juego():
     elif fase == "evento":
         if st.session_state.get("evento_ronda") is None:
             peso_neg = DIFICULTADES.get(dif, DIFICULTADES["Normal"])["eventos_peso"]["negativos"]
-            pool = EVENTOS_NEGATIVOS if random.random() < peso_neg else EVENTOS_POSITIVOS
+            eventos_dif = EVENTOS_POR_DIFICULTAD.get(dif, EVENTOS_POR_DIFICULTAD["Normal"])
+            pool = eventos_dif["negativos"] if random.random() < peso_neg else eventos_dif["positivos"]
             st.session_state["evento_ronda"] = random.choice(pool)
             st.session_state["evento_ts"]    = time.time()
         if st.session_state.get("evento_ts") is None:
