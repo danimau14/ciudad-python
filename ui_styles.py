@@ -25,10 +25,17 @@ def inyectar_css():
 
     /* ── Layout principal responsivo ── */
     .block-container {
-        padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 3vw, 2rem) 3rem !important;
-        max-width: min(1100px, 100%) !important;
+        padding: clamp(0.6rem, 2vw, 1.4rem) clamp(0.75rem, 3vw, 2rem) 3rem !important;
+        max-width: min(1200px, 100%) !important;
+        min-height: 100vh !important;
         margin: 0 auto !important;
         width: 100% !important;
+        background: rgba(10, 12, 26, 0.82) !important;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.30) !important;
+        backdrop-filter: blur(11px) !important;
+        border: 1px solid rgba(167,139,250,0.16) !important;
+        border-radius: 20px !important;
+        overflow-x: hidden !important;
     }
 
     /* ══════════════════════════════════════════════

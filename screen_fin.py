@@ -1,6 +1,6 @@
 import streamlit as st
 from session_manager import navegar
-from config import IND_COLOR, IND_LABEL, DIFICULTADES, LOGROS, MISIONES
+from config import IND_COLOR, IND_LABEL, DIFICULTADES, LOGROS, MISIONES, ESTADOS_CIUDAD
 from db import get_connection
 
 def _cx():
@@ -112,6 +112,9 @@ def pantalla_fin():
     correctas   = st.session_state.get("correctas",0)
     incorrectas = st.session_state.get("incorrectas",0)
     dif         = st.session_state.get("dificultad_sel","Normal")
+    puntuacion_total = st.session_state.get("puntuacion_total", int(sum(ind_fin.values())/4*5) if ind_fin else 0)
+    estado_ciudad_key = st.session_state.get("estado_ciudad", "critica")
+    estado_ciudad = ESTADOS_CIUDAD.get(estado_ciudad_key, ESTADOS_CIUDAD["critica"])
     dif_cfg     = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
     DIF_COL     = {"Fácil":"#10b981","Normal":"#f59e0b","Difícil":"#ef4444"}
     col_dif     = DIF_COL.get(dif,"#a78bfa")
@@ -175,6 +178,23 @@ def pantalla_fin():
                 "<div style='font-size:1.05rem;font-weight:700;color:" + color + "'>" + str(val) + "</div>"
                 "<div style='font-size:.62rem;color:rgba(255,255,255,.3);font-family:Courier Prime,monospace'>"
                 + label + "</div></div>", unsafe_allow_html=True)
+
+    # ESTADO DE LA CIUDAD Y PUNTUACIÓN Total
+    st.markdown("<div style='margin:20px 0'></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='background:" + estado_ciudad["color"] + "12;border:2px solid " + estado_ciudad["color"] + "33;"
+        "border-radius:14px;padding:18px;text-align:center;margin-bottom:16px'>"
+        "<div style='font-size:1.8rem;margin-bottom:8px'>" + estado_ciudad["emoji"] + "</div>"
+        "<div style='font-size:1.1rem;font-weight:700;color:" + estado_ciudad["color"] + ";margin-bottom:6px'>"
+        + estado_ciudad["nombre"] + "</div>"
+        "<div style='font-size:.85rem;color:rgba(255,255,255,.65);margin-bottom:12px'>"
+        + estado_ciudad["descripcion"] + "</div>"
+        "<div style='display:flex;justify-content:center;align-items:center;gap:10px'>"
+        "<span style='font-size:1.3rem;font-weight:700;color:" + estado_ciudad["color"] + ";font-family:Courier Prime,monospace'>"
+        + str(puntuacion_total) + " pts</span>"
+        "<div style='flex:1;background:rgba(255,255,255,.08);border-radius:4px;height:8px;overflow:hidden'>"
+        "<div style='width:" + str(int(puntuacion_total)) + "%;height:8px;background:" + estado_ciudad["color"] + ";border-radius:4px'></div></div>"
+        "</div></div>", unsafe_allow_html=True)
 
     # MISIONES PENDIENTES — canjear con clic
     st.markdown("<hr style='border:none;border-top:1px solid rgba(167,139,250,.2);margin:0 0 16px'>",

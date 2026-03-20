@@ -247,6 +247,28 @@ PREGUNTAS = [
 ]
 
 
+def mezclar_opciones_pregunta(pregunta):
+    """Mezcla las opciones de una pregunta y actualiza el índice correcto."""
+    pregunta_copia = dict(pregunta)
+    opciones = pregunta_copia["ops"][:]  # Copia de las opciones
+    indice_correcto = pregunta_copia["ok"]
+    
+    # Guardar la respuesta correcta antes de mezclar
+    respuesta_correcta = opciones[indice_correcto]
+    
+    # Mezclar las opciones
+    random.shuffle(opciones)
+    
+    # Encontrar la nueva posición de la respuesta correcta
+    nuevo_indice = opciones.index(respuesta_correcta)
+    
+    # Actualizar la pregunta con opciones mezcladas
+    pregunta_copia["ops"] = opciones
+    pregunta_copia["ok"] = nuevo_indice
+    
+    return pregunta_copia
+
+
 def seleccionar_pregunta(dificultad="Medio"):
     # Mapear nivel a dificultades permitidas
     dif_map = {"Fácil": [1], "Medio": [1, 2], "Difícil": [2, 3]}
@@ -259,4 +281,6 @@ def seleccionar_pregunta(dificultad="Medio"):
         disponibles = list(pool)
     idx = random.choice(disponibles)
     st.session_state["preguntas_usadas"] = usadas + [idx]
-    return PREGUNTAS[idx]
+    pregunta = PREGUNTAS[idx]
+    # Mezclar las opciones antes de retornar
+    return mezclar_opciones_pregunta(pregunta)

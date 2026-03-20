@@ -1,31 +1,89 @@
 # 🏙️ Ciudad en Equilibrio - Simulador de Gestión Urbana
 
-**Ciudad en Equilibrio** es una aplicación interactiva desarrollada en Python que permite a los usuarios simular la administración de una ciudad. El desafío principal es mantener la estabilidad entre el crecimiento económico, el bienestar social y el impacto ambiental.
+**Ciudad en Equilibrio** es una aplicación interactiva en Python y Streamlit que invita a los usuarios a gestionar una ciudad campestre sostenible: controlando Economía, Medio Ambiente, Energía y Bienestar Social.
 
-🚀 **App en vivo:** [Visualizar en Streamlit](https://ciudad-en-equilibrio-python.streamlit.app/)
+## 🌱 Objetivo
 
-## 📝 Descripción del Proyecto
+Simular la toma de decisiones sistémicas en una ciudad rural-modernizada, manteniendo equilibrio entre:
 
-Esta herramienta visualiza la complejidad de los sistemas urbanos. A través de un tablero de control, el usuario actúa como gestor municipal tomando decisiones sobre inversión, recursos naturales y presupuesto. El sistema calcula automáticamente los indicadores de sostenibilidad y alerta ante estados críticos.
+- Economía (ingresos y crecimiento)
+- Medio Ambiente (naturaleza, turismo y recursos naturales)
+- Energía (infraestructura y suministro)
+- Bienestar Social (salud, educación y felicidad)
 
-## ✨ Características Principales
+Se trabaja con rondas (10 rondas o colapso) y se gestionan eventos positivos/negativos y decisiones estratégicas.
 
-* **Simulación en Tiempo Real:** Los cambios en las variables se reflejan instantáneamente en los indicadores.
-* **Dashboards Interactivos:** Gráficos dinámicos que muestran la evolución de la población y el uso de recursos.
-* **Sistema de Eventos:** Lógica programada para reaccionar ante decisiones extremas.
-* **📱 Diseño Responsive:** La interfaz está optimizada para funcionar correctamente en dispositivos móviles, tablets y ordenadores, garantizando una experiencia fluida sin importar el tamaño de pantalla.
-* **📈 Arquitectura Escalable:** El código ha sido estructurado de forma modular, permitiendo la integración futura de nuevas variables de simulación (ej. movilidad, educación, salud) sin comprometer el rendimiento actual.
+## 🎮 Experiencia UI/UX
 
-## 🛠️ Tecnologías Utilizadas
+La interfaz está diseñada con estilo campestre + pixel art:
 
-* **Lenguaje:** [Python 3.x](https://www.python.org/)
-* **Framework de Web App:** [Streamlit](https://streamlit.io/) (Garantiza el despliegue responsive nativo).
-* **Análisis de Datos:** [Pandas](https://pandas.pydata.org/)
-* **Visualización:** [Plotly](https://plotly.com/python/) / [Matplotlib](https://matplotlib.org/)
+- paleta suaves (verdes, marrones, beige, azul cielo)
+- luz cálida (amanecer/atardecer)
+- texturas madera/pasto/tierra
+- paneles semi-translúcidos (vidrio/pergamino)
+- botones orgánicos, hover brillo/escalado y animaciones suaves
+- clima dinámico (Sol, Nublado, Lluvia)
+- modo día/noche
+- minimapa UI pixel en esquina
 
-## 🚀 Instalación y Uso Local
+## ✨ Características principales
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone [https://github.com/danimau14/ciudad-python.git](https://github.com/danimau14/ciudad-python.git)
-   cd ciudad-python
+- rondas fijas (10) + colapso cuando algún indicador llega a 0
+- decisiones con cooldown, multiplicadores y efectos (+1..+10 / -1..-10)
+- eventos 70% positivos y 30% negativos por dificultad
+- calculo de puntaje y estado de la ciudad
+- logros, misiones y ranking (SQLite)
+- responsive (PC, tablet, móvil)
+
+## 🧩 Estructura de carpetas
+
+- `app.py`: entrada principal
+- `router.py`: navegación entre pantallas
+- `screen_*`: vistas (inicio, login, lobby, juego, fin, logros, etc.)
+- `ui_styles.py`: temas y estilos globales
+- `screen_juego.py`: lógica principal del juego
+- `config.py`: parámetros y datos (decisiones, eventos, estados)
+- `db.py`: conexión y consultas SQLite
+- `questions*`: banco de preguntas y lógica de selección
+
+## 🔧 Requisitos
+
+- Python 3.9+
+- pip
+
+### Dependencias
+
+```bash
+pip install -r requirements.txt
+```
+
+## ▶️ Ejecutar local
+
+```bash
+cd "c:\Users\User\OneDrive\Escritorio\ING. SISTEMAS DANIEL MAURICIO QUINTERO\SEMESTRE 4\PENSAMIENTO SISTEMICO\CIUDAD PYTHON"
+streamlit run app.py
+```
+
+## 🗂️ Base de datos inicial
+
+- `database.sqlite3` contiene tablas:
+  - `grupos`, `estudiantes`, `progresojuego`, `cooldowndecisiones`, `ranking`, `logros_grupo`, `misiones_pendientes`, `misiones_canjeadas`, `estrellas_grupo`
+- `screen_inicio.py` ejecuta `init_db()`.
+
+## 🛠️ Personalización y desarrollo
+
+- `config.py` permite ajustar fácilmente:
+  - `TOTAL_RONDAS`, `COOLDOWN`, `TIEMPO_PREGUNTA`, `MEZCLA_PREGUNTAS`
+  - `DECISIONES`, `EVENTOS_POR_DIFICULTAD`, `ESTADOS_CIUDAD`, `ATRIBUTOS`, `MISIONES`, `LOGROS`
+- agrega nuevas preguntas en `questions_bank.py`.
+
+## 🗣️ Sugerencias futuras
+
+- modo multijugador/turnos real con websockets
+- agregar mapamundi con coordenadas y eventos locales
+- sistema de resultados exportables (`csv`, `json`)
+- sonidos ambientales (aves, viento, riachuelo) con `st.audio` o `components.html`
+
+## 📦 Licencia
+
+Este proyecto se comparte libremente y puede copiarse, modificarse y redistribuirse.

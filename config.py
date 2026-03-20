@@ -18,13 +18,14 @@ MEZCLA_PREGUNTAS = {
 # ── Penalizaciones  ──────────────────────────────────────────────────────────
 # -5 pts por respuesta incorrecta (ronda impar)
 # -10 pts por respuesta incorrecta (ronda par = doble)
+# Eventos: 70% positivos (mantener equilibrio) / 30% negativos (colapso)
 DIFICULTADES = {
     "Fácil":   {"penalizacion": 5, "mult_par": 2, "estrellas": 1,
-                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
+                "eventos_peso": {"positivos": 0.70, "negativos": 0.30}},
     "Normal":  {"penalizacion": 5, "mult_par": 2, "estrellas": 2,
-                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
+                "eventos_peso": {"positivos": 0.70, "negativos": 0.30}},
     "Difícil": {"penalizacion": 5, "mult_par": 2, "estrellas": 3,
-                "eventos_peso": {"positivos": 0.50, "negativos": 0.50}},
+                "eventos_peso": {"positivos": 0.70, "negativos": 0.30}},
 }
 
 # ── Colores e iconos de indicadores ──────────────────────────────────────────
@@ -50,64 +51,108 @@ CAT_COLOR = {
 }
 
 # ── Decisiones ────────────────────────────────────────────────────────────────
+# Impactos reducidos para pensamiento sistémico (+1 a +10, -1 a -10)
 DECISIONES = {
-    "Construir fábrica":       {"emoji":"🏭","economia":18,"medio_ambiente":-15,"energia":-8, "bienestar_social":-3},
-    "Crear parque natural":    {"emoji":"🌳","economia":-8,"medio_ambiente":18, "energia":-3, "bienestar_social":12},
-    "Instalar paneles solares":{"emoji":"☀️","economia":-12,"medio_ambiente":12,"energia":22, "bienestar_social":-2},
-    "Construir escuelas":      {"emoji":"🏫","economia":-12,"medio_ambiente":-2,"energia":-6, "bienestar_social":22},
-    "Ampliar autopistas":      {"emoji":"🛣️","economia":12, "medio_ambiente":-18,"energia":-12,"bienestar_social":-5},
-    "Agricultura urbana":      {"emoji":"🌱","economia":6,  "medio_ambiente":12, "energia":4,  "bienestar_social":10},
-    "Mejorar hospitales":      {"emoji":"🏥","economia":-18,"medio_ambiente":-2, "energia":-6, "bienestar_social":28},
-    "Planta de carbón":        {"emoji":"⚫","economia":22, "medio_ambiente":-25,"energia":28, "bienestar_social":-10},
+    # ── FÁCIL (efectos claros y bajos) ─────────────────────────────────────
+    "Crear parque natural":     {"emoji":"🌳","dif":"facil","economia":-2,"medio_ambiente":5,"energia":-1,"bienestar_social":3},
+    "Agricultura urbana":       {"emoji":"🌱","dif":"facil","economia":2,"medio_ambiente":3,"energia":1,"bienestar_social":2},
+    "Construir escuelas":       {"emoji":"🏫","dif":"facil","economia":-3,"medio_ambiente":1,"energia":-1,"bienestar_social":6},
+    
+    # ── NORMAL (trade-offs moderados) ──────────────────────────────────────
+    "Construir fábrica":        {"emoji":"🏭","dif":"normal","economia":5,"medio_ambiente":-4,"energia":-2,"bienestar_social":-1},
+    "Instalar paneles solares": {"emoji":"☀️","dif":"normal","economia":-3,"medio_ambiente":3,"energia":6,"bienestar_social":0},
+    "Ampliar autopistas":       {"emoji":"🛣️","dif":"normal","economia":3,"medio_ambiente":-5,"energia":-3,"bienestar_social":-2},
+    "Mejorar hospitales":       {"emoji":"🏥","dif":"normal","economia":-5,"medio_ambiente":0,"energia":-2,"bienestar_social":7},
+    
+    # ── DIFÍCIL (trade-offs complejos) ────────────────────────────────────
+    "Planta de carbón":         {"emoji":"⚫","dif":"dificil","economia":6,"medio_ambiente":-7,"energia":8,"bienestar_social":-3},
 }
 
 # ── Eventos por dificultad ────────────────────────────────────────────────────
+# 70% eventos positivos (mantener equilibrio) / 30% eventos negativos (colapso)
+# Impactos reducidos para pensamiento sistémico (+1 a +10, -1 a -10)
 EVENTOS_POR_DIFICULTAD = {
     "Fácil": {
-        "negativos": [
-            {"nombre":"Lluvia intensa local",    "indicador":"medio_ambiente",  "valor":-6},
-            {"nombre":"Corte eléctrico parcial", "indicador":"energia",         "valor":-7},
-            {"nombre":"Baja de recaudo",         "indicador":"economia",        "valor":-6},
-            {"nombre":"Congestión urbana",       "indicador":"bienestar_social","valor":-6},
+        "negativos": [  # 30% - causan colapso
+            {"nombre":"🌧️ Lluvia intensa local",    "indicador":"medio_ambiente",  "valor":-2},
+            {"nombre":"🔌 Corte eléctrico parcial", "indicador":"energia",         "valor":-2},
+            {"nombre":"📉 Baja de recaudo",         "indicador":"economia",        "valor":-2},
+            {"nombre":"🚗 Congestión urbana",       "indicador":"bienestar_social","valor":-2},
         ],
-        "positivos": [
-            {"nombre":"Feria barrial",           "indicador":"bienestar_social","valor":6},
-            {"nombre":"Ahorro municipal",        "indicador":"economia",        "valor":6},
-            {"nombre":"Mantenimiento energético","indicador":"energia",         "valor":6},
-            {"nombre":"Jornada ecológica",       "indicador":"medio_ambiente",  "valor":6},
+        "positivos": [  # 70% - mantienen equilibrio
+            {"nombre":"🎉 Feria barrial",           "indicador":"bienestar_social","valor":2},
+            {"nombre":"💰 Ahorro municipal",        "indicador":"economia",        "valor":2},
+            {"nombre":"⚡ Mantenimiento energético","indicador":"energia",         "valor":2},
+            {"nombre":"🌿 Jornada ecológica",       "indicador":"medio_ambiente",  "valor":2},
+            {"nombre":"🏘️ Mejora en comunidades",  "indicador":"bienestar_social","valor":1},
         ],
     },
     "Normal": {
-        "negativos": [
-            {"nombre":"Tormenta devastadora",    "indicador":"medio_ambiente",  "valor":-14},
-            {"nombre":"Pandemia regional",       "indicador":"bienestar_social","valor":-16},
-            {"nombre":"Apagón masivo",           "indicador":"energia",         "valor":-14},
-            {"nombre":"Recesión económica",      "indicador":"economia",        "valor":-14},
-            {"nombre":"Inundación urbana",       "indicador":"bienestar_social","valor":-13},
+        "negativos": [  # 30% - causan colapso
+            {"nombre":"🌩️ Tormenta devastadora",    "indicador":"medio_ambiente",  "valor":-4},
+            {"nombre":"🤒 Pandemia regional",       "indicador":"bienestar_social","valor":-5},
+            {"nombre":"🔌 Apagón masivo",           "indicador":"energia",         "valor":-4},
+            {"nombre":"📉 Recesión económica",      "indicador":"economia",        "valor":-4},
+            {"nombre":"🌊 Inundación urbana",       "indicador":"bienestar_social","valor":-3},
         ],
-        "positivos": [
-            {"nombre":"Boom económico",          "indicador":"economia",        "valor":10},
-            {"nombre":"Ahorro energético",       "indicador":"energia",         "valor":9},
-            {"nombre":"Gran cosecha",            "indicador":"medio_ambiente",  "valor":8},
-            {"nombre":"Festival cultural",       "indicador":"bienestar_social","valor":10},
-            {"nombre":"Inversión extranjera",    "indicador":"economia",        "valor":12},
+        "positivos": [  # 70% - mantienen equilibrio
+            {"nombre":"💰 Boom económico",          "indicador":"economia",        "valor":3},
+            {"nombre":"⚡ Ahorro energético",       "indicador":"energia",         "valor":3},
+            {"nombre":"🌽 Gran cosecha",            "indicador":"medio_ambiente",  "valor":2},
+            {"nombre":"🎉 Festival cultural",       "indicador":"bienestar_social","valor":3},
+            {"nombre":"🌍 Inversión extranjera",    "indicador":"economia",        "valor":4},
+            {"nombre":"🎓 Programa educativo",      "indicador":"bienestar_social","valor":2},
         ],
     },
     "Difícil": {
-        "negativos": [
-            {"nombre":"Megasequía prolongada",   "indicador":"medio_ambiente",  "valor":-20},
-            {"nombre":"Colapso de red eléctrica","indicador":"energia",         "valor":-22},
-            {"nombre":"Crisis fiscal severa",    "indicador":"economia",        "valor":-21},
-            {"nombre":"Emergencia sanitaria",    "indicador":"bienestar_social","valor":-22},
-            {"nombre":"Incendio forestal masivo","indicador":"medio_ambiente",  "valor":-24},
+        "negativos": [  # 30% - causan colapso
+            {"nombre":"🏜️ Megasequía prolongada",   "indicador":"medio_ambiente",  "valor":-6},
+            {"nombre":"⚡ Colapso de red eléctrica","indicador":"energia",         "valor":-7},
+            {"nombre":"💸 Crisis fiscal severa",    "indicador":"economia",        "valor":-6},
+            {"nombre":"😷 Emergencia sanitaria",    "indicador":"bienestar_social","valor":-7},
+            {"nombre":"🔥 Incendio forestal masivo","indicador":"medio_ambiente",  "valor":-7},
         ],
-        "positivos": [
-            {"nombre":"Plan de rescate nacional","indicador":"economia",        "valor":14},
-            {"nombre":"Innovación energética",   "indicador":"energia",         "valor":14},
-            {"nombre":"Reforestación récord",    "indicador":"medio_ambiente",  "valor":13},
-            {"nombre":"Pacto social ciudadano",  "indicador":"bienestar_social","valor":14},
-            {"nombre":"Inversión tecnológica",   "indicador":"economia",        "valor":15},
+        "positivos": [  # 70% - mantienen equilibrio (épicos/severos)
+            {"nombre":"🚀 Plan de rescate nacional","indicador":"economia",        "valor":4},
+            {"nombre":"⚡ Innovación energética",   "indicador":"energia",         "valor":4},
+            {"nombre":"🌲 Reforestación récord",    "indicador":"medio_ambiente",  "valor":4},
+            {"nombre":"🤝 Pacto social ciudadano",  "indicador":"bienestar_social","valor":4},
+            {"nombre":"💻 Inversión tecnológica",   "indicador":"economia",        "valor":5},
+            {"nombre":"🌍 Cumbre ambiental mundial","indicador":"medio_ambiente",  "valor":3},
         ],
+    },
+}
+
+# ── Estados de la ciudad (basados en puntuación total 0-100) ─────────────────
+# Puntuación total = promedio de 4 indicadores (0-100)
+ESTADOS_CIUDAD = {
+    "colapso": {
+        "nombre": "🔴 CIUDAD EN COLAPSO",
+        "rango": (0, 25),
+        "color": "#ef4444",
+        "descripcion": "Los sistemas de la ciudad se han desestabilizado. Múltiples indicadores en crisis.",
+        "emoji": "🔴"
+    },
+    "critica": {
+        "nombre": "🟠 CIUDAD EN CRISIS",
+        "rango": (25, 50),
+        "color": "#f59e0b",
+        "descripcion": "La ciudad enfrenta desafíos significativos. Se requieren cambios urgentes.",
+        "emoji": "🟠"
+    },
+    "inestable": {
+        "nombre": "🟡 CIUDAD INESTABLE",
+        "rango": (50, 75),
+        "color": "#eab308",
+        "descripcion": "La ciudad tiene sistemas balanceados pero frágiles. Necesita refuerzos.",
+        "emoji": "🟡"
+    },
+    "estable": {
+        "nombre": "🟢 CIUDAD EQUILIBRADA",
+        "rango": (75, 100),
+        "color": "#10b981",
+        "descripcion": "¡Excelente! Los sistemas de la ciudad están en equilibrio sostenible.",
+        "emoji": "🟢"
     },
 }
 

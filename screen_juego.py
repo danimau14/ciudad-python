@@ -5,7 +5,7 @@ from session_manager import navegar
 from config import (TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN,
                     DECISIONES, EVENTOS_POR_DIFICULTAD,
                     IND_COLOR, IND_LABEL, PREGUNTAS, DIFICULTADES,
-                    MEZCLA_PREGUNTAS, ATRIBUTOS)
+                    MEZCLA_PREGUNTAS, ATRIBUTOS, ESTADOS_CIUDAD)
 from db import get_connection
 
 def _cx():
@@ -20,6 +20,27 @@ DIF_META = {
     "Fácil":   {"color":"#10b981","emoji":"🟢","bg":"rgba(16,185,129,.10)"},
     "Normal":  {"color":"#f59e0b","emoji":"🟡","bg":"rgba(245,158,11,.10)"},
     "Difícil": {"color":"#ef4444","emoji":"🔴","bg":"rgba(239,68,68,.10)"},
+}
+
+# JSON de iconos para UI (iconos reales inyectados)
+ICON_ASSETS = {
+    "economia":       "https://img.icons8.com/fluency/48/000000/coins.png",
+    "medio_ambiente": "https://img.icons8.com/fluency/48/000000/tree.png",
+    "energia":        "https://img.icons8.com/fluency/48/000000/light-on.png",
+    "bienestar_social": "https://img.icons8.com/fluency/48/000000/happy--v1.png",
+    "infrastructura_verde": "https://img.icons8.com/fluency/48/000000/forest.png",
+    "industria_economica":   "https://img.icons8.com/fluency/48/000000/factory.png",
+    "educacion":      "https://img.icons8.com/fluency/48/000000/school-bus.png",
+    "salud":         "https://img.icons8.com/fluency/48/000000/first-aid-kit.png"
+}
+
+DECISION_ICON_SPRITES = {
+    "Infraestructura Verde": "https://img.icons8.com/fluency/48/000000/forest.png",
+    "Fomento Educativo": "https://img.icons8.com/fluency/48/000000/school.png",
+    "Energía Renovable": "https://img.icons8.com/fluency/48/000000/solar-panel.png",
+    "Políticas Sociales": "https://img.icons8.com/fluency/48/000000/handshake.png",
+    "Inversión en Industria": "https://img.icons8.com/fluency/48/000000/factory.png",
+    "Gestión de Agua": "https://img.icons8.com/fluency/48/000000/water.png"
 }
 
 # ── Helpers de DB ─────────────────────────────────────────────────────────────
@@ -106,7 +127,19 @@ def _seleccionar_pregunta():
         nivel   = random.choices(niveles, weights=[mezcla[k]/total_p for k in niveles], k=1)[0]
         idx     = random.choice(por_dif[nivel])
     st.session_state.setdefault("preguntas_usadas", []).append(idx)
-    return PREGUNTAS[idx]
+    pregunta = PREGUNTAS[idx]
+    
+    # ── Mezclar opciones de respuesta ──
+    pregunta_copia = dict(pregunta)
+    opciones = pregunta_copia["ops"][:]
+    indice_correcto = pregunta_copia["ok"]
+    respuesta_correcta = opciones[indice_correcto]
+    random.shuffle(opciones)
+    nuevo_indice = opciones.index(respuesta_correcta)
+    pregunta_copia["ops"] = opciones
+    pregunta_copia["ok"] = nuevo_indice
+    
+    return pregunta_copia
 
 def _aplicar_efectos(ind, ef):
     r = dict(ind)
@@ -117,6 +150,28 @@ def _aplicar_efectos(ind, ef):
 
 def _activo(key):
     return key in st.session_state.get("atributos_activos", set())
+
+def _calcular_puntuacion_total(indicadores):
+    """Calcula puntuación total como la suma de indicadores / cantidad de indicadores (0-100)."""
+    valores = [
+        indicadores.get("economia", 50),
+        indicadores.get("medio_ambiente", 50),
+        indicadores.get("energia", 50),
+        indicadores.get("bienestar_social", 50),
+    ]
+    if not valores:
+        return 0
+    puntuacion = int(sum(valores) / len(valores))
+    return max(0, min(100, puntuacion))
+
+def _obtener_estado_ciudad(puntuacion):
+    """Retorna el estado de la ciudad basado en la puntuación total"""
+    for estado_key, estado_info in ESTADOS_CIUDAD.items():
+        rango_min, rango_max = estado_info["rango"]
+        if rango_min <= puntuacion < rango_max:
+            return estado_key, estado_info
+    # Si puntuación es 500
+    return "estable", ESTADOS_CIUDAD["estable"]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -156,17 +211,17 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind, estrellas):
         v   = _clamp(ind.get(key, 50))
         bc  = "#10b981" if v >= 60 else "#f59e0b" if v >= 30 else "#ef4444"
         crit= v < 30
+        icon_url = ICON_ASSETS.get(key, "https://img.icons8.com/fluency/48/000000/leaf.png")
         ind_html += (
-            "<div style='flex:1;min-width:72px;background:rgba(255,255,255,.03);"
-            "border:" + ("1.5px solid #ef444466" if crit else "1px solid " + color + "18") + ";"
+            "<div style='flex:1;min-width:90px;background:rgba(255,255,255,.14);"
+            "border:" + ("1.5px solid #ef444466" if crit else "1px solid " + color + "35") + ";"
             "border-radius:12px;padding:8px 10px;text-align:center;position:relative'>"
             + ("<div style='position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444'></div>" if crit else "") +
-            "<div style='font-size:.95rem;line-height:1'>" + emoji + "</div>"
-            "<div style='font-size:.55rem;color:rgba(255,255,255,.28);letter-spacing:1.5px;text-transform:uppercase;margin:3px 0'>"
-            + IND_LABEL[key].split()[0] + "</div>"
-            "<div style='font-size:1rem;font-weight:900;color:" + bc + ";font-family:Courier Prime,monospace;line-height:1'>" + str(v) + "</div>"
-            "<div style='margin-top:4px;background:rgba(255,255,255,.06);border-radius:3px;height:3px'>"
-            "<div style='width:" + str(v) + "%;background:" + color + ";height:3px;border-radius:3px'></div></div></div>")
+            "<img src='" + icon_url + "' style='width:24px;height:24px;margin-bottom:4px'>"
+            "<div style='font-size:.80rem;line-height:1.1;color:#3b382f;margin-bottom:3px'>" + IND_LABEL[key].split()[0] + "</div>"
+            "<div style='font-size:.95rem;font-weight:900;color:" + bc + ";font-family:Courier Prime,monospace;line-height:1.1'>" + str(v) + "</div>"
+            "<div style='margin-top:6px;background:rgba(255,255,255,.20);border-radius:3px;height:4px'>"
+            "<div style='width:" + str(v) + "%;background:" + color + ";height:100%;border-radius:3px;transition:width .3s'></div></div></div>")
 
     col_hdr, col_cfg = st.columns([13, 1])
     with col_hdr:
@@ -291,10 +346,37 @@ def _panel_estrellas(gid, estrellas):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_juego():
+    # Elementos decorativos campestres
+    st.markdown("""
+    <div class="leaf" style="left: 10%; animation-delay: 0s;">🍂</div>
+    <div class="leaf" style="left: 30%; animation-delay: 2s;">🍃</div>
+    <div class="leaf" style="left: 60%; animation-delay: 4s;">🍂</div>
+    <div class="cloud" style="left: 20%; animation-delay: 0s;">☁️</div>
+    <div class="cloud" style="left: 70%; animation-delay: 5s;">☁️</div>
+    """, unsafe_allow_html=True)
+
+    # Opciones de clima y ciclo día/noche
+    if "modo_diurno" not in st.session_state:
+        st.session_state["modo_diurno"] = "Día"
+    if "clima_activo" not in st.session_state:
+        st.session_state["clima_activo"] = "Sol"
+
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.session_state["modo_diurno"] = st.selectbox("Modo", ["Día", "Noche"], index=0 if st.session_state["modo_diurno"] == "Día" else 1)
+    with c2:
+        st.session_state["clima_activo"] = st.selectbox("Clima", ["Sol", "Nublado", "Lluvia"], index=["Sol", "Nublado", "Lluvia"].index(st.session_state["clima_activo"]))
+
+    if st.session_state["modo_diurno"] == "Noche":
+        st.markdown("<div class='weather-layer weather-night'></div>", unsafe_allow_html=True)
+    if st.session_state["clima_activo"] == "Sol":
+        st.markdown("<div class='weather-layer weather-sun'></div>", unsafe_allow_html=True)
+    elif st.session_state["clima_activo"] == "Nublado":
+        st.markdown("<div class='weather-layer weather-clouds'></div>", unsafe_allow_html=True)
+    elif st.session_state["clima_activo"] == "Lluvia":
+        st.markdown("<div class='weather-layer weather-rain'></div>", unsafe_allow_html=True)
+
     gid = st.session_state.get("grupo_id")
-    if not gid:
-        navegar("inicio")
-        return
 
     dif          = st.session_state.get("dificultad_sel", "Normal")
     progreso     = _progreso(gid, dif)
@@ -318,16 +400,33 @@ def pantalla_juego():
     }
 
     if ronda > TOTAL_RONDAS:
+        puntuacion_total = _calcular_puntuacion_total(ind)
+        estado_ciudad, _ = _obtener_estado_ciudad(puntuacion_total)
         st.session_state.update(resultado="victoria", indicadores_finales=ind,
-                                rondas_completadas=TOTAL_RONDAS)
+                                rondas_completadas=TOTAL_RONDAS,
+                                puntuacion_total=puntuacion_total,
+                                estado_ciudad=estado_ciudad)
         navegar("fin"); return
-    if any(v <= 0 for v in ind.values()):
+    if any(v == 0 for v in ind.values()):
+        puntuacion_total = _calcular_puntuacion_total(ind)
+        estado_ciudad, _ = _obtener_estado_ciudad(puntuacion_total)
         st.session_state.update(resultado="colapso", indicadores_finales=ind,
-                                rondas_completadas=ronda - 1)
+                                rondas_completadas=ronda - 1,
+                                puntuacion_total=puntuacion_total,
+                                estado_ciudad=estado_ciudad)
         navegar("fin"); return
 
-    _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind, estrellas)
-    st.markdown("---")
+    # Minimapa
+    st.markdown("""
+    <div class="minimap">
+        🏠 Ciudad<br>
+        🌳 Bosque<br>
+        🏭 Fábrica<br>
+        💧 Río<br>
+        Ronda: """ + str(ronda) + """
+    </div>
+    """, unsafe_allow_html=True)
+
     fase = st.session_state.get("fase_ronda", "decision")
 
     # ══ FASE DECISIÓN ═════════════════════════════════════════════════════════
@@ -345,7 +444,7 @@ def pantalla_juego():
             rf   = max(0, cd - ronda) if cd > 0 else 0
             filas = ""
             for k, v in ef.items():
-                if k == "emoji": continue
+                if k in ("emoji", "dif"): continue
                 ci, ei = IND_COLOR.get(k, ("#94a3b8",""))
                 filas += ("<div style='display:flex;justify-content:space-between;padding:2px 0;"
                           "border-bottom:1px solid rgba(255,255,255,.04)'>"
@@ -363,18 +462,21 @@ def pantalla_juego():
                            "<span style='color:#fbbf24;font-weight:700;font-size:.78rem'>"
                            + str(rf) + " ronda" + ("s" if rf!=1 else "") + "</span>" + dots + "</div>")
             with col:
+                icon_url = DECISION_ICON_SPRITES.get(nom, "https://img.icons8.com/fluency/48/000000/idea.png")
                 st.markdown("<div style='position:relative;background:" +
                             ("rgba(167,139,250,.04)" if disp else "rgba(245,158,11,.02)") +
                             ";border:1px solid " + ("rgba(167,139,250,.32)" if disp else "rgba(245,158,11,.18)") +
                             ";border-radius:14px;padding:12px;margin-bottom:4px;min-height:165px;"
                             "opacity:" + ("1" if disp else ".45") + "'>" + overlay +
-                            "<div style='font-size:1.3rem;margin-bottom:3px'>" + ef["emoji"] + "</div>"
+                            "<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px'>"
+                            "<img src='" + icon_url + "' style='width:26px;height:26px;border-radius:4px;background:rgba(255,255,255,.12)'/>"
+                            "<span style='font-size:1.2rem;'>" + ef.get("emoji", "") + "</span></div>"
                             "<div style='font-weight:700;color:#f1f5f9;font-size:.78rem;margin-bottom:6px;line-height:1.2'>"
                             + nom + "</div>" + filas + "</div>", unsafe_allow_html=True)
                 if st.button("Elegir" if disp else "Bloqueada", disabled=not disp,
                              key="dec_" + nom, use_container_width=True):
                     st.session_state["decision_elegida"] = nom
-                    st.session_state["decision_efectos"] = {k:v for k,v in ef.items() if k!="emoji"}
+                    st.session_state["decision_efectos"] = {k:v for k,v in ef.items() if k not in ("emoji", "dif")}
                     st.session_state["pregunta_actual"]  = _seleccionar_pregunta()
                     st.session_state["timer_inicio"]     = None
                     st.session_state["tiempo_agotado"]   = False
@@ -402,7 +504,7 @@ def pantalla_juego():
         # Decisión activa
         ef_res = " ".join("<span style='color:" + IND_COLOR[k][0] + "'>" +
                           IND_COLOR[k][1] + " " + ("+" if v>0 else "") + str(v) + "</span>"
-                          for k,v in ef_dec.items() if k in IND_COLOR)
+                          for k,v in ef_dec.items() if k in IND_COLOR and k not in ("emoji", "dif"))
         st.markdown("<div style='background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.18);"
                     "border-radius:10px;padding:8px 14px;margin-bottom:12px'>"
                     "<span style='color:#a78bfa;font-size:.72rem'>Decisión: </span>"
@@ -441,16 +543,12 @@ def pantalla_juego():
                  "Fisica MRU":"#f59e0b","Fisica MRUA":"#ef4444","Matrices":"#ec4899",
                  "Logica":"#f97316","Algebra":"#84cc16","Estadistica":"#a78bfa","Sistemas":"#34d399"}
         cc  = cat_c.get(pregunta.get("cat",""), "#a78bfa")
-        dc  = {"facil":"#10b981","normal":"#f59e0b","dificil":"#ef4444"}.get(pregunta.get("dif","normal"),"#a78bfa")
-        dl  = {"facil":"FÁCIL","normal":"NORMAL","dificil":"DIFÍCIL"}.get(pregunta.get("dif","normal"),"")
         st.markdown(
             "<div style='background:rgba(10,10,24,.94);border:1px solid " + cc + "1a;"
             "border-left:3px solid " + cc + ";border-radius:14px;padding:18px 20px;margin-bottom:14px'>"
             "<div style='display:flex;gap:6px;margin-bottom:10px'>"
             "<span style='background:" + cc + "14;color:" + cc + ";border:1px solid " + cc + "38;"
-            "border-radius:20px;padding:2px 10px;font-size:.63rem;font-weight:700'>" + pregunta.get("cat","") + "</span>"
-            "<span style='background:" + dc + "14;color:" + dc + ";border:1px solid " + dc + "38;"
-            "border-radius:20px;padding:2px 10px;font-size:.63rem;font-weight:700'>" + dl + "</span></div>"
+            "border-radius:20px;padding:2px 10px;font-size:.63rem;font-weight:700'>" + pregunta.get("cat","") + "</span></div>"
             "<p style='color:#f0f4ff;margin:0;font-family:Georgia,\"Times New Roman\",serif;"
             "font-size:clamp(.96rem,2.2vw,1.14rem);line-height:1.78'>" + pregunta["q"] + "</p></div>",
             unsafe_allow_html=True)
@@ -491,8 +589,8 @@ def pantalla_juego():
         if correcta:
             ef_ap = dict(ef_dec)
             if _activo("doble_efecto"):
-                ef_ap = {k: v*2 if v>0 else v for k,v in ef_ap.items()}
-            nuevo = _aplicar_efectos(ind, ef_ap)
+                ef_ap = {k: (v*2 if v>0 else v) if isinstance(v, int) else v for k,v in ef_ap.items()}
+            nuevo = _aplicar_efectos(ind, {k:v for k,v in ef_ap.items() if k not in ("emoji", "dif")})
             _actualizar_progreso(gid, nuevo["economia"], nuevo["medio_ambiente"],
                                  nuevo["energia"], nuevo["bienestar_social"], ronda, dif)
             _actualizar_cooldown(gid, nom_dec, ronda, dif)
