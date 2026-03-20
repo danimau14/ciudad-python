@@ -2,16 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 import sqlite3
 import hashlib
-import os
 import re
 from session_manager import navegar
-
-_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+from db import get_connection
 
 def _cx():
-    c = sqlite3.connect(_DB, check_same_thread=False)
-    c.row_factory = sqlite3.Row
-    return c
+    return get_connection()
 
 def _hp(pw):
     return hashlib.sha256(pw.encode()).hexdigest()

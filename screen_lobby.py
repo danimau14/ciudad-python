@@ -1,16 +1,10 @@
 import streamlit as st
-import sqlite3
-import os
 from session_manager import navegar
 from config import IND_COLOR, IND_LABEL, LOGROS, LOGROS_LOBBY
-
-# ── Conexión directa a database.db ────────────────────────────────────────────
-_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+from db import get_connection
 
 def _cx():
-    c = sqlite3.connect(_DB, check_same_thread=False)
-    c.row_factory = sqlite3.Row
-    return c
+    return get_connection()
 
 # ── Helpers de DB ─────────────────────────────────────────────────────────────
 def _nombre_grupo(gid):

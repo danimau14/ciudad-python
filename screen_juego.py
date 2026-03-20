@@ -1,6 +1,4 @@
 import streamlit as st
-import sqlite3
-import os
 import random
 import time
 from session_manager import navegar
@@ -8,14 +6,10 @@ from config import (TOTAL_RONDAS, TIEMPO_PREGUNTA, COOLDOWN,
                     DECISIONES, EVENTOS_NEGATIVOS, EVENTOS_POSITIVOS,
                     IND_COLOR, IND_LABEL, PREGUNTAS, DIFICULTADES,
                     MEZCLA_PREGUNTAS, ATRIBUTOS)
-
-# ── Conexión directa a database.db ────────────────────────────────────────────
-_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+from db import get_connection
 
 def _cx():
-    c = sqlite3.connect(_DB, check_same_thread=False)
-    c.row_factory = sqlite3.Row
-    return c
+    return get_connection()
 
 TIEMPO_RESULTADO = 4
 TIEMPO_EVENTO    = 5

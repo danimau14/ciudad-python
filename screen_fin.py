@@ -1,12 +1,10 @@
 import streamlit as st
-import sqlite3
-import os
 from session_manager import navegar
 from config import IND_COLOR, IND_LABEL, DIFICULTADES, LOGROS, MISIONES
+from db import get_connection
 
-_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
 def _cx():
-    c = sqlite3.connect(_DB, check_same_thread=False); c.row_factory = sqlite3.Row; return c
+    return get_connection()
 
 def _clamp(v): return max(0, min(100, v))
 

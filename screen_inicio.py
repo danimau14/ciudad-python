@@ -1,16 +1,8 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import datetime
-import sqlite3
-import os
 from session_manager import navegar
-
-_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
-
-def _ensure_db_file():
-    """Crea database.db si aun no existe."""
-    conn = sqlite3.connect(_DB, check_same_thread=False)
-    conn.close()
+from db import init_db
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -21,7 +13,7 @@ def _ensure_db_file():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_inicio():
-    _ensure_db_file()
+    init_db()
 
     # ── CSS: ocultar Streamlit + fondo + panel + botones ─────────────────────
     st.markdown("""
