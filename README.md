@@ -15,16 +15,15 @@ Se trabaja con rondas (10 rondas o colapso) y se gestionan eventos positivos/neg
 
 ## 🎮 Experiencia UI/UX
 
-La interfaz está diseñada con estilo campestre + pixel art:
+La interfaz está diseñada con un tema oscuro retro-futurista:
 
-- paleta suaves (verdes, marrones, beige, azul cielo)
-- luz cálida (amanecer/atardecer)
-- texturas madera/pasto/tierra
-- paneles semi-translúcidos (vidrio/pergamino)
-- botones orgánicos, hover brillo/escalado y animaciones suaves
-- clima dinámico (Sol, Nublado, Lluvia)
-- modo día/noche
-- minimapa UI pixel en esquina
+- fondo negro azulado con gradientes púrpuras sutiles
+- fuentes monospace ('Press Start 2P' para títulos, 'Courier Prime' para texto)
+- colores púrpura y grises para elementos interactivos
+- layout responsivo con efectos de blur y sombras
+- expanders personalizados con iconos +/-
+- cards con hover effects y transiciones suaves
+- diseño minimalista y moderno
 
 ## ✨ Características principales
 
@@ -63,6 +62,12 @@ pip install -r requirements.txt
 cd "c:\Users\User\OneDrive\Escritorio\ING. SISTEMAS DANIEL MAURICIO QUINTERO\SEMESTRE 4\PENSAMIENTO SISTEMICO\CIUDAD PYTHON"
 streamlit run app.py
 ```
+
+## 🌐 Acceder en línea
+
+La aplicación está desplegada y disponible en: [https://ciudad-en-equilibrio-python.streamlit.app/](https://ciudad-en-equilibrio-python.streamlit.app/)
+
+Puedes acceder directamente desde tu navegador sin necesidad de instalar nada localmente.
 
 ## 🗂️ Base de datos inicial
 
