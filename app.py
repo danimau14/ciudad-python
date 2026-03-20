@@ -86,6 +86,9 @@ def _init_db():
     conn.commit()
     conn.close()
 
+# Inicializa la BD en cuanto carga el script.
+_init_db()
+
 
 st.set_page_config(
     page_title="Ciudad en Equilibrio",
@@ -96,7 +99,6 @@ st.set_page_config(
 
 
 def main():
-    _init_db()          # genera database.db automáticamente
     init_session()
     inyectar_css()
     router()
