@@ -1,34 +1,55 @@
 import streamlit as st
 from session_manager import navegar
-from config import MISIONES, LOGROS
-from db import get_connection
+from config import LOGROS
+from db import get_connection, normalize_grupo_id, fetch_all, fetch_one
 
 def _cx():
     return get_connection()
 
 def _estrellas(gid):
-    c=_cx(); cur=c.cursor(); cur.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?",(gid,))
-    r=cur.fetchone(); c.close(); return r["total"] if r else 0
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return 0
+    r = fetch_one("SELECT total FROM estrellas_grupo WHERE grupoid=?", (gid,))
+    return r["total"] if r else 0
 
 def _guardar_estrellas(gid, cantidad):
-    c=_cx(); cur=c.cursor()
-    c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)",(gid,))
-    cur.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?",(gid,))
-    actual=(cur.fetchone() or {"total":0})["total"]
-    c.execute("UPDATE estrellas_grupo SET total=? WHERE grupoid=?",(max(0,actual+cantidad),gid))
-    c.commit(); c.close()
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return
+    c = _cx()
+    try:
+        cur = c.cursor()
+        c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
+        cur.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?", (gid,))
+        actual = (cur.fetchone() or {"total": 0})["total"]
+        c.execute(
+            "UPDATE estrellas_grupo SET total=? WHERE grupoid=?",
+            (max(0, actual + cantidad), gid),
+        )
+        c.commit()
+    finally:
+        c.close()
 
 def _logros_grupo(gid):
-    c=_cx(); cur=c.cursor(); cur.execute("SELECT logroid FROM logros_grupo WHERE grupoid=?",(gid,))
-    r=cur.fetchall(); c.close(); return [x["logroid"] for x in r]
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return []
+    rows = fetch_all("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
+    return [x["logroid"] for x in rows]
 
 def _est_grupo(gid):
-    c=_cx(); cur=c.cursor(); cur.execute("SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id",(gid,))
-    r=cur.fetchall(); c.close(); return [x["nombreestudiante"] for x in r]
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return []
+    rows = fetch_all(
+        "SELECT nombreestudiante FROM estudiantes WHERE grupoid=? ORDER BY id", (gid,)
+    )
+    return [x["nombreestudiante"] for x in rows]
 
 def pantalla_logros():
-    gid        = st.session_state.get("grupo_id")
-    logros_ids = set(_logros_grupo(gid)) if gid else set()
+    gid        = normalize_grupo_id(st.session_state.get("grupo_id"))
+    logros_ids = set(_logros_grupo(gid)) if gid is not None else set()
     total      = len(LOGROS)
     obtenidos  = len(logros_ids)
     pct        = int(obtenidos/total*100) if total else 0
@@ -80,9 +101,3 @@ def pantalla_logros():
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("⬅  VOLVER AL LOBBY", use_container_width=True): navegar("lobby")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PANTALLA RANKING
-# ══════════════════════════════════════════════════════════════════════════════
-

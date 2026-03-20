@@ -86,3 +86,37 @@ def get_connection():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def normalize_grupo_id(gid):
+    """Convierte grupo_id de session_state a int o None (evita errores en la nube)."""
+    if gid is None:
+        return None
+    if isinstance(gid, str) and not gid.strip():
+        return None
+    try:
+        n = int(gid)
+        return n if n > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_all(sql, params=()):
+    """Ejecuta SELECT y siempre cierra la conexion."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def fetch_one(sql, params=()):
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        return cur.fetchone()
+    finally:
+        conn.close()
