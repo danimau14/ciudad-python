@@ -71,14 +71,6 @@ def pantalla_misiones():
         "⭐ " + str(estrellas) + " acumuladas</span></div>",
         unsafe_allow_html=True)
 
-    opcion_dif = st.selectbox("🔎 Filtrar por dificultad:", ["Todas", "Fácil", "Normal", "Difícil"], index=0, key="filtro_misiones")
-    def _matches_dif(m):
-        if opcion_dif == "Todas":
-            return True
-        if m.get("dif", "todas") == "todas":
-            return True
-        return m.get("dif") == opcion_dif
-
     st.markdown(
         "<div style='background:rgba(255,255,255,.05);border-radius:8px;height:10px;margin-bottom:4px;overflow:hidden'>"
         "<div style='width:" + str(pct) + "%;height:10px;border-radius:8px;"
@@ -88,9 +80,7 @@ def pantalla_misiones():
         + str(completadas) + "/" + str(total) + " · " + str(pct) + "%</div>",
         unsafe_allow_html=True)
 
-    misiones_mostradas = [m for m in MISIONES if _matches_dif(m)]
-    if len(misiones_mostradas) > 20:
-        st.info("Mostrando " + str(len(misiones_mostradas)) + " misiones. Usa el filtro para refinar la lista.")
+    misiones_mostradas = MISIONES
 
     total_rec = sum(m["recompensa"] for m in MISIONES if m["id"] in canjeadas)
     total_pend = sum(p["recompensa"] for p in pendientes)
@@ -120,17 +110,37 @@ def pantalla_misiones():
     st.markdown("<hr style='border:none;border-top:1px solid rgba(167,139,250,.2);margin:0 0 14px'>",
                 unsafe_allow_html=True)
 
-    for m in misiones_mostradas:
-        mid      = m["id"]
-        canjeada = mid in canjeadas
-        pendiente= mid in pend_ids
-        dk       = _dk(m.get("dif","todas"))
-        dc       = DIF_COLOR.get(dk,"#a78bfa")
-        dl       = DIF_LABEL.get(dk,"TODAS")
+    def _texto_meta(m):
+        t = m.get("tipo","partidas")
+        if t == "partidas":
+            return f"Completa {m.get('meta',1)} partidas para desbloquear."
+        if t == "racha":
+            return f"Consigue {m.get('meta',3)} respuestas correctas seguidas."
+        if t == "correctas":
+            return f"Acumula {m.get('meta',8)} respuestas correctas en una partida."
+        if t == "indicador":
+            ind = m.get('ind','indicador')
+            return f"Lleva {ind.replace('_',' ')} a {m.get('meta',70)} puntos al final." 
+        if t == "sin_rojo":
+            return "Finaliza sin ninguna alerta roja de indicador." 
+        if t == "victoria":
+            return f"Gana 1 partida en dificultad {m.get('dif','todas')}."
+        return m.get('desc','Cumple la misión especificada.')
 
-        if canjeada:    bg="rgba(52,211,153,.06)"; brd="rgba(52,211,153,.28)"
-        elif pendiente: bg="rgba(251,191,36,.07)"; brd="rgba(251,191,36,.32)"
-        else:           bg="rgba(15,15,25,.6)";    brd="rgba(167,139,250,.10)"
+    for m in misiones_mostradas:
+        mid       = m["id"]
+        canjeada  = mid in canjeadas
+        pendiente = mid in pend_ids
+        dk        = _dk(m.get("dif","todas"))
+        dc        = DIF_COLOR.get(dk,"#a78bfa")
+        dl        = DIF_LABEL.get(dk,"TODAS")
+
+        if canjeada:
+            bg = "rgba(52,211,153,.06)"; brd = "rgba(52,211,153,.28)"
+        elif pendiente:
+            bg = "rgba(251,191,36,.07)"; brd = "rgba(251,191,36,.32)"
+        else:
+            bg = "rgba(12,12,28,.72)"; brd = "rgba(167,139,250,.2)"
 
         badge_dif = ""
         if dk != "todas":
@@ -167,16 +177,18 @@ def pantalla_misiones():
         with c2:
             if canjeada:
                 st.markdown("<div style='display:flex;align-items:center;justify-content:center;"
-                            "height:80px'><span style='color:#34d399;font-size:1.4rem'>✅</span></div>",
+                            "height:86px;border-radius:10px;background:rgba(52,211,153,.12);'>"
+                            "<span style='color:#34d399;font-size:1.4rem'>✅</span></div>",
                             unsafe_allow_html=True)
             elif pendiente:
-                st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
                 if st.button("Canjear", key="lob_c_" + mid, use_container_width=True):
                     _canjear(gid, mid, m["recompensa"])
-                    st.rerun()
+                    st.experimental_rerun()
             else:
                 st.markdown("<div style='display:flex;align-items:center;justify-content:center;"
-                            "height:80px'><span style='color:#fbbf24;font-weight:700;font-size:.88rem;"
+                            "height:86px;border-radius:10px;background:rgba(255,255,255,.03);'>"
+                            "<span style='color:#fbbf24;font-weight:700;font-size:.88rem;"
                             "font-family:Courier Prime,monospace'>+" + str(m["recompensa"]) + " ⭐</span></div>",
                             unsafe_allow_html=True)
 
