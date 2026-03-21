@@ -211,6 +211,17 @@ MISIONES = [
     {"id":"m12","nombre":"Decisivo",        "desc":"Usa todas las decisiones disponibles en una partida.",
      "recompensa":6,"dif":"todas","tipo":"decisiones_usadas","meta":8},
 ]
+# Generar misiones adicionales hasta tener 100 misiones totales.
+for i in range(13, 101):
+    MISIONES.append({
+        "id": f"m{i:02d}",
+        "nombre": f"Misión {i}",
+        "desc": f"Logra un objetivo especial #{i} en tu gestión urbana.",
+        "recompensa": 2 + (i % 5),
+        "dif": "todas" if i % 3 else "Normal" if i % 5 else "Difícil",
+        "tipo": "partidas" if i % 4 == 0 else "racha" if i % 4 == 1 else "correctas" if i % 4 == 2 else "indicador",
+        "meta": (i % 10 + 1) * (2 if i % 4 == 2 else 1)
+    })
 
 # ── Logros ─────────────────────────────────────────────────────────────────
 LOGROS = [
@@ -222,7 +233,7 @@ LOGROS = [
     {"id":"l06","emoji":"🌱","nombre":"Ecologista",               "tipo":"indicador_fin",    "dif":"todas", "ind":"medio_ambiente","meta":80},
     {"id":"l07","emoji":"💰","nombre":"Capitalista",              "tipo":"indicador_fin",    "dif":"todas", "ind":"economia","meta":80},
     {"id":"l08","emoji":"❤️","nombre":"Humanista",               "tipo":"indicador_fin",    "dif":"todas", "ind":"bienestar_social","meta":80},
-    {"id":"l09","emoji":"⚡","nombre":"Ingeniero",                "tipo":"indicador_fin",    "dif":"todas", "ind":"energia","meta":80},
+    {"id":"l09","emoji":"🛠️","nombre":"Ingeniero",                "tipo":"indicador_fin",    "dif":"todas", "ind":"energia","meta":80},
     {"id":"l10","emoji":"🌟","nombre":"Ciudad Equilibrada",       "tipo":"todos_sobre",      "dif":"todas", "meta":70},
     {"id":"l11","emoji":"🔗","nombre":"Racha x3",                 "tipo":"racha",            "dif":"todas", "meta":3},
     {"id":"l12","emoji":"⛓️","nombre":"Racha x5",                "tipo":"racha",            "dif":"todas", "meta":5},

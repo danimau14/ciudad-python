@@ -71,6 +71,14 @@ def pantalla_misiones():
         "⭐ " + str(estrellas) + " acumuladas</span></div>",
         unsafe_allow_html=True)
 
+    opcion_dif = st.selectbox("🔎 Filtrar por dificultad:", ["Todas", "Fácil", "Normal", "Difícil"], index=0, key="filtro_misiones")
+    def _matches_dif(m):
+        if opcion_dif == "Todas":
+            return True
+        if m.get("dif", "todas") == "todas":
+            return True
+        return m.get("dif") == opcion_dif
+
     st.markdown(
         "<div style='background:rgba(255,255,255,.05);border-radius:8px;height:10px;margin-bottom:4px;overflow:hidden'>"
         "<div style='width:" + str(pct) + "%;height:10px;border-radius:8px;"
@@ -79,6 +87,10 @@ def pantalla_misiones():
         "font-family:Courier Prime,monospace;margin-bottom:14px'>"
         + str(completadas) + "/" + str(total) + " · " + str(pct) + "%</div>",
         unsafe_allow_html=True)
+
+    misiones_mostradas = [m for m in MISIONES if _matches_dif(m)]
+    if len(misiones_mostradas) > 20:
+        st.info("Mostrando " + str(len(misiones_mostradas)) + " misiones. Usa el filtro para refinar la lista.")
 
     total_rec = sum(m["recompensa"] for m in MISIONES if m["id"] in canjeadas)
     total_pend = sum(p["recompensa"] for p in pendientes)
@@ -108,7 +120,7 @@ def pantalla_misiones():
     st.markdown("<hr style='border:none;border-top:1px solid rgba(167,139,250,.2);margin:0 0 14px'>",
                 unsafe_allow_html=True)
 
-    for m in MISIONES:
+    for m in misiones_mostradas:
         mid      = m["id"]
         canjeada = mid in canjeadas
         pendiente= mid in pend_ids

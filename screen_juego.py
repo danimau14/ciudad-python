@@ -190,89 +190,171 @@ def _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind, estrellas):
     }
     fase_ico, fase_txt, fase_col = fase_map.get(fase_actual, ("●","—","#a78bfa"))
 
-    ronda_chips = "".join(
-        "<span style='display:inline-flex;align-items:center;justify-content:center;"
-        "width:22px;height:22px;border-radius:50%;"
-        "background:" + ("#7c3aed" if i < ronda else dm["color"] if i == ronda else "transparent") + ";"
-        "color:" + ("#fff" if i <= ronda else "rgba(255,255,255,.2)") + ";"
-        "border:1px solid " + ("#7c3aed" if i < ronda else dm["color"] if i == ronda else "rgba(255,255,255,.1)") + ";"
-        "font-size:.58rem;font-weight:700;margin:1px 2px'>" + str(i) + "</span>"
-        for i in range(1, TOTAL_RONDAS + 1))
+    # ═══ CHIPS DE RONDAS ═══
+    ronda_chips = ""
+    for i in range(1, TOTAL_RONDAS + 1):
+        if i < ronda:
+            bg_chip = "#7c3aed"
+            border_chip = "#a78bfa"
+            color_chip = "#fff"
+        elif i == ronda:
+            bg_chip = dm["color"]
+            border_chip = dm["color"]
+            color_chip = "#fff"
+        else:
+            bg_chip = "rgba(255,255,255,.02)"
+            border_chip = "rgba(255,255,255,.08)"
+            color_chip = "rgba(255,255,255,.2)"
+        
+        ronda_chips += (
+            "<span style='display:inline-flex;align-items:center;justify-content:center;"
+            "width:18px;height:18px;border-radius:50%;"
+            "background:" + bg_chip + ";border:1.5px solid " + border_chip + ";"
+            "color:" + color_chip + ";font-size:.55rem;font-weight:800;margin:0 2px;"
+            "box-shadow:" + ("0 0 8px " + dm["color"] + "50" if i == ronda else "none") + ";"
+            "cursor:pointer;transition:all .3s'>" + str(i) + "</span>")
 
-    est_chips = "".join(
-        "<span style='display:inline-flex;align-items:center;gap:5px;"
-        + ("background:linear-gradient(135deg,rgba(124,58,237,.4),rgba(99,102,241,.3));border:1px solid rgba(167,139,250,.65);border-radius:20px;padding:4px 14px;font-size:.78rem;color:#e9d5ff;font-weight:700;margin:2px;box-shadow:0 0 12px rgba(167,139,250,.3)'>✏️ " if e == est_turno else "background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:4px 14px;font-size:.76rem;color:#475569;margin:2px'>")
-        + e + "</span>"
-        for e in estudiantes)
+    # ═══ CHIPS DE ESTUDIANTES ═══
+    est_chips = ""
+    for e in estudiantes:
+        is_active = e == est_turno
+        est_chips += (
+            "<span style='display:inline-flex;align-items:center;gap:3px;"
+            + ("background:linear-gradient(135deg,rgba(167,139,250,.3),rgba(99,102,241,.2));border:1.5px solid rgba(167,139,250,.6);color:#e9d5ff;box-shadow:0 0 12px rgba(167,139,250,.3)" if is_active else "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#64748b") + ";"
+            "border-radius:18px;padding:4px 11px;font-size:.76rem;font-weight:700;margin:3px;transition:all .3s;white-space:nowrap;'>"
+            + ("✏️ " if is_active else "") + e + "</span>")
 
+    # ═══ INDICADORES HTML ═══
+    indicadores = [
+        ("economia", "🪙"),
+        ("medio_ambiente", "🌳"),
+        ("energia", "⚡"),
+        ("bienestar_social", "❤️")
+    ]
+    
     ind_html = ""
-    for key in ["economia","medio_ambiente","energia","bienestar_social"]:
-        color, emoji = IND_COLOR[key]
-        v   = _clamp(ind.get(key, 50))
-        bc  = "#10b981" if v >= 60 else "#f59e0b" if v >= 30 else "#ef4444"
-        crit= v < 30
-        icon_url = ICON_ASSETS.get(key, "https://img.icons8.com/fluency/48/000000/leaf.png")
+    for key, emoji_ind in indicadores:
+        color, _ = IND_COLOR[key]
+        v = _clamp(ind.get(key, 50))
+        bc = "#10b981" if v >= 60 else "#f59e0b" if v >= 30 else "#ef4444"
+        crit = v < 30
+        label = IND_LABEL[key].split()[0][:3].upper()
+        
         ind_html += (
-            "<div style='flex:1;min-width:90px;background:rgba(255,255,255,.14);"
-            "border:" + ("1.5px solid #ef444466" if crit else "1px solid " + color + "35") + ";"
-            "border-radius:12px;padding:8px 10px;text-align:center;position:relative'>"
-            + ("<div style='position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444'></div>" if crit else "") +
-            "<img src='" + icon_url + "' style='width:24px;height:24px;margin-bottom:4px'>"
-            "<div style='font-size:.80rem;line-height:1.1;color:#3b382f;margin-bottom:3px'>" + IND_LABEL[key].split()[0] + "</div>"
-            "<div style='font-size:.95rem;font-weight:900;color:" + bc + ";font-family:Courier Prime,monospace;line-height:1.1'>" + str(v) + "</div>"
-            "<div style='margin-top:6px;background:rgba(255,255,255,.20);border-radius:3px;height:4px'>"
-            "<div style='width:" + str(v) + "%;background:" + color + ";height:100%;border-radius:3px;transition:width .3s'></div></div></div>")
+            "<div style='background:linear-gradient(135deg,rgba(0,0,0,.3),rgba(0,0,0,.1));"
+            "border:1.5px solid " + color + "40;border-radius:14px;padding:12px;flex:1;"
+            "transition:all .3s;position:relative;overflow:hidden'>"
+            "<div style='position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent," + color + "60,transparent)'></div>"
+            + ("<div style='position:absolute;top:8px;right:8px;width:5px;height:5px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;animation:pulse 2s infinite'></div>" if crit else "") +
+            "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px'>"
+            "<span style='font-size:.70rem;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.25);font-weight:700'>" + label + "</span>"
+            "<span style='font-size:1.2rem;opacity:.8'>" + emoji_ind + "</span>"
+            "</div>"
+            "<div style='font-size:1.3rem;font-weight:900;color:" + bc + ";font-family:Courier Prime,monospace;margin-bottom:5px'>" + str(v) + "</div>"
+            "<div style='background:rgba(255,255,255,.06);border-radius:4px;height:5px;overflow:hidden'>"
+            "<div style='width:" + str(v) + "%;background:linear-gradient(90deg," + color + "80," + color + ");height:100%;border-radius:4px;box-shadow:0 0 6px " + color + "70;transition:width .5s ease-out'></div>"
+            "</div></div>")
 
-    col_hdr, col_cfg = st.columns([13, 1])
-    with col_hdr:
+    # ═══ CONSTRUCCIÓN DEL HEADER ═══
+    col_left, col_center, col_right = st.columns([2, 3.5, 1.2])
+    
+    with col_left:
         st.markdown(
-            "<style>@keyframes hglow{0%,100%{box-shadow:0 0 20px " + dm["color"] + "18,0 8px 32px rgba(0,0,0,.5)}50%{box-shadow:0 0 40px " + dm["color"] + "30,0 8px 32px rgba(0,0,0,.5)}}"
-            "@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}</style>"
-            "<div style='background:linear-gradient(135deg,rgba(8,8,22,.98),rgba(12,12,30,.96));"
-            "border:1px solid " + dm["color"] + "28;border-top:2px solid " + dm["color"] + ";"
-            "border-radius:16px;padding:12px 16px 10px;animation:hglow 3s ease-in-out infinite;position:relative;overflow:hidden'>"
-            "<div style='position:absolute;top:0;left:0;right:0;height:2px;overflow:hidden'>"
-            "<div style='height:2px;background:linear-gradient(90deg,transparent," + dm["color"] + ",transparent);animation:sweep 2s linear infinite'></div></div>"
-            # Fila 1
-            "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px'>"
-            "<span style='font-size:1.1rem;filter:drop-shadow(0 0 6px rgba(167,139,250,.6))'>🏙️</span>"
-            "<span style='font-family:Press Start 2P,monospace;font-size:clamp(.55rem,1.6vw,.78rem);"
-            "background:linear-gradient(90deg,#ddd6fe,#a5b4fc,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent'>"
-            + nombre_grp + "</span>"
-            "<span style='background:" + dm["bg"] + ";color:" + dm["color"] + ";border:1px solid " + dm["color"] + "50;border-radius:20px;padding:2px 10px;font-size:.64rem;font-weight:700'>"
+            "<div style='background:linear-gradient(135deg,rgba(8,8,22,.85),rgba(15,15,30,.8));"
+            "border:1.5px solid " + dm["color"] + "30;border-top:2px solid " + dm["color"] + ";"
+            "border-radius:12px;padding:11px 14px;height:100%;display:flex;flex-direction:column;justify-content:space-between'>"
+            "<div>"
+            "<div style='display:flex;align-items:center;gap:6px;margin-bottom:6px'>"
+            "<span style='font-size:1rem;filter:drop-shadow(0 0 8px rgba(167,139,250,.5))'>🏙️</span>"
+            "<span style='font-family:Press Start 2P,monospace;font-size:.70rem;letter-spacing:1px;background:linear-gradient(90deg,#c4b5fd,#a5b4fc,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700'>"
+            + nombre_grp.upper()[:15] + "</span>"
+            "</div>"
+            "<div style='display:flex;gap:5px;flex-wrap:wrap'>"
+            "<span style='background:" + dm["bg"] + ";color:" + dm["color"] + ";border:1px solid " + dm["color"] + "50;border-radius:16px;padding:2px 10px;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap'>"
             + dm["emoji"] + " " + dif + "</span>"
-            "<span style='background:" + fase_col + "18;color:" + fase_col + ";border:1px solid " + fase_col + "44;border-radius:20px;padding:2px 10px;font-size:.62rem;font-weight:700'>"
+            "<span style='background:" + fase_col + "12;color:" + fase_col + ";border:1px solid " + fase_col + "40;border-radius:16px;padding:2px 10px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap'>"
             + fase_ico + " " + fase_txt + "</span>"
-            "<div style='margin-left:auto'>"
-            "<span style='display:inline-flex;align-items:center;gap:5px;background:rgba(251,191,36,.12);color:#fbbf24;"
-            "border:1px solid rgba(251,191,36,.38);border-radius:20px;padding:3px 12px;"
-            "font-family:Courier Prime,monospace;font-size:.76rem;font-weight:800'>⭐ " + str(estrellas) + "</span>"
-            "</div></div>"
-            # Fila 2
-            "<div style='display:flex;flex-wrap:wrap;gap:2px;margin-bottom:10px'>" + est_chips + "</div>"
-            # Fila 3
-            "<div style='display:flex;align-items:center;gap:8px;margin-bottom:8px'>"
-            "<span style='font-family:Courier Prime,monospace;font-size:.57rem;color:rgba(255,255,255,.2);white-space:nowrap;min-width:42px'>"
-            "R " + str(ronda) + "/" + str(TOTAL_RONDAS) + "</span>"
-            "<div style='flex:1;display:flex;gap:2px;align-items:center'>" + ronda_chips + "</div>"
-            "<span style='font-family:Courier Prime,monospace;font-size:.60rem;color:" + dm["color"] + ";font-weight:700;min-width:32px;text-align:right'>"
-            + str(pct) + "%</span></div>"
-            "<div style='background:rgba(255,255,255,.04);border-radius:4px;height:4px;overflow:hidden'>"
-            "<div style='width:" + str(pct) + "%;height:4px;background:linear-gradient(90deg,#7c3aed," + dm["color"] + ");border-radius:4px;box-shadow:0 0 10px " + dm["color"] + "80'></div></div>"
+            "</div>"
+            "</div>"
+            "<div style='font-family:Courier Prime,monospace;font-size:.58rem;color:rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:1px'>R " + str(ronda) + "/" + str(TOTAL_RONDAS) + "</div>"
             "</div>",
             unsafe_allow_html=True)
-        st.markdown("<div style='display:flex;gap:5px;margin-bottom:10px'>" + ind_html + "</div>",
-                    unsafe_allow_html=True)
 
-    with col_cfg:
-        st.markdown("<style>div[data-testid='stExpander'] .stButton button{font-size:0.58rem!important;padding:5px 4px!important;min-height:0!important;height:auto!important;line-height:1.2!important;white-space:normal!important;word-break:break-word!important}</style>",
-                    unsafe_allow_html=True)
-        with st.expander("⚙️"):
-            if st.button("📖\nInstruc.", use_container_width=True):
-                st.session_state["_from_juego"] = True
-                navegar("instrucciones")
-            if st.button("🏠\nInicio",   use_container_width=True): navegar("inicio")
-            if st.button("⬅️\nLobby",   use_container_width=True): navegar("lobby")
+    with col_center:
+        st.markdown(
+            "<style>"
+            "@keyframes hglow{0%,100%{box-shadow:0 0 25px " + dm["color"] + "12}50%{box-shadow:0 0 40px " + dm["color"] + "25}}"
+            "@keyframes sweep{0%{left:-100%}100%{left:100%}}"
+            "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}"
+            "</style>"
+            "<div style='background:linear-gradient(135deg,rgba(10,10,25,.9),rgba(12,12,32,.88));"
+            "border:1.5px solid " + dm["color"] + "24;border-radius:12px;padding:11px 14px;"
+            "animation:hglow 3.5s ease-in-out infinite;position:relative;overflow:hidden;height:100%;display:flex;flex-direction:column;justify-content:space-between'>"
+            "<div style='position:absolute;top:0;left:0;right:0;height:1.5px;overflow:hidden'>"
+            "<div style='width:30%;height:100%;background:linear-gradient(90deg,transparent," + dm["color"] + ",transparent);animation:sweep 2.5s linear infinite'></div>"
+            "</div>"
+            "<div>"
+            "<div style='display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap;align-items:center'>"
+            "<span style='font-family:Courier Prime,monospace;font-size:.55rem;color:" + dm["color"] + ";font-weight:800;text-transform:uppercase;letter-spacing:1.5px'>Rondas</span>"
+            "<div style='flex:1;display:flex;gap:1px;align-items:center;justify-content:flex-start;flex-wrap:wrap;padding-left:2px'>" + ronda_chips + "</div>"
+            "</div>"
+            "<div style='background:rgba(255,255,255,.04);border-radius:4px;height:4px;overflow:hidden;margin-bottom:6px'>"
+            "<div style='width:" + str(pct) + "%;height:100%;background:linear-gradient(90deg,#7c3aed," + dm["color"] + ");border-radius:4px;box-shadow:0 0 10px " + dm["color"] + "70;transition:width .6s cubic-bezier(.25,.46,.45,.94)'></div>"
+            "</div>"
+            "<div style='font-family:Courier Prime,monospace;font-size:.56rem;color:" + dm["color"] + ";font-weight:800;text-align:left'>" + str(pct) + "% Completado</div>"
+            "</div>"
+            "<div style='display:flex;flex-wrap:wrap;gap:2px;padding-top:3px;border-top:1px solid rgba(255,255,255,.05)'>"
+            + est_chips +
+            "</div>"
+            "</div>",
+            unsafe_allow_html=True)
+
+    with col_right:
+        st.markdown(
+            "<div style='background:linear-gradient(135deg,rgba(8,8,22,.85),rgba(15,15,30,.8));"
+            "border:1.5px solid rgba(251,191,36,.25);border-radius:12px;padding:11px 10px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center'>"
+            "<div>"
+            "<div style='font-size:1.3rem;margin-bottom:2px'>⭐</div>"
+            "<div style='font-family:Courier Prime,monospace;font-size:.75rem;font-weight:900;color:#fbbf24'>" + str(estrellas) + "</div>"
+            "<div style='font-size:.50rem;color:rgba(255,255,255,.2);margin-top:2px;text-transform:uppercase;letter-spacing:.5px'>Atributos</div>"
+            "</div>"
+            "<div style='width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(251,191,36,.3),transparent);margin:4px 0'></div>"
+            "<div style='font-size:.50rem;color:rgba(255,255,255,.15);line-height:1.3;text-transform:uppercase;letter-spacing:.3px;max-width:100%'>Disponibles al<br>Finalizar</div>"
+            "</div>",
+            unsafe_allow_html=True)
+
+    # ═══ FILA DE INDICADORES ═══
+    st.markdown(
+        "<div style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;margin-bottom:8px'>"
+        + ind_html +
+        "</div>",
+        unsafe_allow_html=True)
+
+    # ═══ BOTONES DE NAVEGACIÓN ═══
+    col_nav_left, col_nav_center, col_nav_right = st.columns([1, 4, 1])
+    
+    with col_nav_left:
+        pass
+    
+    with col_nav_center:
+        pass
+    
+    with col_nav_right:
+        st.markdown(
+            "<style>"
+            "div[data-testid='stExpander'] {margin:0!important;padding:0!important}"
+            "div[data-testid='stExpander'] .stButton button{font-size:0.62rem!important;padding:5px 4px!important;min-height:0!important;height:auto!important;line-height:1.1!important;white-space:normal!important;word-break:break-word!important;border-radius:6px!important}"
+            "</style>",
+            unsafe_allow_html=True)
+        with st.expander("⚙️ Menú", expanded=False):
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📖\nInstr.", use_container_width=True, key="btn_instr_juego"):
+                    st.session_state["_from_juego"] = True
+                    navegar("instrucciones")
+            with col2:
+                if st.button("⬅️\nLobby", use_container_width=True, key="btn_lobby_juego"):
+                    navegar("lobby")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -297,10 +379,11 @@ def _panel_estrellas(gid, estrellas):
         unsafe_allow_html=True)
 
     cols = st.columns(len(ATRIBUTOS))
+    tiene_activo = len(activos) > 0
     for i, (key, atr) in enumerate(ATRIBUTOS.items()):
         ac     = key in activos
         col    = cols[i]
-        puede  = estrellas >= atr["costo"] and not ac
+        puede  = estrellas >= atr["costo"] and not ac and (not tiene_activo or ac)
         tc     = "#60a5fa" if atr["tipo"] == "pregunta" else "#a78bfa"
         bg_a   = "rgba(52,211,153,.10)" if ac else "rgba(255,255,255,.03)"
         brd_a  = "rgba(52,211,153,.40)" if ac else "rgba(255,255,255,.07)"
@@ -337,6 +420,16 @@ def _panel_estrellas(gid, estrellas):
                 txt = "Activo" if ac else "-" + str(atr["costo"] - estrellas) + "⭐"
                 st.markdown("<div style='text-align:center;color:rgba(255,255,255,.16);font-size:.56rem;margin-top:2px'>"
                             + txt + "</div>", unsafe_allow_html=True)
+
+    if tiene_activo:
+        activo_key = next(iter(activos))
+        activo_nombre = ATRIBUTOS.get(activo_key, {}).get("nombre", "atributo")
+        st.markdown(
+            "<div style='background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.25);"
+            "border-radius:10px;padding:8px;margin-top:8px;text-align:center;"
+            "font-size:.70rem;color:#60a5fa'>" +
+            "⚡ Solo un atributo por ronda puede estar activo. " + activo_nombre + " está aplicado." +
+            "</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 

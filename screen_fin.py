@@ -267,7 +267,7 @@ def pantalla_fin():
 
     # BOTONES
     st.markdown("<br>", unsafe_allow_html=True)
-    c1,c2,c3,c4 = st.columns(4)
+    c1,c2,c3 = st.columns(3)
     with c1:
         if st.button("🔄  REINICIAR", use_container_width=True):
             if gid: _reiniciar(gid, dif)
@@ -283,5 +283,3 @@ def pantalla_fin():
         if st.button("🏆  RANKING",  use_container_width=True): navegar("ranking")
     with c3:
         if st.button("🏠  LOBBY",    use_container_width=True): navegar("lobby")
-    with c4:
-        if st.button("🚪  INICIO",   use_container_width=True): navegar("inicio")
