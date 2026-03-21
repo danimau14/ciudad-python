@@ -346,38 +346,7 @@ def _panel_estrellas(gid, estrellas):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def pantalla_juego():
-    # Elementos decorativos campestres
-    st.markdown("""
-    <div class="leaf" style="left: 10%; animation-delay: 0s;">🍂</div>
-    <div class="leaf" style="left: 30%; animation-delay: 2s;">🍃</div>
-    <div class="leaf" style="left: 60%; animation-delay: 4s;">🍂</div>
-    <div class="cloud" style="left: 20%; animation-delay: 0s;">☁️</div>
-    <div class="cloud" style="left: 70%; animation-delay: 5s;">☁️</div>
-    """, unsafe_allow_html=True)
-
-    # Opciones de clima y ciclo día/noche
-    if "modo_diurno" not in st.session_state:
-        st.session_state["modo_diurno"] = "Día"
-    if "clima_activo" not in st.session_state:
-        st.session_state["clima_activo"] = "Sol"
-
-    c1, c2 = st.columns([1, 2])
-    with c1:
-        st.session_state["modo_diurno"] = st.selectbox("Modo", ["Día", "Noche"], index=0 if st.session_state["modo_diurno"] == "Día" else 1)
-    with c2:
-        st.session_state["clima_activo"] = st.selectbox("Clima", ["Sol", "Nublado", "Lluvia"], index=["Sol", "Nublado", "Lluvia"].index(st.session_state["clima_activo"]))
-
-    if st.session_state["modo_diurno"] == "Noche":
-        st.markdown("<div class='weather-layer weather-night'></div>", unsafe_allow_html=True)
-    if st.session_state["clima_activo"] == "Sol":
-        st.markdown("<div class='weather-layer weather-sun'></div>", unsafe_allow_html=True)
-    elif st.session_state["clima_activo"] == "Nublado":
-        st.markdown("<div class='weather-layer weather-clouds'></div>", unsafe_allow_html=True)
-    elif st.session_state["clima_activo"] == "Lluvia":
-        st.markdown("<div class='weather-layer weather-rain'></div>", unsafe_allow_html=True)
-
     gid = st.session_state.get("grupo_id")
-
     dif          = st.session_state.get("dificultad_sel", "Normal")
     progreso     = _progreso(gid, dif)
     estudiantes  = _estudiantes(gid)
@@ -387,8 +356,7 @@ def pantalla_juego():
     idx_turno    = (ronda - 1) % len(estudiantes)
     est_turno    = estudiantes[idx_turno]
     dif_cfg      = DIFICULTADES.get(dif, DIFICULTADES["Normal"])
-    # Penalización: -5 pts (impar) o -10 pts (par = doble)
-    base_pen     = dif_cfg["penalizacion"]   # = 5 para todas las dificultades
+    base_pen     = dif_cfg["penalizacion"]
     penalizacion = base_pen * (dif_cfg["mult_par"] if ronda % 2 == 0 else 1)
     estrellas    = _estrellas(gid)
 
@@ -416,28 +384,31 @@ def pantalla_juego():
                                 estado_ciudad=estado_ciudad)
         navegar("fin"); return
 
-    # Minimapa
-    st.markdown("""
-    <div class="minimap">
-        🏠 Ciudad<br>
-        🌳 Bosque<br>
-        🏭 Fábrica<br>
-        💧 Río<br>
-        Ronda: """ + str(ronda) + """
-    </div>
-    """, unsafe_allow_html=True)
+    _cabecera(nombre_grp, estudiantes, ronda, est_turno, dif, ind, estrellas)
 
     fase = st.session_state.get("fase_ronda", "decision")
 
     # ══ FASE DECISIÓN ═════════════════════════════════════════════════════════
     if fase == "decision":
         _panel_estrellas(gid, estrellas)
-        st.markdown("<div style='font-family:Courier Prime,monospace;font-size:.65rem;"
-                    "text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.25);"
-                    "margin-bottom:10px'>⚙️ Elige una Decisión Estratégica</div>",
-                    unsafe_allow_html=True)
+        
+        # Separador visual
+        st.markdown(
+            "<div style='height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.18),transparent);margin:16px 0;'></div>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<div style='text-align:center;font-family:Courier Prime,monospace;font-size:.56rem;'>"
+            "⊰ <span style='color:rgba(255,255,255,.15)'>ELIGE UNA DECISIÓN ESTRATÉGICA</span> ⊱"
+            "</div>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<div style='height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.18),transparent);margin:12px 0 16px;'></div>",
+            unsafe_allow_html=True)
+        
         cols = st.columns(4)
-        for i, (nom, ef) in enumerate(DECISIONES.items()):
+        decisiones_list = list(DECISIONES.items())
+        
+        for i, (nom, ef) in enumerate(decisiones_list):
             col  = cols[i % 4]
             cd   = cooldowns.get(nom, 0)
             disp = cd == 0 or ronda >= cd
@@ -446,32 +417,32 @@ def pantalla_juego():
             for k, v in ef.items():
                 if k in ("emoji", "dif"): continue
                 ci, ei = IND_COLOR.get(k, ("#94a3b8",""))
-                filas += ("<div style='display:flex;justify-content:space-between;padding:2px 0;"
-                          "border-bottom:1px solid rgba(255,255,255,.04)'>"
-                          "<span style='color:" + ci + ";font-size:.68rem'>" + ei + " " + IND_LABEL.get(k,k) + "</span>"
-                          "<span style='color:" + ("#4ade80" if v>0 else "#f87171") + ";font-size:.74rem;font-weight:700'>"
+                filas += ("<div style='display:flex;justify-content:space-between;padding:3px 0;"
+                          "border-bottom:1px solid rgba(255,255,255,.04);font-size:.70rem'>"
+                          "<span style='color:" + ci + "'>" + ei + " " + IND_LABEL.get(k,k).split()[0] + "</span>"
+                          "<span style='color:" + ("#34d399" if v>0 else "#f87171") + ";font-weight:700'>"
                           + ("+" if v>0 else "") + str(v) + "</span></div>")
             overlay = ""
             if not disp:
-                dots = "".join("<span style='display:inline-block;width:7px;height:7px;border-radius:50%;"
+                dots = "".join("<span style='display:inline-block;width:5px;height:5px;border-radius:50%;"
                                "background:" + ("#fbbf24" if j<rf else "rgba(255,255,255,.08)") + ";margin:1px'></span>"
                                for j in range(COOLDOWN))
-                overlay = ("<div style='position:absolute;inset:0;border-radius:14px;background:rgba(0,0,0,.62);"
-                           "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px'>"
-                           "<span style='font-size:1.1rem'>⏳</span>"
-                           "<span style='color:#fbbf24;font-weight:700;font-size:.78rem'>"
+                overlay = ("<div style='position:absolute;inset:0;border-radius:14px;background:rgba(0,0,0,.60);"
+                           "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;z-index:10'>"
+                           "<span style='font-size:.9rem'>⏳</span>"
+                           "<span style='color:#fbbf24;font-weight:700;font-size:.70rem'>"
                            + str(rf) + " ronda" + ("s" if rf!=1 else "") + "</span>" + dots + "</div>")
             with col:
                 icon_url = DECISION_ICON_SPRITES.get(nom, "https://img.icons8.com/fluency/48/000000/idea.png")
                 st.markdown("<div style='position:relative;background:" +
-                            ("rgba(167,139,250,.04)" if disp else "rgba(245,158,11,.02)") +
-                            ";border:1px solid " + ("rgba(167,139,250,.32)" if disp else "rgba(245,158,11,.18)") +
-                            ";border-radius:14px;padding:12px;margin-bottom:4px;min-height:165px;"
-                            "opacity:" + ("1" if disp else ".45") + "'>" + overlay +
-                            "<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px'>"
-                            "<img src='" + icon_url + "' style='width:26px;height:26px;border-radius:4px;background:rgba(255,255,255,.12)'/>"
-                            "<span style='font-size:1.2rem;'>" + ef.get("emoji", "") + "</span></div>"
-                            "<div style='font-weight:700;color:#f1f5f9;font-size:.78rem;margin-bottom:6px;line-height:1.2'>"
+                            ("rgba(167,139,250,.05)" if disp else "rgba(100,100,100,.04)") +
+                            ";border:1px solid " + ("rgba(167,139,250,.28)" if disp else "rgba(100,100,100,.15)") +
+                            ";border-radius:14px;padding:12px;margin-bottom:8px;min-height:180px;"
+                            "opacity:" + ("1" if disp else ".5") + ";backdrop-filter:blur(10px)'>" + overlay +
+                            "<div style='display:flex;align-items:center;gap:8px;margin-bottom:8px'>"
+                            "<img src='" + icon_url + "' style='width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.12)'/>"
+                            "<span style='font-size:1.1rem;'>" + ef.get("emoji", "") + "</span></div>"
+                            "<div style='font-weight:700;color:#f1f5f9;font-size:.78rem;margin-bottom:8px;line-height:1.3'>"
                             + nom + "</div>" + filas + "</div>", unsafe_allow_html=True)
                 if st.button("Elegir" if disp else "Bloqueada", disabled=not disp,
                              key="dec_" + nom, use_container_width=True):
