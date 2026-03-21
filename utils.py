@@ -3,7 +3,7 @@ import streamlit as st
 from config import (PREGUNTAS, MEZCLA_PREGUNTAS, IND_COLOR, IND_LABEL,
                     CAT_COLOR, TOTAL_RONDAS, LOGROS, MISIONES,
                     UMBRAL_COLAPSO, UMBRAL_ROJO, DIFICULTADES)
-from database import (obtener_logros_grupo, desbloquear_logro,
+from db import (obtener_logros_grupo, desbloquear_logro,
                       obtener_misiones_canjeadas, obtener_stats, sumar_estrellas)
 
 

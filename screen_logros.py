@@ -54,6 +54,13 @@ def pantalla_logros():
     obtenidos  = len(logros_ids)
     pct        = int(obtenidos/total*100) if total else 0
 
+    top_cols = st.columns([1,8])
+    with top_cols[0]:
+        if st.button("⬅  VOLVER AL LOBBY", use_container_width=True, key="top_lobby_logros"):
+            navegar("lobby")
+    with top_cols[1]:
+        pass
+
     st.markdown(
         "<div style='font-family:Press Start 2P,monospace;font-size:1.3rem;"
         "background:linear-gradient(90deg,#a78bfa,#60a5fa);"
@@ -100,4 +107,4 @@ def pantalla_logros():
                     unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("⬅  VOLVER AL LOBBY", use_container_width=True): navegar("lobby")
+    # Botón final eliminado porque se añadió botón superior.

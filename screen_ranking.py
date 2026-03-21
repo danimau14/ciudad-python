@@ -74,6 +74,13 @@ def pantalla_ranking():
         elif p>=40: return "REGULAR","#f59e0b","⚠️"
         else: return "CRÍTICO","#ef4444","🚨"
 
+    top_cols = st.columns([1,8])
+    with top_cols[0]:
+        if st.button("⬅  VOLVER AL LOBBY", use_container_width=True, key="top_lobby_ranking"):
+            navegar("lobby")
+    with top_cols[1]:
+        pass
+
     st.markdown(
         "<div style='font-family:Press Start 2P,monospace;font-size:1.3rem;"
         "background:linear-gradient(90deg,#fbbf24,#f97316);"
@@ -179,11 +186,9 @@ def pantalla_ranking():
                 "<div style='font-size:.62rem;color:rgba(255,255,255,.3)'>pts</div>"
                 "</div></div>"
                 + ("<div style='margin-bottom:6px'>" + chips_e + "</div>" if chips_e else "")
-                + "<div>"
-                + chips_l
                 + "</div></div>",
                 unsafe_allow_html=True,
             )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("⬅  VOLVER AL LOBBY", use_container_width=True): navegar("lobby")
+    # Botón final eliminado porque se añadió botón superior.

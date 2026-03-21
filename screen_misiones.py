@@ -57,6 +57,13 @@ def pantalla_misiones():
     DIF_LABEL = {"Facil":"FÁCIL","Normal":"NORMAL","Dificil":"DIFÍCIL","todas":"TODAS"}
     def _dk(d): return {"Fácil":"Facil","Difícil":"Dificil"}.get(d,d)
 
+    top_cols = st.columns([1,8])
+    with top_cols[0]:
+        if st.button("⬅  VOLVER AL LOBBY", use_container_width=True, key="top_lobby_misiones"):
+            navegar("lobby")
+    with top_cols[1]:
+        pass
+
     st.markdown(
         "<div style='display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px'>"
         "<div>"
@@ -127,81 +134,43 @@ def pantalla_misiones():
             return f"Gana 1 partida en dificultad {m.get('dif','todas')}."
         return m.get('desc','Cumple la misión especificada.')
 
-    for m in misiones_mostradas:
-        mid       = m["id"]
-        canjeada  = mid in canjeadas
-        pendiente = mid in pend_ids
-        dk        = _dk(m.get("dif","todas"))
-        dc        = DIF_COLOR.get(dk,"#a78bfa")
-        dl        = DIF_LABEL.get(dk,"TODAS")
-
-        if canjeada:
-            bg = "rgba(52,211,153,.06)"; brd = "rgba(52,211,153,.28)"
-        elif pendiente:
-            bg = "rgba(251,191,36,.07)"; brd = "rgba(251,191,36,.32)"
-        else:
-            bg = "rgba(12,12,28,.72)"; brd = "rgba(167,139,250,.2)"
-
-        badge_dif = ""
-        if dk != "todas":
-            badge_dif = ("<span style='font-size:.62rem;font-weight:700;text-transform:uppercase;"
-                         "letter-spacing:1px;color:" + dc + ";background:" + dc + "18;"
-                         "border:1px solid " + dc + "44;border-radius:20px;padding:2px 9px;"
-                         "font-family:Courier Prime,monospace'>" + dl + "</span>")
-        if canjeada:
-            badge_est = ("<span style='font-size:.62rem;font-weight:700;text-transform:uppercase;"
-                         "color:#34d399;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);"
-                         "border-radius:20px;padding:2px 9px;font-family:Courier Prime,monospace'>✅ CANJEADA</span>")
-        elif pendiente:
-            badge_est = ("<span style='font-size:.62rem;font-weight:700;text-transform:uppercase;"
-                         "color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);"
-                         "border-radius:20px;padding:2px 9px;font-family:Courier Prime,monospace'>⏳ PENDIENTE</span>")
-        else:
-            badge_est = ""
-
-        c1,c2 = st.columns([5,1])
-        with c1:
-            st.markdown(
-                "<div style='background:" + bg + ";border:1px solid " + brd + ";"
-                "border-radius:14px;padding:14px 18px;margin-bottom:8px'>"
-                "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px'>"
-                "<span style='font-weight:700;color:#f1f5f9;font-family:Courier Prime,monospace;font-size:.9rem'>"
-                + m["nombre"] + "</span>" + badge_dif + badge_est + "</div>"
-                "<div style='display:flex;justify-content:space-between;align-items:center'>"
-                "<div style='font-size:.78rem;color:rgba(255,255,255,.4);"
-                "font-family:Courier Prime,monospace;line-height:1.5'>" + m["desc"] + "</div>"
-                "<span style='color:#fbbf24;font-weight:700;font-size:.82rem;"
-                "font-family:Courier Prime,monospace;margin-left:12px;flex-shrink:0'>"
-                "+" + str(m["recompensa"]) + " ⭐</span></div></div>",
-                unsafe_allow_html=True)
-        with c2:
-            if canjeada:
-                st.markdown("<div style='display:flex;align-items:center;justify-content:center;"
-                            "height:86px;border-radius:10px;background:rgba(52,211,153,.12);'>"
-                            "<span style='color:#34d399;font-size:1.4rem'>✅</span></div>",
-                            unsafe_allow_html=True)
-            elif pendiente:
-                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-                if st.button("Canjear", key="lob_c_" + mid, use_container_width=True):
-                    _canjear(gid, mid, m["recompensa"])
-                    st.experimental_rerun()
-            else:
-                st.markdown("<div style='display:flex;align-items:center;justify-content:center;"
-                            "height:86px;border-radius:10px;background:rgba(255,255,255,.03);'>"
-                            "<span style='color:#fbbf24;font-weight:700;font-size:.88rem;"
-                            "font-family:Courier Prime,monospace'>+" + str(m["recompensa"]) + " ⭐</span></div>",
-                            unsafe_allow_html=True)
-
     st.markdown(
-        "<div style='background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);"
-        "border-radius:14px;padding:12px 18px;margin-top:14px;margin-bottom:6px;"
+        "<div style='background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:12px 18px;margin-bottom:14px;"
         "font-family:Courier Prime,monospace;font-size:.75rem;color:rgba(255,255,255,.45);line-height:1.6'>"
         "💡 Las misiones <b style='color:#fbbf24'>⏳ PENDIENTE</b> fueron completadas en una partida "
         "pero no se canjearon en la pantalla final. Canjéalas aquí para sumar estrellas a tu cuenta.</div>",
         unsafe_allow_html=True)
 
+    n_cols = 4
+    filas = [MISIONES[i:i+n_cols] for i in range(0, len(MISIONES), n_cols)]
+    for fila in filas:
+        cols = st.columns(n_cols)
+        for j, m in enumerate(fila):
+            mid = m["id"]
+            canjeada = mid in canjeadas
+            pendiente = mid in pend_ids
+            ob = canjeada or pendiente
+            filt = "none" if ob else "grayscale(1) opacity(.25)"
+            bg = "rgba(124,58,237,.12)" if ob else "rgba(255,255,255,.02)"
+            brd = "rgba(124,58,237,.4)" if ob else "rgba(255,255,255,.07)"
+            gc = "#a78bfa" if ob else "rgba(255,255,255,.18)"
+            nm = m["desc"]
+            with cols[j]:
+                st.markdown(
+                    "<div style='background:" + bg + ";border:1px solid " + brd + ";"
+                    "border-radius:14px;padding:14px;text-align:center;margin-bottom:8px;"
+                    "min-height:110px'>"
+                    "<div style='font-size:.70rem;font-weight:700;color:" + gc + ";"
+                    "margin-bottom:4px;font-family:Courier Prime,monospace'>" + nm + "</div>"
+                    "</div>",
+                    unsafe_allow_html=True)
+                if pendiente:
+                    if st.button("Canjear", key="canjear_" + mid):
+                        _canjear(gid, mid, m["recompensa"])
+                        st.experimental_rerun()
+
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("⬅  VOLVER AL LOBBY", use_container_width=True): navegar("lobby")
+    # Botón final eliminado porque se añadió botón superior.
 
 
 # ══════════════════════════════════════════════════════════════════════════════

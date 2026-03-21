@@ -120,3 +120,59 @@ def fetch_one(sql, params=()):
         return cur.fetchone()
     finally:
         conn.close()
+
+
+def obtener_logros_grupo(gid):
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return []
+    rows = fetch_all("SELECT logroid FROM logros_grupo WHERE grupoid=?", (gid,))
+    return [x["logroid"] for x in rows]
+
+
+def desbloquear_logro(gid, lid):
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return
+    c = get_connection()
+    try:
+        c.execute("INSERT OR IGNORE INTO logros_grupo(grupoid,logroid) VALUES(?,?)", (gid, lid))
+        c.commit()
+    except Exception:
+        pass
+    finally:
+        c.close()
+
+
+def obtener_misiones_canjeadas(gid):
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return []
+    rows = fetch_all("SELECT misionid FROM misiones_canjeadas WHERE grupoid=?", (gid,))
+    return [x["misionid"] for x in rows]
+
+
+def obtener_stats(gid):
+    # placeholder
+    return {}
+
+
+def sumar_estrellas(gid, cantidad):
+    gid = normalize_grupo_id(gid)
+    if gid is None:
+        return
+    c = get_connection()
+    try:
+        cur = c.cursor()
+        c.execute("INSERT OR IGNORE INTO estrellas_grupo(grupoid,total) VALUES(?,0)", (gid,))
+        cur.execute("SELECT total FROM estrellas_grupo WHERE grupoid=?", (gid,))
+        actual = (cur.fetchone() or {"total": 0})["total"]
+        c.execute(
+            "UPDATE estrellas_grupo SET total=? WHERE grupoid=?",
+            (max(0, actual + cantidad), gid),
+        )
+        c.commit()
+    except Exception:
+        pass
+    finally:
+        c.close()
