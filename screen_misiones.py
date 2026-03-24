@@ -154,14 +154,16 @@ def pantalla_misiones():
             bg = "rgba(124,58,237,.12)" if ob else "rgba(255,255,255,.02)"
             brd = "rgba(124,58,237,.4)" if ob else "rgba(255,255,255,.07)"
             gc = "#a78bfa" if ob else "rgba(255,255,255,.18)"
-            nm = m["desc"]
+            nombre = m.get("nombre", "Misión")
+            desc   = m.get("desc", "")
             with cols[j]:
                 st.markdown(
                     "<div style='background:" + bg + ";border:1px solid " + brd + ";"
                     "border-radius:14px;padding:14px;text-align:center;margin-bottom:8px;"
                     "min-height:110px'>"
-                    "<div style='font-size:.70rem;font-weight:700;color:" + gc + ";"
-                    "margin-bottom:4px;font-family:Courier Prime,monospace'>" + nm + "</div>"
+                    "<div style='font-size:.80rem;font-weight:800;color:" + gc + ";"
+                    "margin-bottom:5px;font-family:Courier Prime,monospace'>" + nombre + "</div>"
+                    "<div style='font-size:.65rem;color:rgba(255,255,255,.35);line-height:1.3;margin-bottom:4px'>" + desc + "</div>"
                     "</div>",
                     unsafe_allow_html=True)
                 if pendiente:

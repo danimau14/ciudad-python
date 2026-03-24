@@ -47,6 +47,37 @@ def _est_grupo(gid):
     )
     return [x["nombreestudiante"] for x in rows]
 
+
+def _texto_como_logro(logro):
+    if logro.get("como"):
+        return logro["como"]
+    tipo = logro.get("tipo", "")
+    meta = logro.get("meta", "?")
+    dif  = logro.get("dif", "todas")
+    ind  = logro.get("ind", "")
+
+    if tipo == "victoria":
+        return f"Gana una partida en dificultad {dif}."
+    if tipo == "correctas_partida":
+        return f"Responde {meta} o más preguntas correctas en una partida."
+    if tipo == "indicador_fin":
+        if ind:
+            return f"Lleva {ind.replace('_', ' ')} a {meta} o más al final de la partida."
+        return f"Lleva los indicadores a {meta} o más al final de la partida."
+    if tipo == "todos_sobre":
+        return f"Consigue que todos los indicadores estén por encima de {meta}."
+    if tipo == "racha":
+        return f"Consigue una racha de {meta} respuestas correctas seguidas."
+    if tipo == "decisiones_todas":
+        return f"Usa al menos {meta} decisiones diferentes durante la partida."
+    if tipo == "tam_grupo":
+        return f"Juega con un equipo de al menos {meta} estudiantes."
+    if tipo == "partidas":
+        return f"Completa {meta} partidas en total."
+
+    return logro.get("desc", "Completa el desafío para desbloquear el logro.")
+
+
 def pantalla_logros():
     gid        = normalize_grupo_id(st.session_state.get("grupo_id"))
     logros_ids = set(_logros_grupo(gid)) if gid is not None else set()
@@ -91,8 +122,8 @@ def pantalla_logros():
             bg   = "rgba(124,58,237,.12)" if ob else "rgba(255,255,255,.02)"
             brd  = "rgba(124,58,237,.4)"  if ob else "rgba(255,255,255,.07)"
             gc   = "#a78bfa" if ob else "rgba(255,255,255,.18)"
-            nm   = logro["nombre"] if ob else "???"
-            desc = logro.get("desc","") if ob else "Logro bloqueado"
+            nm   = logro.get("nombre", "Logro")
+            desc = logro.get("desc", "") if ob else _texto_como_logro(logro)
             with cols[j]:
                 st.markdown(
                     "<div style='background:" + bg + ";border:1px solid " + brd + ";"
